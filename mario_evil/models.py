@@ -268,6 +268,19 @@ def typewriter():
     m.box((0, 40+D+0.5, 4), (60, 1, 36), (20, 20, 24))                # base plate
     return m
 
+def pistol_held():
+    """Pistol for Mario's fist: origin = grip centre, barrel along +z (Mario's forward), up = +y."""
+    m = pistol()
+    R = rot(yaw=-90)                 # barrel +x -> +z
+    out = Mesh()
+    S = 0.8
+    def tx(q):
+        q = apply(R, ((q[0] + 22) * S, (q[1] - 22) * S, q[2] * S))
+        return q
+    for (p0, p1, p2, n0, n1, n2, c) in m.tris:
+        out.tris.append((tx(p0), tx(p1), tx(p2), apply(R, n0), apply(R, n1), apply(R, n2), c))
+    return out
+
 MODELS = {
     'item_herb_g': lambda: herb(None),
     'item_herb_r': lambda: herb('r'),
@@ -281,6 +294,7 @@ MODELS = {
     'item_typewriter': typewriter,
     'item_gun': pistol,
     'item_ammo': ammo_box,
+    'held_gun': pistol_held,
 }
 
 def _sb(v):

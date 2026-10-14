@@ -565,6 +565,9 @@ Gfx *geo_switch_mario_hand_grab_pos(s32 callContext, struct GraphNode *node, Mat
                 case GRAB_POS_BOWSER:
                     vec3s_set(asHeldObj->translation, 80, -270, 1260);
                     break;
+                case GRAB_POS_MEVIL_GUN:    // Mario EVIL: pistol sits in the right fist
+                    vec3s_set(asHeldObj->translation, 0, 0, 0);
+                    break;
             }
         }
     } else if (callContext == GEO_CONTEXT_HELD_OBJ) {

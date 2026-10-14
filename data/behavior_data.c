@@ -6112,6 +6112,13 @@ const BehaviorScript bhvMansionItemBox[] = {
     END_LOOP(),
 };
 
+const BehaviorScript bhvMansionHeldGun[] = {
+    BEGIN(OBJ_LIST_UNIMPORTANT),
+    BEGIN_LOOP(),
+        CALL_NATIVE(bhv_mansion_heldgun_loop),
+    END_LOOP(),
+};
+
 const BehaviorScript bhvMansionZombie[] = {
     BEGIN(OBJ_LIST_GENACTOR),
     OR_INT(oFlags, (OBJ_FLAG_COMPUTE_ANGLE_TO_MARIO | OBJ_FLAG_COMPUTE_DIST_TO_MARIO | OBJ_FLAG_SET_FACE_YAW_TO_MOVE_YAW | OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE)),

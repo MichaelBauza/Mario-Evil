@@ -105,6 +105,7 @@ void bhv_mansion_file_init(void);
 void bhv_mansion_file_loop(void);
 void bhv_mansion_typewriter_loop(void);
 void bhv_mansion_itembox_loop(void);
+void bhv_mansion_heldgun_loop(void);
 void bhv_mansion_zombie_init(void);
 void bhv_mansion_zombie_loop(void);
 

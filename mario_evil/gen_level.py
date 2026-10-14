@@ -27,7 +27,7 @@ TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil',
             'mans_door', 'mans_wood', 'mans_marble', 'mans_grass',
             'mans_door_k1', 'mans_door_k2', 'mans_door_k3']
 ICONS = ['item_herb_g', 'item_herb_r', 'item_herb_b', 'item_key', 'item_ribbon', 'item_file',
-         'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo']   # 3D models (models.py)
+         'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo', 'held_gun']   # 3D models (models.py)
 
 def door_emblem(d):
     """Key id whose emblem is painted on this door: its own key, or the key of the door it connects to."""

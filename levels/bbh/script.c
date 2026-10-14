@@ -95,6 +95,7 @@ const LevelScript level_bbh_entry[] = {
     LOAD_MODEL_FROM_GEO(MODEL_LEVEL_GEOMETRY_0C, mansion_geo_item_key2),
     LOAD_MODEL_FROM_GEO(MODEL_LEVEL_GEOMETRY_0D, mansion_geo_item_key3),
     LOAD_MODEL_FROM_GEO(MODEL_LEVEL_GEOMETRY_0E, mansion_geo_item_ammo),
+    LOAD_MODEL_FROM_GEO(MODEL_LEVEL_GEOMETRY_0F, mansion_geo_held_gun),
 
     AREA(/*index*/ 1, mansion_geo_area),
         OBJECT(/*model*/ MODEL_NONE, /*pos*/ -2800, 20, 0, /*angle*/ 0, 270, 0, /*behParam*/ 0x000A0000, /*beh*/ bhvInstantActiveWarp),

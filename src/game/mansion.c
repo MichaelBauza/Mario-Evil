@@ -405,15 +405,15 @@ static void gun_fire(struct MarioState *m, struct Object *target) {
     gMansion.ammo--;
     gMansion.fireCool = 20;
     gMansion.flash = 3;
-    play_sound(SOUND_GENERAL2_BOBOMB_EXPLOSION, gGlobalSoundSource);
+    play_sound(SOUND_MEVIL_GUNSHOT, gGlobalSoundSource);
     if (target != NULL && abs_angle_diff(atan2s(target->oPosZ - m->pos[2], target->oPosX - m->pos[0]), m->faceAngle[1]) < 0x1800) {
         target->oHealth--;
         target->oMoveAngleYaw = atan2s(target->oPosZ - m->pos[2], target->oPosX - m->pos[0]);
         target->oForwardVel = 14.0f;
         target->oVelY = 5.0f;
         target->oAction = (target->oHealth <= 0) ? 3 : 2;
-        if (target->oHealth <= 0) play_sound(SOUND_OBJ_CHUCKYA_DEATH, target->header.gfx.cameraToObject);
-        else play_sound(SOUND_OBJ_KING_BOBOMB_TALK, target->header.gfx.cameraToObject);
+        if (target->oHealth <= 0) play_sound(SOUND_MEVIL_ZDEATH, target->header.gfx.cameraToObject);
+        else play_sound(SOUND_MEVIL_ZHURT, target->header.gfx.cameraToObject);
         target->oTimer = 0;
         play_sound(SOUND_ACTION_HIT, target->header.gfx.cameraToObject);
     }
@@ -467,7 +467,36 @@ void mansion_tank_input(struct MarioState *m) {
 /* per-frame update                                                         */
 /* ------------------------------------------------------------------------ */
 
+/* ---- pistol in Mario's fist ---------------------------------------------
+   A hidden helper object carries the pistol model; Mario's right-hand GEO_HELD_OBJECT node draws it.
+   m->heldObj is only set between mansion_post_update and the next mansion_pre_update, so Mario's
+   actions never see a "held" object. */
+static struct Object *sHeldGun = NULL;
+
+void bhv_mansion_heldgun_loop(void) {
+    cur_obj_hide();
+}
+
+static void held_gun_detach(struct MarioState *m) {
+    if (m->heldObj != NULL && m->heldObj == sHeldGun) m->heldObj = NULL;
+}
+
+static void held_gun_attach(struct MarioState *m) {
+    if (sHeldGun == NULL || sHeldGun->activeFlags == ACTIVE_FLAG_DEACTIVATED
+        || !obj_has_behavior(sHeldGun, bhvMansionHeldGun)) {
+        sHeldGun = spawn_object(m->marioObj, MODEL_LEVEL_GEOMETRY_0F, bhvMansionHeldGun);
+    }
+    if (sHeldGun != NULL) {
+        sHeldGun->header.gfx.node.flags |= GRAPH_RENDER_INVISIBLE;
+        sHeldGun->header.gfx.scale[0] = sHeldGun->header.gfx.scale[1] = sHeldGun->header.gfx.scale[2] = 1.0f;
+        m->heldObj = sHeldGun;
+        m->marioBodyState->grabPos = GRAB_POS_MEVIL_GUN;
+        m->marioBodyState->handState = MARIO_HAND_FISTS;
+    }
+}
+
 void mansion_pre_update(void) {
+    held_gun_detach(gMarioState);
     if (gMansion.msgTimer > 0) gMansion.msgTimer--;
     if (gMansion.flash > 0) gMansion.flash--;
     gMansion.nearPrompt = 0;
@@ -666,6 +695,7 @@ void mansion_post_update(void) {
         // arm out, holding the pistol: freeze the punch animation on its extended frame
         set_mario_animation(m, MARIO_ANIM_FIRST_PUNCH);
         m->marioObj->header.gfx.animInfo.animFrame = 3;
+        held_gun_attach(m);
     }
     if (gMansion.doorState == 1) m->marioObj->header.gfx.node.flags |= GRAPH_RENDER_INVISIBLE;
     else m->marioObj->header.gfx.node.flags &= ~GRAPH_RENDER_INVISIBLE;
@@ -1134,6 +1164,20 @@ void bhv_mansion_itembox_loop(void) {
 
 /* ---- zombies ---------------------------------------------------------- */
 
+static void zombie_moan(struct Object *z) {
+    static u8 sMoanRot = 0;
+    static const u32 sMoans[3] = { SOUND_MEVIL_ZMOAN1, SOUND_MEVIL_ZMOAN2, SOUND_MEVIL_ZMOAN3 };
+    play_sound(sMoans[sMoanRot], z->header.gfx.cameraToObject);
+    if (++sMoanRot >= 3) sMoanRot = 0;
+}
+
+// Mario footsteps (called from play_step_sound in mario.c while in the mansion): alternate two RE1 steps.
+void mansion_footstep(struct MarioState *m) {
+    static u8 sFoot = 0;
+    play_sound(sFoot ? SOUND_MEVIL_STEP2 : SOUND_MEVIL_STEP1, gGlobalSoundSource);
+    sFoot ^= 1;
+}
+
 void bhv_mansion_zombie_init(void) {
     if (uid_get(gMansion.killed, UID)) {
         obj_mark_for_deletion(o);
@@ -1162,15 +1206,15 @@ void bhv_mansion_zombie_loop(void) {
             o->oForwardVel = 0.0f;
             if (dist < 1100.0f) {
                 o->oAction = 1;
-                play_sound(SOUND_OBJ_KING_BOBOMB_TALK, o->header.gfx.cameraToObject);   // low zombie moan
+                zombie_moan(o);
             } else if (dist < 1900.0f && (o->oTimer % 150) == 75) {
-                play_sound(SOUND_OBJ_KING_BOBOMB_TALK, o->header.gfx.cameraToObject);
+                zombie_moan(o);
             }
             break;
         case 1: // shamble toward Mario
             cur_obj_rotate_yaw_toward(o->oAngleToMario, 0x120);
             o->oForwardVel = 4.5f;
-            if ((o->oTimer % 105) == 60) play_sound(SOUND_OBJ_KING_BOBOMB_TALK, o->header.gfx.cameraToObject);
+            if ((o->oTimer % 105) == 60) zombie_moan(o);
             if (dist < 115.0f && o->oSubAction == 0 && !(m->action & ACT_FLAG_INVULNERABLE) && m->invincTimer == 0) {
                 m->interactObj = o;
                 m->hurtCounter += 8;    // two wedges of health
@@ -1211,7 +1255,7 @@ void bhv_mansion_zombie_loop(void) {
                 o->oVelY = 8.0f;
                 play_sound(SOUND_ACTION_HIT, o->header.gfx.cameraToObject);
                 o->oAction = (o->oHealth <= 0) ? 3 : 2;
-                if (o->oHealth <= 0) play_sound(SOUND_OBJ_CHUCKYA_DEATH, o->header.gfx.cameraToObject);
+                if (o->oHealth <= 0) play_sound(SOUND_MEVIL_ZDEATH, o->header.gfx.cameraToObject);
                 o->oTimer = 0;
             }
         }
@@ -1220,4 +1264,36 @@ void bhv_mansion_zombie_loop(void) {
     }
 
     cur_obj_move_standard(-78);
+
+    // Extra containment so zombies never slip through furniture, doors or each other.
+    // oHomeX/oHomeZ = last good position, oHomeY = last floor height (the zombie never uses its spawn home).
+    {
+        f32 x = o->oPosX, y = o->oPosY, z = o->oPosZ;
+        f32 d;
+        struct Object *other;
+        f32_find_wall_collision(&x, &y, &z, 25.0f, 52.0f);
+        f32_find_wall_collision(&x, &y, &z, 50.0f, 52.0f);
+        o->oPosX = x;
+        o->oPosZ = z;
+
+        other = cur_obj_find_nearest_object_with_behavior(bhvMansionZombie, &d);
+        if (other != NULL && d < 85.0f && d > 0.5f) {
+            f32 push = (85.0f - d) * 0.5f;
+            s16 away = obj_angle_to_object(other, o);
+            o->oPosX += sins(away) * push;
+            o->oPosZ += coss(away) * push;
+        }
+
+        if (o->oFloorHeight > o->oHomeY + 22.0f) {
+            // stepped up onto a prop top: undo the move
+            o->oPosX = o->oHomeX;
+            o->oPosZ = o->oHomeZ;
+            o->oPosY = o->oHomeY;
+            o->oForwardVel = 0.0f;
+        } else {
+            o->oHomeX = o->oPosX;
+            o->oHomeZ = o->oPosZ;
+            o->oHomeY = o->oFloorHeight;
+        }
+    }
 }
