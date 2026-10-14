@@ -247,4 +247,16 @@ DOORS = [
     dict(id='dock_e',  room='dock',  wall='E', at=3850,    to='tun_w'),
 ]
 
+# Schematic rectangles for the pause-menu map (x0, z0, x1, z1) in units of 100 world units. Rooms that connect
+# touch each other here, whatever the real gaps are; Mario and the doors are placed by their position inside the
+# real room rectangle.  Checked for overlaps by check_map.py.
+MAPRECTS = {
+    'hall': (-21, 4, -1, 22), 'dining': (-1, 5, 19, 21), 'corr_n': (-1, 0, 21, 5), 'kitchen': (19, 5, 37, 21),
+    'court': (22, -8, 72, 5), 'save': (35.5, -18, 45.5, -8), 'guard': (72, -7, 83, 4),
+    'corr_w': (-38, 10.5, -21, 15.5), 'lib': (-47, 15.5, -29, 29.5),
+    'land': (-21, 22, -1, 34), 'corr2': (-1, 25.5, 25, 30.5), 'gal': (25, 22, 45, 33), 'bed': (2, 30.5, 20, 42.5),
+    'stair': (41, 5, 57, 10), 'cellar': (57, 5, 71, 15), 'lab': (54, 15, 74, 33),
+    'tunnel': (50, 33, 66, 38), 'dock': (38, 34, 50, 45),
+}
+
 START = (-2800, 0, 0xC000)   # (x, z, yaw): inside the hall facing west

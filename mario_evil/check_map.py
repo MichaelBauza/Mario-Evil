@@ -2,7 +2,7 @@
 """Sanity checks for mansion_map.py: bounds, room overlap, items in props, door placement/pairing."""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from mansion_map import ROOMS, DOORS
+from mansion_map import ROOMS, DOORS, MAPRECTS
 R = {r['id']: r for r in ROOMS}
 bad = 0
 for i, a in enumerate(ROOMS):
@@ -40,5 +40,13 @@ for d in DOORS:
     if d['to'] not in by or by[d['to']]['to'] != d['id']: print('UNPAIRED', d['id']); bad += 1
     for e in DOORS:
         if e is not d and 'wall' in e and e['room'] == d['room'] and e['wall'] == w and abs(e['at']-at) < 500: print('DOORS CLOSE', d['id'], e['id']); bad += 1
+ids = [r['id'] for r in ROOMS]
+for i in ids:
+    if i not in MAPRECTS: print('NO MAPRECT', i); bad += 1
+for i, a in enumerate(ids):
+    for b in ids[i+1:]:
+        if a in MAPRECTS and b in MAPRECTS:
+            A, B = MAPRECTS[a], MAPRECTS[b]
+            if A[0] < B[2] and B[0] < A[2] and A[1] < B[3] and B[1] < A[3]: print('MAPRECT OVERLAP', a, b); bad += 1
 print('map problems:', bad)
 sys.exit(1 if bad else 0)

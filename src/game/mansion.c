@@ -1093,7 +1093,8 @@ static void draw_tabs(void) {
     }
 }
 
-// Top-down floor plan: rooms the player has entered, door markers (coloured by the key they need), Mario.
+// Schematic floor plan: each room has a compact map rectangle (mx0..mz1, tenths of 100 world units) so
+// connected rooms touch. Mario and the door markers are placed by their position inside the real room.
 static void draw_map(void) {
     s32 i;
     s32 minX = 32767, minZ = 32767, maxX = -32768, maxZ = -32768;
@@ -1103,10 +1104,10 @@ static void draw_map(void) {
 
     draw_box(SAFE_L - 4, 44, SAFE_R + 4, 202, 18, 16, 14, 235);
     for (i = 0; i < MANSION_NUM_ROOMS; i++) {
-        if (gMansionRooms[i].x0 < minX) minX = gMansionRooms[i].x0;
-        if (gMansionRooms[i].z0 < minZ) minZ = gMansionRooms[i].z0;
-        if (gMansionRooms[i].x1 > maxX) maxX = gMansionRooms[i].x1;
-        if (gMansionRooms[i].z1 > maxZ) maxZ = gMansionRooms[i].z1;
+        if (gMansionRooms[i].mx0 < minX) minX = gMansionRooms[i].mx0;
+        if (gMansionRooms[i].mz0 < minZ) minZ = gMansionRooms[i].mz0;
+        if (gMansionRooms[i].mx1 > maxX) maxX = gMansionRooms[i].mx1;
+        if (gMansionRooms[i].mz1 > maxZ) maxZ = gMansionRooms[i].mz1;
     }
     sx = (f32) W / (f32) (maxX - minX);
     sz = (f32) H / (f32) (maxZ - minZ);
@@ -1119,10 +1120,10 @@ static void draw_map(void) {
         s32 x1, y1, x2, y2;
         s32 cur = (i == gMansion.room);
         if (!((gMansion.visited >> i) & 1)) continue;
-        x1 = ox + (s32) ((r->x0 - minX) * sc);
-        y1 = oz + (s32) ((r->z0 - minZ) * sc);
-        x2 = ox + (s32) ((r->x1 - minX) * sc);
-        y2 = oz + (s32) ((r->z1 - minZ) * sc);
+        x1 = ox + (s32) ((r->mx0 - minX) * sc);
+        y1 = oz + (s32) ((r->mz0 - minZ) * sc);
+        x2 = ox + (s32) ((r->mx1 - minX) * sc);
+        y2 = oz + (s32) ((r->mz1 - minZ) * sc);
         if (x2 - x1 < 4) x2 = x1 + 4;
         if (y2 - y1 < 4) y2 = y1 + 4;
         draw_box(x1, y1, x2, y2, cur ? 240 : 120, cur ? 210 : 120, cur ? 80 : 140, 255);
@@ -1130,24 +1131,34 @@ static void draw_map(void) {
     }
     for (i = 0; i < MANSION_NUM_DOORS; i++) {
         const struct MansionDoor *d = &gMansionDoors[i];
+        const struct MansionRoom *r = &gMansionRooms[d->room];
+        f32 u, v;
         s32 dx, dy;
-        u8 r = 200, g = 200, b = 210;
+        u8 cr = 200, cg = 200, cb = 210;
         if (!((gMansion.visited >> d->room) & 1)) continue;
         if (door_locked(i)) {
             switch (d->key) {
-                case 1: r = 230; g = 190; b = 55; break;
-                case 2: r = 150; g = 175; b = 225; break;
-                case 3: r = 240; g = 130; b = 40; break;
-                default: r = 200; g = 50; b = 50; break;
+                case 1: cr = 230; cg = 190; cb = 55; break;
+                case 2: cr = 150; cg = 175; cb = 225; break;
+                case 3: cr = 240; cg = 130; cb = 40; break;
+                default: cr = 200; cg = 50; cb = 50; break;
             }
         }
-        dx = ox + (s32) ((d->x - minX) * sc);
-        dy = oz + (s32) ((d->z - minZ) * sc);
-        draw_box(dx - 1, dy - 1, dx + 2, dy + 2, r, g, b, 255);
+        u = (f32) (d->x - r->x0) / (f32) (r->x1 - r->x0);
+        v = (f32) (d->z - r->z0) / (f32) (r->z1 - r->z0);
+        dx = ox + (s32) ((r->mx0 + (r->mx1 - r->mx0) * u - minX) * sc);
+        dy = oz + (s32) ((r->mz0 + (r->mz1 - r->mz0) * v - minZ) * sc);
+        draw_box(dx - 1, dy - 1, dx + 2, dy + 2, cr, cg, cb, 255);
     }
     {
-        s32 mx = ox + (s32) ((gMarioState->pos[0] - minX) * sc);
-        s32 my = oz + (s32) ((gMarioState->pos[2] - minZ) * sc);
+        const struct MansionRoom *r = &gMansionRooms[gMansion.room];
+        f32 u = (gMarioState->pos[0] - r->x0) / (f32) (r->x1 - r->x0);
+        f32 v = (gMarioState->pos[2] - r->z0) / (f32) (r->z1 - r->z0);
+        s32 mx, my;
+        if (u < 0.0f) u = 0.0f; else if (u > 1.0f) u = 1.0f;
+        if (v < 0.0f) v = 0.0f; else if (v > 1.0f) v = 1.0f;
+        mx = ox + (s32) ((r->mx0 + (r->mx1 - r->mx0) * u - minX) * sc);
+        my = oz + (s32) ((r->mz0 + (r->mz1 - r->mz0) * v - minZ) * sc);
         if ((gGlobalTimer >> 3) & 1) draw_box(mx - 2, my - 2, mx + 3, my + 3, 60, 230, 90, 255);
         else draw_box(mx - 1, my - 1, mx + 2, my + 2, 60, 230, 90, 255);
     }
