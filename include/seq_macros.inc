@@ -23,7 +23,7 @@
 
 .macro seq_startchannel a, b
     .byte 0x90 + \a
-    .byte (\b - sequence_start) >> 8, (\b - sequence_start) & 0xff
+    .short (\b - sequence_start)
 .endm
 
 .macro seq_subtract a
@@ -48,12 +48,12 @@
 
 .macro seq_setshortnotedurationtable a
     .byte 0xd1
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro seq_setshortnotevelocitytable a
     .byte 0xd2
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro seq_setmutebhv a
@@ -112,7 +112,7 @@
 
 .macro seq_bgez a
     .byte 0xf5
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro seq_loopend
@@ -126,22 +126,22 @@
 
 .macro seq_bltz a
     .byte 0xf9
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro seq_beqz a
     .byte 0xfa
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro seq_jump a
     .byte 0xfb
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro seq_call a
     .byte 0xfc
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro seq_delay a
@@ -200,7 +200,7 @@
 
 .macro chan_startchannel a, b
     .byte 0x10 + \a
-    .byte (\b - sequence_start) >> 8, (\b - sequence_start) & 0xff
+    .short (\b - sequence_start)
 .endm
 
 .macro chan_disablechannel a
@@ -236,7 +236,7 @@
 
 .macro chan_setdyntable a
     .byte 0xc2
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro chan_largenotesoff
@@ -273,7 +273,7 @@
 
 .macro chan_readseq a
     .byte 0xcb
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro chan_setval a
@@ -332,7 +332,7 @@
 
 .macro chan_setenvelope a
     .byte 0xda
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro chan_transpose a
@@ -394,7 +394,7 @@
 
 .macro chan_bgez a
     .byte 0xf5
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro chan_break
@@ -412,22 +412,22 @@
 
 .macro chan_bltz a
     .byte 0xf9
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro chan_beqz a
     .byte 0xfa
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro chan_jump a
     .byte 0xfb
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro chan_call a
     .byte 0xfc
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro chan_delay a
@@ -445,12 +445,12 @@
 
 .macro chan_writeseq val, pos, offset
     .byte 0xc7, \val
-    .byte (\pos - sequence_start + \offset) >> 8, (\pos - sequence_start + \offset) & 0xff
+    .short (\pos - sequence_start + \offset)
 .endm
 
 .macro chan_writeseq_nextinstr val, offset
     .byte 0xc7, \val
-    .byte (writeseq\@ - sequence_start + \offset) >> 8, (writeseq\@ - sequence_start + \offset) & 0xff
+    .short (writeseq\@ - sequence_start + \offset)
     writeseq\@:
 .endm
 
@@ -481,7 +481,7 @@
 
 .macro chan_setlayer a, b
     .byte 0x88 + \a
-    .byte (\b - sequence_start) >> 8, (\b - sequence_start) & 0xff
+    .short (\b - sequence_start)
 .endm
 
 .macro chan_ioreadval a
@@ -504,7 +504,7 @@
 
 .macro chan_setlayer a, b
     .byte 0x90 + \a
-    .byte (\b - sequence_start) >> 8, (\b - sequence_start) & 0xff
+    .short (\b - sequence_start)
 .endm
 
 .macro chan_freelayers
@@ -662,12 +662,12 @@
 
 .macro layer_jump a
     .byte 0xfb
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro layer_call a
     .byte 0xfc
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm
 
 .macro layer_end
@@ -727,5 +727,5 @@
 .endm
 
 .macro sound_ref a
-    .byte (\a - sequence_start) >> 8, (\a - sequence_start) & 0xff
+    .short (\a - sequence_start)
 .endm

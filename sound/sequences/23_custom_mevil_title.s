@@ -21,7 +21,9 @@ chan_setinstr 0
 chan_setvol 127
 chan_setpan 64
 chan_setlayer 0, .title_layer
-chan_end
+.title_channel_loop:
+chan_delay 20000
+chan_jump .title_channel_loop
 
 .title_layer:
 layer_note1 39, 15770, 127
