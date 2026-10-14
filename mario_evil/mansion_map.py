@@ -1,7 +1,8 @@
-"""Mario EVIL -- Tier 1 map definition (Main Hall, Dining Room, North Corridor, Save Room, West Corridor)."""
+"""Mario EVIL -- Tier 2 map: ground floor, west wing, east wing, courtyard, guardhouse, second floor."""
 
-ITEM_IDS = {'herb_g': 1, 'herb_r': 2, 'herb_b': 3, 'ribbon': 4, 'key': 5, 'gun': 6}
-FILES = {1: "Peach's Letter", 2: "Toad Gardener's Diary", 3: "Researcher Toad's Letter"}
+ITEM_IDS = {'herb_g': 1, 'herb_r': 2, 'herb_b': 3, 'ribbon': 4, 'key': 5, 'gun': 6, 'ammo': 10}
+FILES = {1: "Peach's Letter", 2: "Toad Gardener's Diary", 3: "Researcher Toad's Letter",
+         4: "Kamek's Orders", 5: "Specimen 42 Report", 6: "Spore Containment Memo", 7: "Luigi's Journal"}
 
 
 def cams_along_x(r, ya=0.86, inset=200, fov=52, front='N'):
@@ -55,17 +56,98 @@ save = room('save', 'Save Room', 3000, -3500, 4000, -2500, 700, floor='mans_floo
             boxes=[dict(x0=3550, z0=-2850, x1=3850, z1=-2650, y1=110, side='mans_wood', top='mans_wood')],
             lights=[(3500, 520, -3000, 0.85, 800)],
             objs=[dict(kind='typewriter', pos=(3700, -2750), y=110), dict(kind='box', pos=(3250, -3350)),
-                  dict(kind='ribbon', pos=(3800, -3300)), dict(kind='key', pos=(3300, -2650), keyid=1)])
+                  dict(kind='ribbon', pos=(3800, -3300)), dict(kind='key', pos=(3750, -3050), keyid=1),
+                  dict(kind='gun', pos=(3350, -3250)), dict(kind='ammo', pos=(3500, -3350), amount=15)])
 save['cams'] = [dict(pos=(3150, 600, -2650), look=(3550, 60, -3050), zone=(3000, -3500, 4000, -2500), fov=58)]
 ROOMS.append(save)
 
 # ---- West Corridor ---------------------------------------------------------
 cw = room('corr_w', 'West Corridor', -7500, -250, -5800, 250, 700, floor='mans_stone', wainscot=300,
           lights=[(-6200, 520, 0, 0.45, 600), (-7100, 520, 0, 0.45, 600)],
-          objs=[dict(kind='zombie', pos=(-6600, 0), yaw=0x4000), dict(kind='file', file=3, pos=(-7300, 0)),
-                dict(kind='herb_b', pos=(-7300, 150))])
+          objs=[dict(kind='zombie', pos=(-6600, 0), yaw=0x4000), dict(kind='file', file=3, pos=(-6900, -150)),
+                dict(kind='herb_b', pos=(-6900, 150))])
 cw['cams'] = cams_along_x(cw, ya=0.9, inset=120, fov=60, front='N')
 ROOMS.append(cw)
+
+# ---- Kitchen (east wing) ----------------------------------------------------
+kitchen = room('kitchen', 'Kitchen', 1600, -800, 3400, 800, 700, floor='mans_stone', wainscot=300,
+               boxes=[dict(x0=2300, z0=-150, x1=2700, z1=150, y1=110, side='mans_wood', top='mans_wood')],
+               lights=[(2500, 520, 0, 0.55, 800), (3000, 450, 500, 0.25, 500)],
+               objs=[dict(kind='zombie', pos=(2900, 450), yaw=0x8000), dict(kind='zombie', pos=(2000, -450), yaw=0x4000),
+                     dict(kind='herb_g', pos=(1850, 600)), dict(kind='ammo', pos=(3250, 600), amount=12),
+                     dict(kind='file', file=6, pos=(2500, 0), y=110)])
+kitchen['cams'] = cams_along_x(kitchen, front='N')
+ROOMS.append(kitchen)
+
+# ---- Courtyard (open sky) ---------------------------------------------------
+court = room('court', 'Courtyard', 1500, -2300, 6500, -1000, 900, floor='mans_grass', wall='mans_stone', panel='mans_stone',
+             wainscot=0, sky=True, ambient=0.50,
+             boxes=[dict(x0=3800, z0=-1850, x1=4200, z1=-1450, y1=120, side='mans_marble', top='mans_marble')],
+             lights=[(2500, 400, -1650, 0.25, 900), (5500, 400, -1650, 0.25, 900)],
+             objs=[dict(kind='zombie', pos=(3000, -1400), yaw=0xC000), dict(kind='zombie', pos=(4800, -1900), yaw=0x4000),
+                   dict(kind='zombie', pos=(5600, -1300), yaw=0x8000),
+                   dict(kind='herb_g', pos=(2200, -2050)), dict(kind='ammo', pos=(2250, -1700), amount=10),
+                   dict(kind='file', file=5, pos=(6100, -2000))])
+court['cams'] = cams_along_x(court, ya=0.8, inset=250, fov=55, front='N')
+ROOMS.append(court)
+
+# ---- Guardhouse (second save point) -----------------------------------------
+guard = room('guard', 'Guardhouse', 6900, -2100, 8000, -1000, 650, floor='mans_floor',
+             boxes=[dict(x0=7450, z0=-2050, x1=7800, z1=-1850, y1=100, side='mans_wood', top='mans_wood')],
+             lights=[(7450, 480, -1550, 0.80, 700)],
+             objs=[dict(kind='typewriter', pos=(7700, -1950), y=100), dict(kind='box', pos=(7100, -1250)),
+                   dict(kind='ribbon', pos=(7800, -1250)), dict(kind='herb_r', pos=(7500, -1200)),
+                   dict(kind='ammo', pos=(7300, -1200), amount=15), dict(kind='file', file=7, pos=(7600, -1950), y=100)])
+guard['cams'] = [dict(pos=(7850, 560, -1150), look=(7300, 60, -1700), zone=(6900, -2100, 8000, -1000), fov=58)]
+ROOMS.append(guard)
+
+# ---- Library (west wing) ----------------------------------------------------
+lib = room('lib', 'Library', -7900, 1000, -6100, 2400, 750, floor='mans_floor', carpets=[(-7500, 1100, -6500, 2300)],
+           boxes=[dict(x0=-7900, z0=1500, x1=-7700, z1=2000, y1=650, side='mans_wood', top='mans_wood'),
+                  dict(x0=-6300, z0=1500, x1=-6100, z1=2000, y1=650, side='mans_wood', top='mans_wood'),
+                  dict(x0=-7150, z0=1650, x1=-6850, z1=1850, y1=110, side='mans_wood', top='mans_wood')],
+           lights=[(-7000, 560, 1700, 0.55, 800), (-6400, 450, 1200, 0.25, 500)],
+           objs=[dict(kind='zombie', pos=(-6600, 2100), yaw=0x8000), dict(kind='zombie', pos=(-7500, 2100), yaw=0xC000),
+                 dict(kind='herb_g', pos=(-7600, 1200)), dict(kind='herb_b', pos=(-6400, 1200)),
+                 dict(kind='key', pos=(-7000, 2150), keyid=2), dict(kind='file', file=4, pos=(-7000, 1750), y=110)])
+lib['cams'] = cams_along_x(lib, front='N')
+ROOMS.append(lib)
+
+# ---- Second floor landing -----------------------------------------------------
+land = room('land', 'Second Floor Landing', -4600, 2000, -2400, 3200, 850, floor='mans_floor',
+            carpets=[(-4500, 2500, -2500, 2700)],
+            boxes=[dict(x0=-4200, z0=2800, x1=-4080, z1=2920, y1=800, side='mans_marble', top='mans_marble')],
+            lights=[(-3500, 650, 2600, 0.55, 1000), (-4350, 500, 2300, 0.25, 600)],
+            objs=[dict(kind='zombie', pos=(-3300, 2800), yaw=0x8000), dict(kind='herb_g', pos=(-4300, 2300)),
+                  dict(kind='ammo', pos=(-2800, 2250), amount=10)])
+land['cams'] = cams_along_x(land, front='S')
+ROOMS.append(land)
+
+# ---- Second floor corridor ----------------------------------------------------
+c2 = room('corr2', 'Second Floor Corridor', -2000, 2450, 600, 2950, 700, floor='mans_floor', wainscot=300,
+          lights=[(-1300, 520, 2700, 0.45, 700), (100, 520, 2700, 0.45, 700)],
+          objs=[dict(kind='zombie', pos=(-300, 2700), yaw=0x4000), dict(kind='herb_g', pos=(-1000, 2550))])
+c2['cams'] = cams_along_x(c2, ya=0.9, inset=120, fov=60, front='S')
+ROOMS.append(c2)
+
+# ---- Gallery (locked: Moon Key) -----------------------------------------------
+gal = room('gal', 'Gallery', 1200, 2000, 3200, 3400, 800, floor='mans_floor', carpets=[(1300, 2550, 3100, 2850)],
+           boxes=[dict(x0=2000, z0=2500, x1=2400, z1=2900, y1=140, side='mans_marble', top='mans_marble')],
+           lights=[(2200, 600, 2700, 0.60, 900), (1500, 450, 3200, 0.25, 500)],
+           objs=[dict(kind='zombie', pos=(1700, 3100), yaw=0xC000), dict(kind='zombie', pos=(2800, 2300), yaw=0x8000),
+                 dict(kind='key', pos=(2200, 2700), keyid=3, y=140), dict(kind='herb_r', pos=(2900, 3100)),
+                 dict(kind='ammo', pos=(1500, 2300), amount=12)])
+gal['cams'] = cams_along_x(gal, front='N')
+ROOMS.append(gal)
+
+# ---- Bedroom ------------------------------------------------------------------
+bed = room('bed', 'Bedroom', -1800, 3600, 0, 4800, 700, floor='mans_floor', carpets=[(-1500, 4000, -300, 4600)],
+           boxes=[dict(x0=-1700, z0=3800, x1=-1300, z1=4200, y1=90, side='mans_wood', top='mans_wood')],
+           lights=[(-900, 520, 4200, 0.50, 700)],
+           objs=[dict(kind='zombie', pos=(-500, 4400), yaw=0x8000), dict(kind='herb_g', pos=(-300, 3900)),
+                 dict(kind='herb_b', pos=(-1600, 4600)), dict(kind='ammo', pos=(-300, 4650), amount=10)])
+bed['cams'] = cams_along_x(bed, front='N')
+ROOMS.append(bed)
 
 DOORS = [
     dict(id='hall_e',  room='hall',   wall='E', at=0,     to='dining_w'),
@@ -76,6 +158,24 @@ DOORS = [
     dict(id='save_w',  room='save',   wall='W', at=-3000, to='corrn_e'),
     dict(id='hall_w',  room='hall',   wall='W', at=0,     to='corrw_e', key=1),
     dict(id='corrw_e', room='corr_w', wall='E', at=0,     to='hall_w'),
+    dict(id='dining_e', room='dining', wall='E', at=0,     to='kitchen_w'),
+    dict(id='kitchen_w', room='kitchen', wall='W', at=0,   to='dining_e'),
+    dict(id='kitchen_n', room='kitchen', wall='N', at=2500, to='court_s'),
+    dict(id='court_s', room='court', wall='S', at=2500,    to='kitchen_n'),
+    dict(id='court_n', room='court', wall='N', at=3350,    to='save_s'),
+    dict(id='save_s',  room='save',  wall='S', at=3350,    to='court_n'),
+    dict(id='court_e', room='court', wall='E', at=-1650,   to='guard_w', key=3),
+    dict(id='guard_w', room='guard', wall='W', at=-1550,   to='court_e'),
+    dict(id='corrw_w', room='corr_w', wall='W', at=0,      to='lib_n'),
+    dict(id='lib_n',   room='lib',   wall='N', at=-7000,   to='corrw_w'),
+    dict(id='hall_s',  room='hall',  wall='S', at=-3500,   to='land_n'),
+    dict(id='land_n',  room='land',  wall='N', at=-3500,   to='hall_s'),
+    dict(id='land_e',  room='land',  wall='E', at=2600,    to='corr2_w'),
+    dict(id='corr2_w', room='corr2', wall='W', at=2700,    to='land_e'),
+    dict(id='corr2_e', room='corr2', wall='E', at=2700,    to='gal_w', key=2),
+    dict(id='gal_w',   room='gal',   wall='W', at=2700,    to='corr2_e'),
+    dict(id='corr2_s', room='corr2', wall='S', at=-800,    to='bed_n'),
+    dict(id='bed_n',   room='bed',   wall='N', at=-800,    to='corr2_s'),
 ]
 
 START = (-2800, 0, 0xC000)   # (x, z, yaw): inside the hall facing west

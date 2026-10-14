@@ -69,6 +69,10 @@ ALIGNED8 static const Texture mans_marble_tex[] = {
 #include "levels/bbh/mans_marble.rgba16.inc.c"
 };
 
+ALIGNED8 static const Texture mans_grass_tex[] = {
+#include "levels/bbh/mans_grass.rgba16.inc.c"
+};
+
 ALIGNED8 static const Texture item_herb_g_tex[] = {
 #include "levels/bbh/item_herb_g.rgba16.inc.c"
 };
@@ -103,5 +107,17 @@ ALIGNED8 static const Texture item_typewriter_tex[] = {
 
 ALIGNED8 static const Texture item_gun_tex[] = {
 #include "levels/bbh/item_gun.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture item_key2_tex[] = {
+#include "levels/bbh/item_key2.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture item_key3_tex[] = {
+#include "levels/bbh/item_key3.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture item_ammo_tex[] = {
+#include "levels/bbh/item_ammo.rgba16.inc.c"
 };
 

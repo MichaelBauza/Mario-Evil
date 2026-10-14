@@ -98,6 +98,39 @@ const GeoLayout mansion_geo_item_gun[] = {
    GEO_END(),
 };
 
+const GeoLayout mansion_geo_item_key2[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_BILLBOARD(),
+      GEO_OPEN_NODE(),
+         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_key2),
+      GEO_CLOSE_NODE(),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_item_key3[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_BILLBOARD(),
+      GEO_OPEN_NODE(),
+         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_key3),
+      GEO_CLOSE_NODE(),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_item_ammo[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_BILLBOARD(),
+      GEO_OPEN_NODE(),
+         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_ammo),
+      GEO_CLOSE_NODE(),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
 const GeoLayout mansion_geo_area[] = {
    GEO_NODE_SCREEN_AREA(10, SCREEN_CENTER_X, SCREEN_CENTER_Y, SCREEN_CENTER_X, SCREEN_CENTER_Y),
    GEO_OPEN_NODE(),
@@ -114,13 +147,21 @@ const GeoLayout mansion_geo_area[] = {
          GEO_OPEN_NODE(),
             GEO_CAMERA(CAMERA_MODE_FIXED, 0, 600, 600, 0, 0, 0, geo_camera_main),
             GEO_OPEN_NODE(),
-               GEO_SWITCH_CASE(5, geo_switch_mansion_room),
+               GEO_SWITCH_CASE(13, geo_switch_mansion_room),
                GEO_OPEN_NODE(),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_hall),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_dining),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_corr_n),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_save),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_corr_w),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_kitchen),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_court),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_guard),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_lib),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_land),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_corr2),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_gal),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_bed),
                GEO_CLOSE_NODE(),
                GEO_RENDER_OBJ(),
                GEO_ASM(0, geo_mansion_door_anim),

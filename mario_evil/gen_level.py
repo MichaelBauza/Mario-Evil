@@ -23,9 +23,9 @@ DOOR_W, DOOR_H = 300, 340
 CELL = 520            # max vertex-lighting cell size
 
 TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil', 'mans_stone',
-            'mans_door', 'mans_wood', 'mans_marble']
+            'mans_door', 'mans_wood', 'mans_marble', 'mans_grass']
 ICONS = ['item_herb_g', 'item_herb_r', 'item_herb_b', 'item_key', 'item_ribbon', 'item_file',
-         'item_box', 'item_typewriter', 'item_gun']
+         'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo']
 
 def sub(a, b): return (a[0]-b[0], a[1]-b[1], a[2]-b[2])
 def add(a, b): return (a[0]+b[0], a[1]+b[1], a[2]+b[2])
@@ -112,7 +112,8 @@ def build_room(room):
     # carpet runner
     for (cx0, cz0, cx1, cz1) in room.get('carpets', []):
         g.face('mans_carpet', (cx0, 3, cz0), (cx1-cx0, 0, 0), (0, 0, cz1-cz0), (0, 1, 0), False)
-    g.face(room.get('ceil', 'mans_ceil'), (x0, h, z0), (W, 0, 0), (0, 0, D), (0, -1, 0), True)
+    if not room.get('sky'):
+        g.face(room.get('ceil', 'mans_ceil'), (x0, h, z0), (W, 0, 0), (0, 0, D), (0, -1, 0), True)
     wall = room.get('wall', 'mans_wall'); panel = room.get('panel', 'mans_panel')
     for side in 'NSEW':
         O, A, n = wall_of(room, side)
@@ -345,7 +346,8 @@ def emit_all():
             if kind in ITEM_IDS:
                 iid = ITEM_IDS[kind]
                 icon = {'herb_g': 'item_herb_g', 'herb_r': 'item_herb_r', 'herb_b': 'item_herb_b', 'ribbon': 'item_ribbon',
-                        'key': 'item_key', 'gun': 'item_gun'}[kind.split(':')[0]]
+                        'key': {1: 'item_key', 2: 'item_key2', 3: 'item_key3'}.get(o.get('keyid', 1), 'item_key'),
+                        'gun': 'item_gun', 'ammo': 'item_ammo'}[kind.split(':')[0]]
                 par = (iid << 24) | (o.get('amount', 1) << 16) | (o.get('keyid', 0) << 8) | nuid()
                 objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionPickup),\n' % (models[icon], x, y + 10, z, yaw * 360 // 65536, par))
             elif kind == 'file':

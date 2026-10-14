@@ -46,12 +46,20 @@ static void str_append(char *dst, const char *src, s32 max) {
 
 static const char *const sItemNames[MI_COUNT] = {
     "", "Green Herb", "Red Herb", "Blue Herb", "Ink Ribbon", "Star Key", "Pistol",
-    "Mixed Herb (GG)", "Mixed Herb (GR)", "Mixed Herb (GB)"
+    "Mixed Herb (GG)", "Mixed Herb (GR)", "Mixed Herb (GB)", "Handgun Ammo"
 };
 
-#define NUM_FILES 3
+static const char *const sKeyNames[4] = { "Key", "Star Key", "Moon Key", "Sun Key" };
+
+static const char *slot_name(const struct MansionSlot *s) {
+    if (s->id == MI_KEY) return sKeyNames[s->extra & 3];
+    return sItemNames[s->id];
+}
+
+#define NUM_FILES 7
 static const char *const sFileTitles[NUM_FILES + 1] = {
-    "", "Peach's Letter", "Toad Gardener's Diary", "Researcher Toad's Letter"
+    "", "Peach's Letter", "Toad Gardener's Diary", "Researcher Toad's Letter",
+    "Kamek's Orders", "Specimen 42 Report", "Spore Containment Memo", "Luigi's Journal"
 };
 static const char *const sFileText[NUM_FILES + 1] = {
     "",
@@ -88,7 +96,47 @@ static const char *const sFileText[NUM_FILES + 1] = {
     "We were test subjects too.\n"
     "I left the Star Key in the room where I\n"
     "kept the typewriter. It opens the west\n"
-    "passage. Do not follow me there."
+    "passage. Do not follow me there.",
+    "To: Kamek, Royal Magikoopa\n"
+    "From: His Majesty\n\n"
+    "The spores took on the Toads. Good.\n"
+    "Now make them take on soldiers. An army\n"
+    "that never retreats and never needs\n"
+    "to be paid.\n"
+    "Keep the Princess out of the east wing.\n"
+    "Keep Mario out of the castle.\n"
+    "If he gets in, make sure he does not\n"
+    "get out.\n\n"
+    "                                     - B.",
+    "SPECIMEN 42 - Piranha Plant, mature\n\n"
+    "Fed on spore-treated soil for 19 days.\n"
+    "Growth: 400 percent. It ignores the\n"
+    "feeding schedule now. It hunts.\n"
+    "Roots have spread beneath the courtyard\n"
+    "and into the foundation.\n"
+    "I recommended burning it. Dr. K refused.\n"
+    "He calls it the proof of concept.\n"
+    "It is still growing.",
+    "ALL KITCHEN STAFF\n\n"
+    "Cold storage is sealed. Do not eat\n"
+    "anything from the pantry. The mushroom\n"
+    "stock is contaminated. Purple caps.\n"
+    "Three cooks reported dizziness.\n"
+    "One has not come out of the pantry since\n"
+    "yesterday. We can hear him in there.\n\n"
+    "Seal the door. Burn your clothes.\n"
+    "Report to the lab.",
+    "Day 1 - Brigade split up. I took the\n"
+    "guardhouse. Radio is dead.\n"
+    "Day 2 - Scratching in the walls. The\n"
+    "others stopped answering.\n"
+    "Day 3 - Found a stairwell behind the\n"
+    "courtyard fountain. Cold air, and a\n"
+    "smell I know from the garden.\n"
+    "Day 4 - If you are reading this, Mario,\n"
+    "I am still alive. The way down is\n"
+    "under the fountain. I will wait for\n"
+    "you there. Please hurry."
 };
 
 #define HEALTH_MAX     0x880
@@ -155,6 +203,7 @@ static void snapshot_save(void) {
     struct MarioState *m = gMarioState;
     gMansion.hasSave = TRUE;
     gMansion.saveHealth = m->health;
+    gMansion.saveAmmo = gMansion.ammo;
     vec3f_copy(gMansion.savePos, m->pos);
     gMansion.saveYaw = m->faceAngle[1];
     memcpy(gMansion.saveInv, gMansion.inv, sizeof(gMansion.inv));
@@ -168,6 +217,7 @@ static void snapshot_save(void) {
 static void snapshot_load(void) {
     struct MarioState *m = gMarioState;
     m->health = gMansion.saveHealth;
+    gMansion.ammo = gMansion.saveAmmo;
     vec3f_copy(m->pos, gMansion.savePos);
     m->faceAngle[1] = gMansion.saveYaw;
     m->marioObj->oPosX = m->pos[0]; m->marioObj->oPosY = m->pos[1]; m->marioObj->oPosZ = m->pos[2];
@@ -311,9 +361,83 @@ void mansion_camera(struct Camera *c) {
 #define TANK_TURN_RATE  0x0500   // full stick: about 7 degrees per frame
 #define TANK_DEADZONE   12
 
+/* ---- pistol -------------------------------------------------------------- */
+
+static s32 has_gun(void) {
+    s32 i;
+    for (i = 0; i < MANSION_INV_SLOTS; i++) if (gMansion.inv[i].id == MI_GUN) return TRUE;
+    return FALSE;
+}
+
+// Nearest living zombie in front of Mario (within range and a forward cone), or NULL.
+static struct Object *aim_target(struct MarioState *m) {
+    struct ObjectNode *head = &gObjectLists[OBJ_LIST_GENACTOR];
+    struct Object *obj = (struct Object *) head->next;
+    struct Object *best = NULL;
+    f32 bestDist = 1500.0f;
+
+    while (obj != (struct Object *) head) {
+        if (obj->activeFlags != ACTIVE_FLAG_DEACTIVATED && obj_has_behavior(obj, bhvMansionZombie)
+            && obj->oAction != 3 && find_room(obj->oPosX, obj->oPosZ) == gMansion.room) {
+            f32 dx = obj->oPosX - m->pos[0], dz = obj->oPosZ - m->pos[2];
+            f32 d = sqrtf(dx * dx + dz * dz);
+            s16 ang = atan2s(dz, dx);
+            if (d < bestDist && abs_angle_diff(ang, m->faceAngle[1]) < 0x3000) {
+                best = obj;
+                bestDist = d;
+            }
+        }
+        obj = (struct Object *) obj->header.next;
+    }
+    return best;
+}
+
+static void gun_fire(struct MarioState *m, struct Object *target) {
+    if (gMansion.ammo == 0) {
+        play_sound(SOUND_MENU_CAMERA_BUZZ, gGlobalSoundSource);
+        gMansion.fireCool = 12;
+        if (gMansion.msgTimer < 20) mansion_message("Out of ammo.");
+        return;
+    }
+    gMansion.ammo--;
+    gMansion.fireCool = 20;
+    gMansion.flash = 3;
+    play_sound(SOUND_GENERAL2_BOBOMB_EXPLOSION, gGlobalSoundSource);
+    if (target != NULL && abs_angle_diff(atan2s(target->oPosZ - m->pos[2], target->oPosX - m->pos[0]), m->faceAngle[1]) < 0x1800) {
+        target->oHealth--;
+        target->oMoveAngleYaw = atan2s(target->oPosZ - m->pos[2], target->oPosX - m->pos[0]);
+        target->oForwardVel = 14.0f;
+        target->oVelY = 5.0f;
+        target->oAction = (target->oHealth <= 0) ? 3 : 2;
+        target->oTimer = 0;
+        play_sound(SOUND_ACTION_HIT, target->header.gfx.cameraToObject);
+    }
+}
+
 void mansion_tank_input(struct MarioState *m) {
     struct Controller *ctl = m->controller;
     f32 top = (ctl->buttonDown & R_TRIG) ? TANK_RUN_SPEED : TANK_WALK_SPEED;
+
+    if (gMansion.fireCool > 0) gMansion.fireCool--;
+    gMansion.aiming = 0;
+    if (gMansion.menu == MENU_NONE && gMansion.doorState == 0 && has_gun() && (ctl->buttonDown & Z_TRIG)
+        && !(m->action & ACT_FLAG_AIR) && m->action != ACT_BACKWARD_GROUND_KB) {
+        struct Object *target = aim_target(m);
+        gMansion.aiming = 1;
+        // Z raises the pistol: no walking, no crouch, no jump. Left/right still turns (slower).
+        m->input &= ~(INPUT_Z_DOWN | INPUT_Z_PRESSED | INPUT_A_PRESSED | INPUT_A_DOWN | INPUT_B_PRESSED | INPUT_NONZERO_ANALOG);
+        if (ctl->stickX > TANK_DEADZONE || ctl->stickX < -TANK_DEADZONE) {
+            m->faceAngle[1] -= (s16) (ctl->stickX * (TANK_TURN_RATE / 2) / 64);
+        } else if (target != NULL) {
+            // auto-aim: swing toward the nearest enemy in front when the stick is centred
+            m->faceAngle[1] = approach_s16_symmetric(m->faceAngle[1],
+                                                     atan2s(target->oPosZ - m->pos[2], target->oPosX - m->pos[0]), 0x500);
+        }
+        m->intendedMag = 0.0f;
+        m->intendedYaw = m->faceAngle[1];
+        if ((ctl->buttonPressed & A_BUTTON) && gMansion.fireCool == 0) gun_fire(m, target);
+        return;
+    }
 
     // Turn: sign flipped after on-device report that left/right felt inverted.
     if (ctl->stickX > TANK_DEADZONE || ctl->stickX < -TANK_DEADZONE) {
@@ -340,6 +464,7 @@ void mansion_tank_input(struct MarioState *m) {
 
 void mansion_pre_update(void) {
     if (gMansion.msgTimer > 0) gMansion.msgTimer--;
+    if (gMansion.flash > 0) gMansion.flash--;
     gMansion.nearPrompt = 0;
 
     if (gMansion.doorState != 0) {
@@ -498,7 +623,13 @@ static void update_doors(void) {
             gMansion.inv[k].id = MI_NONE;
             gMansion.lockedUnlocked[i >> 3] |= (1 << (i & 7));
             gMansion.lockedUnlocked[gMansionDoors[i].dest >> 3] |= (1 << (gMansionDoors[i].dest & 7));
-            mansion_message("Used the Star Key. The door unlocks.");
+            {
+                char kb[40];
+                str_copy(kb, "Used the ", sizeof(kb));
+                str_append(kb, sKeyNames[d->key & 3], sizeof(kb));
+                str_append(kb, ". It unlocks.", sizeof(kb));
+                mansion_message(kb);
+            }
         }
         gMansion.doorState = 1;
         gMansion.doorTimer = 0;
@@ -517,6 +648,11 @@ void mansion_post_update(void) {
     s32 r = find_room(m->pos[0], m->pos[2]);
     if (r >= 0 && gMansion.doorState == 0) gMansion.room = r;
     update_doors();
+    if (gMansion.aiming && gMansion.doorState == 0) {
+        // arm out, holding the pistol: freeze the punch animation on its extended frame
+        set_mario_animation(m, MARIO_ANIM_FIRST_PUNCH);
+        m->marioObj->header.gfx.animInfo.animFrame = 3;
+    }
     if (gMansion.doorState == 1) m->marioObj->header.gfx.node.flags |= GRAPH_RENDER_INVISIBLE;
     else m->marioObj->header.gfx.node.flags &= ~GRAPH_RENDER_INVISIBLE;
 }
@@ -749,6 +885,13 @@ static void draw_menu(void) {
     s32 i;
     draw_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, 190);
     print_small_text(SAFE_L, 16, "STATUS", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+    if (has_gun()) {
+        char ab[24];
+        char nb[14];
+        str_copy(ab, "Handgun ammo: ", sizeof(ab));
+        num_to_str(nb, gMansion.ammo); str_append(ab, nb, sizeof(ab));
+        print_small_text(SAFE_L, 30, ab, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+    }
     print_small_text(SAFE_R, 16, sCondText[condition()], PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL, 1);
     {
         s32 w = (gMarioState->health * 120) / HEALTH_MAX;
@@ -767,7 +910,7 @@ static void draw_menu(void) {
             sel = (i == gMansion.sel) && (gMansion.menu == MENU_ITEMS || gMansion.boxSide == 0);
             draw_box(x, y, x + bw, y + bh, sel ? 110 : 40, sel ? 110 : 40, sel ? 40 : 50, 230);
             if (gMansion.comboSrc == i) draw_box(x, y + bh - 2, x + bw, y + bh, 240, 160, 40, 255);
-            if (s->id != MI_NONE) print_small_text(x + 6, y + (bh > 20 ? 10 : 3), sItemNames[s->id], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+            if (s->id != MI_NONE) print_small_text(x + 6, y + (bh > 20 ? 10 : 3), slot_name(s), PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
         }
     }
     if (gMansion.menu == MENU_BOX) {
@@ -776,7 +919,7 @@ static void draw_menu(void) {
             s32 x = SAFE_L + 150, y = 58 + i * 15;
             s32 sel = (i == gMansion.boxSel) && gMansion.boxSide == 1;
             if (sel) draw_box(x - 2, y - 1, SAFE_R, y + 13, 110, 110, 40, 230);
-            if (gMansion.box[i].id != MI_NONE) print_small_text(x + 4, y, sItemNames[gMansion.box[i].id], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+            if (gMansion.box[i].id != MI_NONE) print_small_text(x + 4, y, slot_name(&gMansion.box[i]), PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
         }
         draw_footer("D-Pad: select   A: move   B: close");
     } else if (gMansion.menu == MENU_ITEMS) {
@@ -789,7 +932,7 @@ static void draw_menu(void) {
         head[0] = '\0';
         str_append(head, "FILE ", sizeof(head));
         num_to_str(nbuf, f); str_append(head, nbuf, sizeof(head));
-        str_append(head, "/3   ", sizeof(head));
+        str_append(head, "/7   ", sizeof(head));
         str_append(head, have ? sFileTitles[f] : "- - -", sizeof(head));
         print_small_text(SAFE_L, 46, "<", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
         print_small_text(SAFE_L + 14, 46, head, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
@@ -822,6 +965,15 @@ void mansion_render_hud(void) {
     } else if (prompt == 2) {
         print_small_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 56, "B: Save (uses 1 Ink Ribbon)", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
     }
+    if (has_gun()) {
+        char ab[24];
+        char nb[14];
+        str_copy(ab, gMansion.ammo > 0 ? "AMMO " : "<COL_F03030FF>AMMO ", sizeof(ab));
+        num_to_str(nb, gMansion.ammo); str_append(ab, nb, sizeof(ab));
+        print_small_text(SAFE_R, SCREEN_HEIGHT - 32, ab, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL, 1);
+        if (gMansion.aiming) print_small_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 32, "A: Fire", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+    }
+    if (gMansion.flash > 0) draw_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 255, 240, 200, 50);
     if (gMansion.fade > 0) draw_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, gMansion.fade);
 }
 
@@ -840,17 +992,44 @@ void bhv_mansion_pickup_init(void) {
     cur_obj_scale(1.0f);
 }
 
+// Objects only exist (visibly and actively) while Mario is in the room they were placed in.
+static s32 obj_in_current_room(void) {
+    if (find_room(o->oPosX, o->oPosZ) == gMansion.room) {
+        cur_obj_unhide();
+        return TRUE;
+    }
+    cur_obj_hide();
+    return FALSE;
+}
+
 void bhv_mansion_pickup_loop(void) {
     u8 id = (o->oBehParams >> 24) & 0xFF;
+    u8 amount = (o->oBehParams >> 16) & 0xFF;
     u8 extra = (o->oBehParams >> 8) & 0xFF;
-    char buf[40];
+    char buf[48];
+    char nb[14];
 
+    if (!obj_in_current_room()) return;
     o->oPosY = o->oHomeY + 6.0f * sins(o->oTimer * 0x500);
     if (o->oDistanceToMario < 120.0f && gMansion.menu == MENU_NONE) {
-        if (mansion_inv_add(id, extra)) {
+        if (id == MI_AMMO) {
+            // ammo goes straight to the weapon, it doesn't take an inventory slot
+            u32 total = gMansion.ammo + (amount ? amount : 10);
+            gMansion.ammo = (u8) MIN(total, 99);
+            uid_set(gMansion.collected, UID);
+            str_copy(buf, "Picked up: Handgun Ammo (+", sizeof(buf));
+            num_to_str(nb, amount ? amount : 10); str_append(buf, nb, sizeof(buf));
+            str_append(buf, ")", sizeof(buf));
+            mansion_message(buf);
+            play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource);
+            obj_mark_for_deletion(o);
+        } else if (mansion_inv_add(id, extra)) {
+            struct MansionSlot tmp;
+            tmp.id = id; tmp.extra = extra;
             uid_set(gMansion.collected, UID);
             str_copy(buf, "Picked up: ", sizeof(buf));
-            str_append(buf, sItemNames[id], sizeof(buf));
+            str_append(buf, slot_name(&tmp), sizeof(buf));
+            if (id == MI_GUN) str_append(buf, ". Hold Z to aim, A to fire.", sizeof(buf));
             mansion_message(buf);
             play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource);
             obj_mark_for_deletion(o);
@@ -868,6 +1047,7 @@ void bhv_mansion_file_init(void) {
 
 void bhv_mansion_file_loop(void) {
     u8 f = (o->oBehParams >> 24) & 0xFF;
+    if (!obj_in_current_room()) return;
     o->oPosY = o->oHomeY + 6.0f * sins(o->oTimer * 0x500);
     if (o->oDistanceToMario < 120.0f && gMansion.menu == MENU_NONE && gMansion.wantMenu == MENU_NONE) {
         gMansion.files |= (1u << f);
@@ -927,6 +1107,7 @@ void bhv_mansion_zombie_loop(void) {
     struct MarioState *m = gMarioState;
     f32 dist = o->oDistanceToMario;
 
+    if (!obj_in_current_room()) return;
     if (gMansion.menu != MENU_NONE) return;
     if (o->oSubAction > 0) o->oSubAction--;   // bite / hit cooldown
 

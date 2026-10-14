@@ -12,7 +12,7 @@
 
 enum MansionItem {
     MI_NONE, MI_HERB_G, MI_HERB_R, MI_HERB_B, MI_RIBBON, MI_KEY, MI_GUN,
-    MI_HERB_GG, MI_HERB_GR, MI_HERB_GB, MI_COUNT
+    MI_HERB_GG, MI_HERB_GR, MI_HERB_GB, MI_AMMO, MI_COUNT
 };
 
 enum MansionMenu { MENU_NONE, MENU_ITEMS, MENU_FILES, MENU_BOX };
@@ -70,6 +70,9 @@ struct MansionState {
     u32 saveKilled[MANSION_MAX_UIDS / 32];
     u8  saveUnlocked[8];
     u8  nearPrompt;     // 0 none, 1 open box, 2 typewriter
+    // weapons
+    u8  ammo, saveAmmo;
+    u8  aiming, fireCool, flash;
 };
 
 extern struct MansionState gMansion;

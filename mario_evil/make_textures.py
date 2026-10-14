@@ -88,4 +88,22 @@ icon('item_typewriter', typewriter)
 def pistol(d):
     d.rectangle([4, 8, 26, 14], fill=(60, 60, 66, 255), outline=(150, 150, 160, 255)); d.rectangle([5, 14, 12, 26], fill=(50, 40, 34, 255), outline=(150, 150, 160, 255))
 icon('item_gun', pistol)
+im = new((34, 52, 30, 255)); d = ImageDraw.Draw(im)           # dark overgrown grass (courtyard)
+for k in range(40):
+    r = random.Random(k); x = r.randint(0, 31); y = r.randint(0, 28)
+    d.line([x, y, x + r.randint(-2, 2), y + 3], fill=(22 + r.randint(0, 24), 70 + r.randint(0, 30), 30, 255))
+noise(im, 6, 11); save(im, 'mans_grass')
+def keyc(col, hi):
+    def f(d):
+        d.ellipse([4, 4, 14, 14], outline=col, width=3); d.rectangle([12, 8, 28, 10], fill=col)
+        d.rectangle([22, 10, 24, 15], fill=col); d.rectangle([27, 10, 28, 14], fill=col)
+        d.ellipse([7, 7, 11, 11], fill=hi)
+    return f
+icon('item_key2', keyc((150, 170, 230, 255), (230, 240, 255, 255)))     # Moon Key: silver-blue
+icon('item_key3', keyc((235, 130, 40, 255), (255, 220, 120, 255)))      # Sun Key: orange
+def ammo(d):
+    for i, x in enumerate((6, 12, 18, 24)):
+        d.rectangle([x, 12, x + 4, 26], fill=(200, 160, 60, 255), outline=(110, 80, 20, 255))
+        d.polygon([(x, 12), (x + 4, 12), (x + 2, 6)], fill=(170, 120, 50, 255), outline=(110, 80, 20, 255))
+icon('item_ammo', ammo)
 print('textures written')
