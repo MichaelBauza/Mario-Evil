@@ -114,23 +114,27 @@ def door_emblem(name, col, kind):
     d.rectangle([0, 0, 31, 31], outline=(34, 20, 10, 255)); d.rectangle([4, 3, 27, 14], outline=(52, 30, 16, 255))
     d.rectangle([4, 17, 27, 28], outline=(52, 30, 16, 255)); d.ellipse([24, 19, 27, 22], fill=(190, 160, 60, 255))
     noise(im, 4, 7)
-    d = ImageDraw.Draw(im)
-    cx, cy = 15.5, 15.5
-    d.ellipse([cx-12, cy-12, cx+12, cy+12], fill=(26, 20, 18, 255), outline=(190, 160, 60, 255), width=1)   # brass medallion
+    # emblem drawn 8x oversized and box-filtered down so it stays readable at 32x32
+    K = 8; cx, cy = 15.5 * K, 8.6 * K
+    big = Image.new('RGBA', (32 * K, 32 * K), (0, 0, 0, 0)); g = ImageDraw.Draw(big)
+    def circ(r, fill): g.ellipse([cx - r * K, cy - r * K, cx + r * K, cy + r * K], fill=fill)
+    circ(6.6, (200, 168, 62, 255)); circ(5.6, (30, 22, 20, 255))                         # brass ring + dark plate
     if kind == 'star':
         pts = []
         for i in range(10):
-            a = -math.pi / 2 + i * math.pi / 5; r = 10 if i % 2 == 0 else 4.2
+            a = -math.pi / 2 + i * math.pi / 5; r = (5.2 if i % 2 == 0 else 2.3) * K
             pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
-        d.polygon(pts, fill=col)
+        g.polygon(pts, fill=col)
     elif kind == 'moon':
-        d.ellipse([cx-9, cy-9, cx+9, cy+9], fill=col)
-        d.ellipse([cx-4, cy-11, cx+12, cy+7], fill=(26, 20, 18, 255))
+        circ(4.6, col)
+        g.ellipse([cx - 1.2 * K, cy - 4.8 * K, cx + 5.0 * K, cy + 3.2 * K], fill=(30, 22, 20, 255))
     else:
-        d.ellipse([cx-5, cy-5, cx+5, cy+5], fill=col)
+        circ(2.4, col)
         for i in range(8):
             a = i * math.pi / 4
-            d.line([cx + 7 * math.cos(a), cy + 7 * math.sin(a), cx + 11 * math.cos(a), cy + 11 * math.sin(a)], fill=col, width=2)
+            g.line([cx + 3.2 * K * math.cos(a), cy + 3.2 * K * math.sin(a), cx + 5.2 * K * math.cos(a), cy + 5.2 * K * math.sin(a)], fill=col, width=int(1.5 * K))
+    small = big.resize((32, 32), Image.BOX)
+    im.alpha_composite(small)
     save(im, name)
 door_emblem('mans_door_k1', (240, 205, 70, 255), 'star')
 door_emblem('mans_door_k2', (160, 185, 240, 255), 'moon')

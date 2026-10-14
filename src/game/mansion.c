@@ -486,7 +486,10 @@ void mansion_pre_update(void) {
 #define DOOR_W 300
 #define DOOR_H 340
 
-extern const Gfx *const mansion_door_begin_dls[];
+extern const Gfx mansion_door_begin_dl0[];
+extern const Gfx mansion_door_begin_dl1[];
+extern const Gfx mansion_door_begin_dl2[];
+extern const Gfx mansion_door_begin_dl3[];
 extern const Gfx mansion_door_end_dl[];
 
 static f32 door_open_amount(void) {
@@ -535,7 +538,13 @@ Gfx *geo_mansion_door_anim(s32 callContext, struct GraphNode *node, UNUSED void 
         set_vtx(&v[6], ex, DOOR_H, ez, 1020, 0,    lr, lg, lb);
         set_vtx(&v[7], hx, DOOR_H, hz, 0,    0,    lr, lg, lb);
 
-        gSPDisplayList(g++, mansion_door_begin_dls[d->emblem & 3]);
+        // NB: level-data symbols are segmented addresses; they may be handed to the RSP but never dereferenced by the CPU.
+        switch (d->emblem & 3) {
+            case 1:  gSPDisplayList(g++, mansion_door_begin_dl1); break;
+            case 2:  gSPDisplayList(g++, mansion_door_begin_dl2); break;
+            case 3:  gSPDisplayList(g++, mansion_door_begin_dl3); break;
+            default: gSPDisplayList(g++, mansion_door_begin_dl0); break;
+        }
         gSPVertex(g++, v, 8, 0);
         gSP2Triangles(g++, 0, 1, 2, 0x0, 0, 2, 3, 0x0);
         gSP2Triangles(g++, 4, 5, 6, 0x0, 4, 6, 7, 0x0);

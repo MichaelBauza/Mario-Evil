@@ -236,7 +236,6 @@ def emit_all():
         out.append('    gsDPSetRenderMode(G_RM_OPA_SURF, G_RM_OPA_SURF2),\n')
         out.append('    gsSPClearGeometryMode(G_ZBUFFER | G_CULL_BACK),\n')
         out.append('    gsSPEndDisplayList(),\n};\n\n')
-    out.append('const Gfx *const mansion_door_begin_dls[] = { mansion_door_begin_dl0, mansion_door_begin_dl1, mansion_door_begin_dl2, mansion_door_begin_dl3 };\n\n')
     out.append('const Gfx mansion_door_end_dl[] = {\n    gsSPSetGeometryMode(G_ZBUFFER | G_CULL_BACK),\n')
     out.append(tileend)
     # 3D item / prop models (models.py)
@@ -292,7 +291,7 @@ def emit_all():
     blk = ['// MANSION-BEGIN (generated)\n', 'extern const GeoLayout mansion_geo_area[];\n', 'extern const Collision mansion_collision[];\n']
     for ic in ICONS:
         blk.append('extern const GeoLayout mansion_geo_%s[];\nextern const Gfx mansion_dl_%s[];\n' % (ic, ic))
-    blk.append('extern const Gfx *const mansion_door_begin_dls[];\nextern const Gfx mansion_door_end_dl[];\n')
+    blk.append(''.join('extern const Gfx mansion_door_begin_dl%d[];\n' % i for i in range(4)) + 'extern const Gfx mansion_door_end_dl[];\n')
     for r in ROOMS: blk.append('extern const Gfx mansion_dl_%s[];\n' % r['id'])
     blk.append('// MANSION-END\n')
     endif = hdr.rfind('#endif')

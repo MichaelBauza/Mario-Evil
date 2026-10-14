@@ -5965,8 +5965,6 @@ const Gfx mansion_door_begin_dl3[] = {
     gsSPEndDisplayList(),
 };
 
-const Gfx *const mansion_door_begin_dls[] = { mansion_door_begin_dl0, mansion_door_begin_dl1, mansion_door_begin_dl2, mansion_door_begin_dl3 };
-
 const Gfx mansion_door_end_dl[] = {
     gsSPSetGeometryMode(G_ZBUFFER | G_CULL_BACK),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
