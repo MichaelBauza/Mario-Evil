@@ -772,8 +772,8 @@ static const Vtx goomba_seg8_vertex_0801CDF0[] = {
 
 // 0x0801CE20 - 0x0801CF78
 const Gfx goomba_seg8_dl_0801CE20[] = {
-    gsSPLightColor(LIGHT_1, 0x542e10ff),
-    gsSPLightColor(LIGHT_2, 0x150b04ff),
+    gsSPLightColor(LIGHT_1, 0x34402aff),
+    gsSPLightColor(LIGHT_2, 0x0d1209ff),
     gsSPVertex(goomba_seg8_vertex_0801B700, 16, 0),
     gsSP2Triangles( 0,  1,  2, 0x0,  0,  2,  3, 0x0),
     gsSP2Triangles( 4,  5,  6, 0x0,  4,  6,  7, 0x0),
@@ -801,8 +801,8 @@ const Gfx goomba_seg8_dl_0801CE20[] = {
 
 // 0x0801CF78 - 0x0801D0D0
 const Gfx goomba_seg8_dl_0801CF78[] = {
-    gsSPLightColor(LIGHT_1, 0x613413ff),
-    gsSPLightColor(LIGHT_2, 0x180d04ff),
+    gsSPLightColor(LIGHT_1, 0x3b4930ff),
+    gsSPLightColor(LIGHT_2, 0x0f150bff),
     gsSPVertex(goomba_seg8_vertex_0801BA50, 15, 0),
     gsSP2Triangles( 0,  1,  2, 0x0,  0,  2,  3, 0x0),
     gsSP2Triangles( 1,  4,  5, 0x0,  1,  5,  2, 0x0),
@@ -830,8 +830,8 @@ const Gfx goomba_seg8_dl_0801CF78[] = {
 
 // 0x0801D0D0 - 0x0801D360
 const Gfx goomba_seg8_dl_0801D0D0[] = {
-    gsSPLightColor(LIGHT_1, 0x774220ff),
-    gsSPLightColor(LIGHT_2, 0x1d1008ff),
+    gsSPLightColor(LIGHT_1, 0x485840ff),
+    gsSPLightColor(LIGHT_2, 0x121610ff),
     gsSPVertex(goomba_seg8_vertex_0801BDC0, 16, 0),
     gsSP2Triangles( 0,  1,  2, 0x0,  0,  2,  3, 0x0),
     gsSP2Triangles( 4,  5,  6, 0x0,  4,  6,  7, 0x0),
@@ -882,8 +882,8 @@ const Gfx goomba_seg8_dl_0801D0D0[] = {
 
 // 0x0801D360 - 0x0801D760
 const Gfx goomba_seg8_dl_0801D360[] = {
-    gsSPLightColor(LIGHT_1, 0xdeb44eff),
-    gsSPLightColor(LIGHT_2, 0x372d13ff),
+    gsSPLightColor(LIGHT_1, 0x8a9068ff),
+    gsSPLightColor(LIGHT_2, 0x22251aff),
     gsSPVertex(goomba_seg8_vertex_0801C620, 16, 0),
     gsSP2Triangles( 0,  1,  2, 0x0,  0,  2,  3, 0x0),
     gsSP2Triangles( 4,  5,  1, 0x0,  4,  1,  0, 0x0),

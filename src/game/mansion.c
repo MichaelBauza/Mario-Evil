@@ -304,9 +304,9 @@ void mansion_tank_input(struct MarioState *m) {
     struct Controller *ctl = m->controller;
     f32 top = (ctl->buttonDown & R_TRIG) ? TANK_RUN_SPEED : TANK_WALK_SPEED;
 
-    // Turn: positive stickX is clockwise from above, which is an increasing faceAngle.
+    // Turn: sign flipped after on-device report that left/right felt inverted.
     if (ctl->stickX > TANK_DEADZONE || ctl->stickX < -TANK_DEADZONE) {
-        m->faceAngle[1] += (s16) (ctl->stickX * TANK_TURN_RATE / 64);
+        m->faceAngle[1] -= (s16) (ctl->stickX * TANK_TURN_RATE / 64);
     }
 
     if (ctl->stickY > TANK_DEADZONE) {
