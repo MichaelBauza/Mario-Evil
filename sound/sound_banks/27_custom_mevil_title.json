@@ -1,0 +1,31 @@
+{
+    "date": "2026-10-14",
+    "sample_bank": "music_zcustom_title",
+    "envelopes": {
+        "envelope0": [
+            [
+                2,
+                32700
+            ],
+            [
+                1,
+                32700
+            ],
+            [
+                32700,
+                29430
+            ],
+            "hang"
+        ]
+    },
+    "instruments": {
+        "inst0": {
+            "release_rate": 208,
+            "envelope": "envelope0",
+            "sound": "00_title"
+        }
+    },
+    "instrument_list": [
+        "inst0"
+    ]
+}

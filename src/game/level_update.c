@@ -1404,8 +1404,8 @@ s32 lvl_set_current_level(UNUSED s16 initOrUpdate, s32 levelNum) {
         disable_warp_checkpoint();
     }
 
-    if (gCurrCourseNum > COURSE_STAGES_MAX || warpCheckpointActive) {
-        return FALSE;
+    if (gCurrCourseNum > COURSE_STAGES_MAX || warpCheckpointActive || gCurrLevelNum == LEVEL_BBH) {
+        return FALSE;   // Mario EVIL: no star-select screen, the game opens on its own main menu
     }
 
     return !gDebugLevelSelect;

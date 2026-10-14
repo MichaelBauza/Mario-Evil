@@ -85,3 +85,7 @@ ALIGNED8 static const Texture mans_door_k3_tex[] = {
 #include "levels/bbh/mans_door_k3.rgba16.inc.c"
 };
 
+ALIGNED8 static const Texture mans_title_tex[] = {
+#include "levels/bbh/mans_title.rgba16.inc.c"
+};
+

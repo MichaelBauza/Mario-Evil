@@ -5,6 +5,7 @@
 #include "sm64.h"
 #include "area.h"
 #include "audio/external.h"
+#include "seq_ids.h"
 #include "behavior_data.h"
 #include "camera.h"
 #include "engine/graph_node.h"
@@ -242,12 +243,20 @@ s32 lvl_mansion_init(UNUSED s16 arg, UNUSED s32 unused) {
     } else if (!gMansion.started) {
         gMarioState->health = HEALTH_MAX;
     }
+    if (!gMansion.started) {
+        // first boot: show the main menu (opens as a pause menu on the first frame) with its own music
+        gMansion.wantMenu = MENU_TITLE;
+        gMansion.titleTimer = 0;
+        gMansion.titleOut = 0;
+        gMusicVolumeTrim = 1.0f;
+        play_music(SEQ_PLAYER_LEVEL, SEQUENCE_ARGS(4, SEQ_MEVIL_TITLE), 0);
+    }
     gMansion.started = TRUE;
     gMansion.camIdx = -1;
     gMansion.menu = MENU_NONE;
     gMansion.doorState = 0;
     gMansion.fade = 0;
-    gMansion.wantMenu = 0;
+    if (gMansion.wantMenu != MENU_TITLE) gMansion.wantMenu = 0;
     gMansion.room = (u8) MAX(0, find_room(gMarioState->pos[0], gMarioState->pos[2]));
     return 0;
 }
@@ -520,6 +529,7 @@ extern const Gfx mansion_door_begin_dl1[];
 extern const Gfx mansion_door_begin_dl2[];
 extern const Gfx mansion_door_begin_dl3[];
 extern const Gfx mansion_door_end_dl[];
+extern const Gfx mansion_title_dl[];
 
 static f32 door_open_amount(void) {
     f32 t = ((f32) gMansion.doorTimer - DOOR_OPEN_START) / (DOOR_OPEN_END - DOOR_OPEN_START);
@@ -717,6 +727,10 @@ void mansion_enter_pause(void) {
     gMansion.boxSel = 0;
     gMansion.boxSide = 0;
     gMansion.comboSrc = -1;
+    if (gMansion.menu == MENU_TITLE) {
+        raise_background_noise(1);      // the main-menu music plays at full volume
+        return;
+    }
     play_sound(SOUND_MENU_MESSAGE_APPEAR, gGlobalSoundSource);
 }
 
@@ -799,7 +813,25 @@ static u8 combine_result(u8 a, u8 b) {
 void mansion_paused_update(void) {
     struct Controller *c = gPlayer1Controller;
     s32 dx, dy;
-    s32 moved = menu_dir(&dx, &dy);
+    s32 moved;
+
+    if (gMansion.menu == MENU_TITLE) {
+        gMansion.titleTimer++;
+        if (gMansion.titleOut > 0) {
+            if (--gMansion.titleOut == 0) {
+                // hand over from the menu music to the mansion's own
+                gMusicVolumeTrim = 0.35f;
+                play_music(SEQ_PLAYER_LEVEL, SEQUENCE_ARGS(4, SEQ_LEVEL_SPOOKY), 0);
+                close_menu();
+            }
+        } else if (gMansion.titleTimer > 24 && (c->buttonPressed & (START_BUTTON | A_BUTTON))) {
+            gMansion.titleOut = 40;
+            play_sound(SOUND_MENU_STAR_SOUND, gGlobalSoundSource);
+            seq_player_fade_out(SEQ_PLAYER_LEVEL, 40);
+        }
+        return;
+    }
+    moved = menu_dir(&dx, &dy);
 
     if (c->buttonPressed & START_BUTTON) { close_menu(); return; }
 
@@ -1024,8 +1056,22 @@ static void draw_menu(void) {
     }
 }
 
+static void draw_title(void) {
+    gSPDisplayList(gDisplayListHead++, mansion_title_dl);
+    if (gMansion.titleOut > 0) {
+        s32 a = (40 - gMansion.titleOut) * 255 / 38;
+        draw_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, a > 255 ? 255 : a);
+    } else if (gMansion.titleTimer > 24 && ((gMansion.titleTimer / 22) & 1) == 0) {
+        print_small_text(SCREEN_WIDTH / 2, 206, "PRESS START", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+    }
+}
+
 void mansion_render_hud(void) {
     s32 prompt = gMansion.nearPrompt;
+    if (gMansion.menu == MENU_TITLE) {
+        draw_title();
+        return;
+    }
     if (gMansion.menu != MENU_NONE) {
         draw_menu();
         if (gMansion.msgTimer > 0) print_small_text(SCREEN_WIDTH / 2, 186, gMansion.msg, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);

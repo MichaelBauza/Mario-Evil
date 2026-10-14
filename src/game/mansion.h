@@ -15,7 +15,7 @@ enum MansionItem {
     MI_HERB_GG, MI_HERB_GR, MI_HERB_GB, MI_AMMO, MI_COUNT
 };
 
-enum MansionMenu { MENU_NONE, MENU_ITEMS, MENU_FILES, MENU_BOX };
+enum MansionMenu { MENU_NONE, MENU_ITEMS, MENU_FILES, MENU_BOX, MENU_TITLE };
 
 struct MansionRoom { s16 x0, z0, x1, z1; u8 camFirst, camCount; const char *name; };
 struct MansionCam  { s16 zx0, zz0, zx1, zz1; s16 px, py, pz; s16 fx, fy, fz; u8 fov; };
@@ -51,6 +51,8 @@ struct MansionState {
     u8  boxSide;
     u8  wantMenu;
     u8  wantFile;
+    s16 titleTimer;     // main menu: frames since it opened
+    s16 titleOut;       // main menu: >0 while fading out after START
     s8  stickLatchX, stickLatchY;
     // persistent
     struct MansionSlot inv[MANSION_INV_SLOTS];

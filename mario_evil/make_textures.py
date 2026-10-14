@@ -139,4 +139,35 @@ def door_emblem(name, col, kind):
 door_emblem('mans_door_k1', (240, 205, 70, 255), 'star')
 door_emblem('mans_door_k2', (160, 185, 240, 255), 'moon')
 door_emblem('mans_door_k3', (245, 140, 40, 255), 'sun')
+
+# --- main-menu title image (320x240, RGBA16, Floyd-Steinberg dithered to 5 bits/channel) --------------
+def title_image():
+    import numpy as np
+    src = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'title_logo.jpg')).convert('RGB')
+    h = 240; w = round(src.width * h / src.height)
+    src = src.resize((w, h), Image.LANCZOS)
+    x0 = (w - 320) // 2
+    a = np.asarray(src.crop((x0, 0, x0 + 320, 240)), dtype=np.float64)
+    # darken the bottom strip so the PRESS START prompt reads cleanly
+    ramp = np.clip((np.arange(240) - 196) / 44.0, 0, 1)[:, None, None]
+    a = a * (1.0 - 0.72 * ramp)
+    out = np.zeros_like(a)
+    H, W, _ = a.shape
+    for y in range(H):
+        for x in range(W):
+            old = a[y, x].copy()
+            q = np.clip(np.round(old / 255.0 * 31.0), 0, 31)
+            new = q * 255.0 / 31.0
+            out[y, x] = q
+            err = old - new
+            if x + 1 < W: a[y, x + 1] += err * (7 / 16)
+            if y + 1 < H:
+                if x > 0: a[y + 1, x - 1] += err * (3 / 16)
+                a[y + 1, x] += err * (5 / 16)
+                if x + 1 < W: a[y + 1, x + 1] += err * (1 / 16)
+    q = out.astype(np.uint8)
+    rgb = ((q << 3) | (q >> 2)).astype(np.uint8)
+    im = Image.fromarray(rgb, 'RGB').convert('RGBA')
+    save(im, 'mans_title')
+title_image()
 print('textures written')
