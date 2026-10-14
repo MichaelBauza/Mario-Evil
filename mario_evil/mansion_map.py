@@ -92,6 +92,7 @@ court = room('court', 'Courtyard', 1500, -2300, 6500, -1000, 900, floor='mans_gr
                    dict(kind='herb_g', pos=(2200, -2050)), dict(kind='ammo', pos=(2250, -1700), amount=10),
                    dict(kind='file', file=5, pos=(6100, -2000))])
 court['cams'] = cams_along_x(court, ya=0.8, inset=250, fov=55, front='N')
+_cc = court['cams']; _cc[0]['zone'], _cc[1]['zone'] = _cc[1]['zone'], _cc[0]['zone']   # swap which angle plays in which half
 ROOMS.append(court)
 
 # ---- Guardhouse (second save point) -----------------------------------------
