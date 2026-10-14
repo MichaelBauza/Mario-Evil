@@ -31,6 +31,7 @@ static s16   sSnapYaw[CINE_MAX_GROUP];
    cinematic feeds a forward push matched to its walk speed (set after the pad is cleared each frame). */
 static s32   sWalkFeed;
 static s16   sWalkStickY;
+static s32   sPressAt;   /* text timer of the last accepted A/B press on this page */
 
 static const struct CineScript *cur_script(void) { return &gCines[gMansion.cine - 1]; }
 
@@ -76,6 +77,7 @@ static void group_begin(void) {
     s32 first = gMansion.cineStep, n = group_len(first), k;
     gMansion.cineT = 0;
     gMansion.cineChars = 0;
+    sPressAt = -100;
     for (k = 0; k < n; k++) {
         const struct CineStep *st = &cs->steps[first + k];
         if (st->op == CINE_CAM) {
@@ -255,7 +257,10 @@ void mansion_cine_pre(void) {
         /* dialogue: one page at a time; A reveals the page, then A moves on */
         s32 total = (s32) strlen(first->line0) + (s32) strlen(first->line1);
         /* ignore presses for the first 10 frames of a page so the press that opened it can't skip it */
-        if (t >= 10 && (ctl->buttonPressed & (A_BUTTON | B_BUTTON))) {
+        /* presses are rate-limited (one accepted per 15 frames), so holding A or a turbo/rapid-tap
+           button cannot race through the text */
+        if (t >= 10 && (ctl->buttonPressed & (A_BUTTON | B_BUTTON)) && (t - sPressAt) >= 15) {
+            sPressAt = t;
             if (gMansion.cineChars < total) {
                 gMansion.cineChars = total;
             } else {
