@@ -280,4 +280,11 @@ def title_image():
     im = Image.fromarray(rgb, 'RGB').convert('RGBA')
     save(im, 'mans_title')
 title_image()
+
+# --- user-supplied photo textures: carpet, table/box wood, courtyard cement + grass ---------------
+user_floor('tex_floor_carpet_rug.jpg', 'mans_carpet', periods=6)    # whole rug (border + medallion), not a sub-tile crop
+user_floor('tex_wood_table.jpg', 'mans_wood', periods=2)            # tables, desks, crates, shelves
+user_floor('tex_courtyard_grass.jpg', 'mans_grass', periods=2)      # courtyard floor
+user_floor('tex_courtyard_cement.jpg', 'mans_cement', periods=4)    # courtyard walls/panels
+
 print('textures written')

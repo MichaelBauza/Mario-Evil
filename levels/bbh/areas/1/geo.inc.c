@@ -183,6 +183,14 @@ const GeoLayout mansion_geo_prop_table[] = {
    GEO_END(),
 };
 
+const GeoLayout mansion_geo_prop_desk[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_desk),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
 const GeoLayout mansion_geo_prop_chair[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),

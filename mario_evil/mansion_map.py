@@ -244,9 +244,9 @@ def add(rid, *objs):
 
 def pot(x, z, yaw=0): return dict(kind='prop', model='pot', pos=(x, z), y=0, yaw=yaw)
 
-# -- Courtyard: brick walls, arched gates, balcony rail, cracked slime flagstones, the ghost fountain
+# -- Courtyard: cracked cement walls, arched gates, balcony rail, overgrown grass, the ghost fountain
 c = RM['court']
-c.update(floor='mans_cobble', wall='mans_brick', panel='mans_brick', rail=(780, 900), ambient=0.46)
+c.update(floor='mans_grass', wall='mans_cement', panel='mans_cement', rail=(780, 900), ambient=0.46)
 c['boxes'][0]['hidden'] = True                       # collision only; the fountain model is drawn instead
 for (wall, at) in (('N', 2300), ('N', 4650), ('N', 5900), ('S', 3900), ('S', 5300), ('W', -1650)):
     c.setdefault('decor', []).append(dict(tex='mans_gate', wall=wall, at=at, w=320, h=400, y0=0))
@@ -283,12 +283,25 @@ dining['boxes'].append(dict(x0=-230, z0=626, x1=230, z1=776, y1=300, side='mans_
 RM['dining'].setdefault('lights', []).append((0, 170, 546, 0.60, 650, (1.00, 0.70, 0.36)))   # fireplace glow
 add('corr_n', lamp_on('corr_n', 'S', -400, 380), on_wall('corr_n', 'N', 300, 'vine'))
 portrait('corr_n', 'S', 700, 3, y=300)
+
+def desk_at(rid, box_index, yaw=0):
+    """Replace a flat wood 'table' box with the modeled desk prop: collision keeps the box's
+    footprint, but the box itself stops drawing and the desk model is drawn in its place."""
+    b = RM[rid]['boxes'][box_index]
+    cx, cz = (b['x0'] + b['x1']) / 2, (b['z0'] + b['z1']) / 2
+    b['hidden'] = True
+    add(rid, dict(kind='prop', model='desk', pos=(cx, cz), y=0, yaw=yaw))
+
 add('save', lamp_on('save', 'E', -3000, 380), on_wall('save', 'N', 3700, 'vine'))
+desk_at('save', 0)                                    # typewriter desk
 add('corr_w', lamp_on('corr_w', 'N', -6500, 380), on_wall('corr_w', 'S', -7200, 'vine'))
 add('kitchen', lamp_on('kitchen', 'S', 2800, 380), on_wall('kitchen', 'N', 3200, 'vine'), pot(3300, 650), pot(1750, -700, 0x6000))
+desk_at('kitchen', 0)                                 # counter
 add('guard', lamp_on('guard', 'N', 7300, 360), on_wall('guard', 'S', 7600, 'vine'))
+desk_at('guard', 0)                                   # typewriter desk
 chand('lib', -7000, 1700); portrait('lib', 'N', -6600, 1, y=360); portrait('lib', 'S', -7300, 2, y=360)
 add('lib', lamp_on('lib', 'E', 1700, 420), on_wall('lib', 'N', -7600, 'vine'), pot(-6300, 2250))
+desk_at('lib', 2)                                     # reading table (boxes 0/1 are the bookshelves)
 chand('land', -3500, 2600); portrait('land', 'N', -2900, 3); portrait('land', 'S', -4000, 1)
 add('land', lamp_on('land', 'E', 2300, 430), on_wall('land', 'S', -3000, 'vine'), pot(-4350, 3050))
 add('corr2', lamp_on('corr2', 'N', -800, 380), on_wall('corr2', 'S', 200, 'vine'))
@@ -298,6 +311,7 @@ chand('bed', -900, 4200); portrait('bed', 'S', -900, 3, y=330)
 add('bed', lamp_on('bed', 'E', 4400, 380), on_wall('bed', 'N', -1650, 'vine'))
 add('stair', lamp_on('stair', 'N', 5000, 340), on_wall('stair', 'S', 5600, 'vine'))
 add('cellar', lamp_on('cellar', 'E', 600, 380), on_wall('cellar', 'N', 6600, 'vine'), pot(7550, 900))
+desk_at('cellar', 0)                                  # typewriter desk
 add('lab', lamp_on('lab', 'W', 3000, 420), lamp_on('lab', 'E', 1900, 420), on_wall('lab', 'N', 6200, 'vine'), pot(6100, 3100, 0x2000))
 add('tunnel', lamp_on('tunnel', 'S', 6200, 340), on_wall('tunnel', 'N', 5900, 'vine'))
 add('dock', lamp_on('dock', 'S', 4400, 400), on_wall('dock', 'E', 3600, 'vine'))

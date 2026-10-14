@@ -523,6 +523,19 @@ def chair():
     m.box((0, 260, -55), (140, 14, 16), WOOD)                      # crest rail
     return m
 
+def desk():
+    """Plain writing desk / side table, 340 long (x) x 220 deep (z), top at y=110, with one drawer.
+    Used for the typewriter desk in every safe room plus the kitchen counter and library reading table."""
+    m = Mesh()
+    m.box((0, 100, 0), (340, 20, 220), WOOD)                        # top
+    m.box((0, 91, 0), (300, 4, 180), WOOD_D)                        # apron shadow
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            m.box((sx * 150, 45, sz * 90), (22, 90, 22), WOOD_D)    # legs
+    m.box((70, 68, 94), (90, 46, 18), WOOD_D)                       # drawer front
+    m.box((70, 68, 104), (24, 10, 4), BRASS)                        # drawer pull
+    return m
+
 def fireplace():
     """Stone fireplace against a wall. Origin at floor centre of the back; projects +z (150 deep), 420 wide, mantel ~300."""
     m = Mesh()
@@ -612,6 +625,7 @@ MODELS = {
     'prop_toad': toad,
     'prop_vine': vine,
     'prop_table': table,
+    'prop_desk': desk,
     'prop_chair': chair,
     'prop_fireplace': fireplace,
 }
