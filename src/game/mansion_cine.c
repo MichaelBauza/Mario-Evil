@@ -268,7 +268,9 @@ void mansion_cine_pre(void) {
                 return;
             }
         }
-        if (gMansion.cine && gMansion.cineChars < total && (t % 30) == 0) gMansion.cineChars++;   /* ~2 characters a second */
+        /* normal speed: ~15 characters a second; holding A slows the typing by 90% (~1.5 characters a second) */
+        if (gMansion.cine && gMansion.cineChars < total &&
+            (t % ((ctl->buttonDown & A_BUTTON) ? 20 : 2)) == 0) gMansion.cineChars++;
         if (gMansion.cine) gMansion.cineT++;
         return;
     }
