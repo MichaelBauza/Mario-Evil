@@ -27,6 +27,11 @@ static Vec3f sSnapPos[CINE_MAX_GROUP], sSnapFocus[CINE_MAX_GROUP];
 static f32   sSnapFov[CINE_MAX_GROUP];
 static s16   sSnapYaw[CINE_MAX_GROUP];
 
+/* Walking drives Mario through his own walk action: the tank controls read the forward stick, so the
+   cinematic feeds a forward push matched to its walk speed (set after the pad is cleared each frame). */
+static s32   sWalkFeed;
+static s16   sWalkStickY;
+
 static const struct CineScript *cur_script(void) { return &gCines[gMansion.cine - 1]; }
 
 static s32 group_len(s32 first) {
@@ -97,6 +102,7 @@ static void walk_stop(void) {
 }
 
 static void cine_end(void) {
+    sWalkFeed = 0;
     gMansion.cineSeen |= 1u << (gMansion.cine - 1);
     gMansion.cine = 0;
     gMansion.camIdx = -1;      // next frame the gameplay camera re-picks its angle
@@ -119,6 +125,7 @@ static void cine_start(s32 i) {
     if (gCines[i].nSteps == 0) return;
     gMansion.cine = i + 1;
     gMansion.cineStep = 0;
+    sWalkFeed = 0;
     vec3f_copy(sCamPos, gLakituState.pos);
     vec3f_copy(sCamFocus, gLakituState.focus);
     sCamFov = gMansionFov;
@@ -182,12 +189,19 @@ static s32 member_step(const struct CineStep *st, s32 k, s32 t) {
             m->pos[0] = sSnapPos[k][0] + dx * e;
             m->pos[1] = sSnapPos[k][1] + ((f32) st->v[1] - sSnapPos[k][1]) * e;
             m->pos[2] = sSnapPos[k][2] + dz * e;
-            if (st->frames > 0) m->forwardVel = dist / (f32) st->frames;
+            f32 speed = (st->frames > 0) ? dist / (f32) st->frames : 0.0f;
+            s32 done = (t >= st->frames);
+            /* walk action: forward speed = stickY / 4 under tank controls, so stickY = 4 * speed */
+            m->forwardVel = speed;
             m->faceAngle[1] = yaw;
             m->intendedYaw = yaw;
-            m->intendedMag = 0.0f;
             for (j = 0; j < 3; j++) m->vel[j] = 0.0f;
-            return t >= st->frames;
+            if (!done) {
+                s32 y = (s32) (4.0f * speed + 0.5f);
+                sWalkStickY = (s16) (y < 16 ? 16 : (y > 64 ? 64 : y));
+                sWalkFeed = 1;
+            }
+            return done;
         }
         case CINE_WAIT:
             return t >= st->frames;
@@ -199,12 +213,22 @@ static s32 member_step(const struct CineStep *st, s32 k, s32 t) {
     }
 }
 
+/* Called after the pad is cleared, so the walk's forward push survives. */
+void mansion_cine_feed_input(void) {
+    struct Controller *ctl = gPlayer1Controller;
+    if (!gMansion.cine || !sWalkFeed) return;
+    ctl->stickX = 0; ctl->rawStickX = 0;
+    ctl->stickY = sWalkStickY; ctl->rawStickY = sWalkStickY;
+    ctl->stickMag = sWalkStickY;
+}
+
 void mansion_cine_pre(void) {
     const struct CineScript *cs;
     const struct CineStep *first;
     struct Controller *ctl = gPlayer1Controller;
     s32 n, k, t, allDone = 1;
     if (!gMansion.cine) return;
+    sWalkFeed = 0;
     cs = cur_script();
     first = &cs->steps[gMansion.cineStep];
     t = gMansion.cineT;

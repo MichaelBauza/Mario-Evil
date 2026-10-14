@@ -32,6 +32,7 @@ struct Camera;
 
 void mansion_cine_check(void);                  // post-update: start a cinematic if Mario walks into its zone
 void mansion_cine_pre(void);                    // pre-update: advance the running cinematic (reads A)
+void mansion_cine_feed_input(void);             // after the pad is cleared: keeps Mario walking during a walk step
 s32  mansion_cine_camera(struct Camera *c);     // camera override; TRUE if a cinematic is driving the camera
 void mansion_cine_render(void);                 // dialogue box
 

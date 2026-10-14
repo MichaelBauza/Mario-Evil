@@ -550,6 +550,7 @@ void mansion_pre_update(void) {
     if (gMansion.cine) {                        // cinematic: Mario is locked, the script drives everything
         mansion_cine_pre();
         zero_player_input();
+        mansion_cine_feed_input();
         return;
     }
 
