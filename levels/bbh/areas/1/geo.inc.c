@@ -103,6 +103,30 @@ const GeoLayout mansion_geo_held_gun[] = {
    GEO_END(),
 };
 
+const GeoLayout mansion_geo_item_console[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_console),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_item_luigi[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_luigi),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_boss_tyrant[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_boss_tyrant),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
 const GeoLayout mansion_geo_area[] = {
    GEO_NODE_SCREEN_AREA(10, SCREEN_CENTER_X, SCREEN_CENTER_Y, SCREEN_CENTER_X, SCREEN_CENTER_Y),
    GEO_OPEN_NODE(),
@@ -119,7 +143,7 @@ const GeoLayout mansion_geo_area[] = {
          GEO_OPEN_NODE(),
             GEO_CAMERA(CAMERA_MODE_FIXED, 0, 600, 600, 0, 0, 0, geo_camera_main),
             GEO_OPEN_NODE(),
-               GEO_SWITCH_CASE(13, geo_switch_mansion_room),
+               GEO_SWITCH_CASE(18, geo_switch_mansion_room),
                GEO_OPEN_NODE(),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_hall),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_dining),
@@ -134,6 +158,11 @@ const GeoLayout mansion_geo_area[] = {
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_corr2),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_gal),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_bed),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_stair),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_cellar),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_lab),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_tunnel),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_dock),
                GEO_CLOSE_NODE(),
                GEO_RENDER_OBJ(),
                GEO_ASM(0, geo_mansion_door_anim),

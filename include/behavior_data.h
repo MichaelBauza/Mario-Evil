@@ -545,6 +545,8 @@ extern const BehaviorScript bhvMansionPickup[];
 extern const BehaviorScript bhvMansionFile[];
 extern const BehaviorScript bhvMansionTypewriter[];
 extern const BehaviorScript bhvMansionItemBox[];
+extern const BehaviorScript bhvMansionConsole[];
+extern const BehaviorScript bhvMansionLuigi[];
 extern const BehaviorScript bhvMansionHeldGun[];
 extern const BehaviorScript bhvMansionZombie[];
 

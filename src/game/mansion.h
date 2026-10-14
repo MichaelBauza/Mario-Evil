@@ -75,6 +75,13 @@ struct MansionState {
     // weapons
     u8  ammo, saveAmmo;
     u8  aiming, fireCool, flash;
+    // Tier 3 (runtime only; reset whenever the level (re)loads)
+    u8  tyrant;         // 0 dormant, 1 awake, 2 defeated
+    u8  escape;         // 0 not armed, 1 self-destruct counting, 2 escaped
+    u8  gate;           // lab exit shutters open (Luigi spoken to after the Tyrant fell)
+    u8  bossHp, bossMax;
+    u16 escapeTime;     // frames left on the self-destruct countdown
+    s16 endTimer;       // >0 while the ending plays
 };
 
 extern struct MansionState gMansion;
@@ -107,6 +114,8 @@ void bhv_mansion_file_init(void);
 void bhv_mansion_file_loop(void);
 void bhv_mansion_typewriter_loop(void);
 void bhv_mansion_itembox_loop(void);
+void bhv_mansion_console_loop(void);
+void bhv_mansion_luigi_loop(void);
 void bhv_mansion_heldgun_loop(void);
 void bhv_mansion_zombie_init(void);
 void bhv_mansion_zombie_loop(void);

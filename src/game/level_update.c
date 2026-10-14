@@ -622,6 +622,8 @@ s16 music_unchanged_through_warp(s16 arg) {
 void initiate_warp(s16 destLevel, s16 destArea, s16 destWarpNode, s32 warpFlags) {
     if (destWarpNode >= WARP_NODE_CREDITS_MIN) {
         sWarpDest.type = WARP_TYPE_CHANGE_LEVEL;
+    } else if (gCurrLevelNum == LEVEL_BBH && sSourceWarpNodeId == WARP_NODE_DEATH) {
+        sWarpDest.type = WARP_TYPE_CHANGE_LEVEL;   // Mario EVIL: dying reloads the mansion (restores the last typewriter save)
     } else if (warpFlags == WARP_FLAG_EXIT_COURSE) {
         sWarpDest.type = WARP_TYPE_CHANGE_LEVEL;
     } else if (destLevel != gCurrLevelNum) {

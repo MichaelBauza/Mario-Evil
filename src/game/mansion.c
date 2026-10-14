@@ -57,10 +57,11 @@ static const char *slot_name(const struct MansionSlot *s) {
     return sItemNames[s->id];
 }
 
-#define NUM_FILES 7
+#define NUM_FILES 9
 static const char *const sFileTitles[NUM_FILES + 1] = {
     "", "Peach's Letter", "Toad Gardener's Diary", "Researcher Toad's Letter",
-    "Kamek's Orders", "Specimen 42 Report", "Spore Containment Memo", "Luigi's Journal"
+    "Kamek's Orders", "Specimen 42 Report", "Spore Containment Memo", "Luigi's Journal",
+    "Kamek's Lab Log", "Self-Destruct Notice"
 };
 static const char *const sFileText[NUM_FILES + 1] = {
     "",
@@ -137,7 +138,27 @@ static const char *const sFileText[NUM_FILES + 1] = {
     "Day 4 - If you are reading this, Mario,\n"
     "I am still alive. The way down is\n"
     "under the fountain. I will wait for\n"
-    "you there. Please hurry."
+    "you there. Please hurry.",
+    "LOG - Dr. K\n\n"
+    "Day 40 - Subject B-01 is stable. The\n"
+    "spores no longer rot the host. They\n"
+    "rebuild it. His Majesty volunteered for\n"
+    "the final dose himself.\n"
+    "Day 41 - Bigger. Stronger. He no longer\n"
+    "answers to his name.\n"
+    "Day 44 - Containment holds for now. If\n"
+    "the power fails the capsule opens. The\n"
+    "console in this lab will burn it all.\n"
+    "Five minutes to the dock by the service\n"
+    "tunnel. I will not be using it. I want\n"
+    "to see what he becomes.",
+    "LAB PROTOCOL 9\n\n"
+    "SELF-DESTRUCT SEQUENCE ARMED.\n"
+    "Capsule B-01 RELEASED.\n\n"
+    "All personnel evacuate through the\n"
+    "service tunnel to the dock.\n"
+    "Time to detonation: 5 minutes.\n\n"
+    "This sequence cannot be cancelled."
 };
 
 #define HEALTH_MAX     0x880
@@ -251,6 +272,8 @@ s32 lvl_mansion_init(UNUSED s16 arg, UNUSED s32 unused) {
         gMusicVolumeTrim = 1.0f;
         play_music(SEQ_PLAYER_LEVEL, SEQUENCE_ARGS(4, SEQ_MEVIL_TITLE), 0);
     }
+    gMansion.tyrant = 0; gMansion.escape = 0; gMansion.gate = 0;
+    gMansion.bossHp = 0; gMansion.bossMax = 0; gMansion.escapeTime = 0; gMansion.endTimer = 0;
     gMansion.started = TRUE;
     gMansion.camIdx = -1;
     gMansion.menu = MENU_NONE;
@@ -390,7 +413,7 @@ static struct Object *aim_target(struct MarioState *m) {
 
     while (obj != (struct Object *) head) {
         if (obj->activeFlags != ACTIVE_FLAG_DEACTIVATED && obj_has_behavior(obj, bhvMansionZombie)
-            && obj->oAction != 3 && find_room(obj->oPosX, obj->oPosZ) == gMansion.room) {
+            && obj->oAction != 3 && obj->oAction != 4 && find_room(obj->oPosX, obj->oPosZ) == gMansion.room) {
             f32 dx = obj->oPosX - m->pos[0], dz = obj->oPosZ - m->pos[2];
             f32 d = sqrtf(dx * dx + dz * dz);
             s16 ang = atan2s(dz, dx);
@@ -415,7 +438,18 @@ static void gun_fire(struct MarioState *m, struct Object *target) {
     gMansion.fireCool = 20;
     gMansion.flash = 3;
     play_sound(SOUND_MEVIL_GUNSHOT, gGlobalSoundSource);
-    if (target != NULL && abs_angle_diff(atan2s(target->oPosZ - m->pos[2], target->oPosX - m->pos[0]), m->faceAngle[1]) < 0x1800) {
+    if (target != NULL && ((target->oBehParams >> 8) & 1) && abs_angle_diff(atan2s(target->oPosZ - m->pos[2], target->oPosX - m->pos[0]), m->faceAngle[1]) < 0x1800) {
+        // the Tyrant shrugs hits off: no stagger, only its health bar moves
+        target->oHealth--;
+        play_sound(SOUND_ACTION_HIT, target->header.gfx.cameraToObject);
+        if (target->oHealth <= 0) {
+            target->oAction = 3;
+            target->oTimer = 0;
+            play_sound(SOUND_MEVIL_ZDEATH, target->header.gfx.cameraToObject);
+        } else if ((target->oHealth % 4) == 0) {
+            play_sound(SOUND_MEVIL_ZHURT, target->header.gfx.cameraToObject);
+        }
+    } else if (target != NULL && abs_angle_diff(atan2s(target->oPosZ - m->pos[2], target->oPosX - m->pos[0]), m->faceAngle[1]) < 0x1800) {
         target->oHealth--;
         target->oMoveAngleYaw = atan2s(target->oPosZ - m->pos[2], target->oPosX - m->pos[0]);
         target->oForwardVel = 14.0f;
@@ -510,6 +544,22 @@ void mansion_pre_update(void) {
     if (gMansion.flash > 0) gMansion.flash--;
     gMansion.nearPrompt = 0;
 
+    if (gMansion.endTimer > 0) {
+        // ending: the last page waits for START / A, then the game resets to the main menu
+        if (gMansion.endTimer < 32000) gMansion.endTimer++;
+        if (gMansion.endTimer == 40) seq_player_fade_out(SEQ_PLAYER_LEVEL, 60);
+        if (gMansion.endTimer == 110) {
+            gMusicVolumeTrim = 1.0f;
+            play_music(SEQ_PLAYER_LEVEL, SEQUENCE_ARGS(4, SEQ_MEVIL_TITLE), 0);
+        }
+        if (gMansion.endTimer > 70 + 150 * 3 + 30 && (gPlayer1Controller->buttonPressed & (START_BUTTON | A_BUTTON))) {
+            memset(&gMansion, 0, sizeof(gMansion));
+            gMarioState->numLives = 4;
+            level_trigger_warp(gMarioState, WARP_OP_DEATH);
+        }
+        zero_player_input();
+        return;
+    }
     if (gMansion.doorState != 0) {
         zero_player_input();
     }
@@ -596,6 +646,7 @@ Gfx *geo_mansion_door_anim(s32 callContext, struct GraphNode *node, UNUSED void 
 
 static s32 door_locked(s32 idx) {
     const struct MansionDoor *d = &gMansionDoors[idx];
+    if (d->key == 9) return !gMansion.gate;   // lab exit shutters
     return d->key != 0 && !(gMansion.lockedUnlocked[idx >> 3] & (1 << (idx & 7)));
 }
 
@@ -666,6 +717,14 @@ static void update_doors(void) {
         // moving toward the door means facing opposite to the door's inward normal
         if (fx * -d->nx + fz * -d->nz < 0.6f) continue;
         if (++gMansion.doorPush < 6) return;
+        if (d->key == 9 && door_locked(i)) {
+            if (gMansion.msgTimer < 20) {
+                mansion_message(gMansion.tyrant == 2 ? "Luigi is calling you. Check on him." : "The exit shutters are sealed.");
+                play_sound(SOUND_MENU_CAMERA_BUZZ, gGlobalSoundSource);
+            }
+            gMansion.doorPush = 0;
+            return;
+        }
         if (door_locked(i)) {
             s32 k = inv_find_key(d->key);
             if (k < 0) {
@@ -704,6 +763,29 @@ void mansion_post_update(void) {
     if (r >= 0 && gMansion.doorState == 0) gMansion.room = r;
     update_doors();
     mansion_footsteps(m);
+    if (gMansion.escape == 1 && gMansion.endTimer == 0) {
+        if (gMansion.escapeTime > 0) gMansion.escapeTime--;
+        if (gMansion.escapeTime == 0) {
+            // the lab goes up
+            mansion_message("The mansion collapses...");
+            gMansion.flash = 30;
+            m->health = 0xFF;
+            set_mario_action(m, ACT_STANDING_DEATH, 0);
+            gMansion.escape = 3;
+        } else if ((gMansion.escapeTime % 150) == 0 && gMansion.escapeTime < 3600) {
+            play_sound(SOUND_MENU_CAMERA_BUZZ, gGlobalSoundSource);    // alarm tick in the last two minutes
+        }
+        {
+            // the lifeboat at the dock (Escape Dock room, boat centre)
+            f32 bx = m->pos[0] - 4100.0f, bz = m->pos[2] - 3850.0f;
+            if (bx * bx + bz * bz < 300.0f * 300.0f && gMansion.doorState == 0) {
+                gMansion.escape = 2;
+                gMansion.endTimer = 1;
+                zero_player_input();
+                mansion_message("");
+            }
+        }
+    }
     if (gMansion.aiming && gMansion.doorState == 0) {
         // arm out, holding the pistol: freeze the punch animation on its extended frame
         set_mario_animation(m, MARIO_ANIM_FIRST_PUNCH);
@@ -715,7 +797,7 @@ void mansion_post_update(void) {
 }
 
 s32 mansion_wants_pause(void) {
-    if (gMansion.doorState != 0) return FALSE;
+    if (gMansion.doorState != 0 || gMansion.endTimer > 0) return FALSE;
     if (gMansion.wantMenu != MENU_NONE) return TRUE;
     return (gPlayer1Controller->buttonPressed & START_BUTTON) != 0;
 }
@@ -1066,8 +1148,48 @@ static void draw_title(void) {
     }
 }
 
+static void draw_ending(void) {
+    s32 t = gMansion.endTimer;
+    s32 page = (t - 70) / 150;
+    char buf[40];
+    char nb[14];
+    s32 left = gMansion.escapeTime / 30;
+    draw_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, MIN(255, t * 6));
+    if (t <= 70) return;
+    if (page > 3) page = 3;
+    switch (page) {
+        case 0:
+            print_small_text(SCREEN_WIDTH / 2, 96, "KAMEK'S LABORATORY IS GONE.", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+            print_small_text(SCREEN_WIDTH / 2, 114, "The island burns behind them.", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+            break;
+        case 1:
+            print_small_text(SCREEN_WIDTH / 2, 96, "Mario and Luigi row for the mainland,", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+            print_small_text(SCREEN_WIDTH / 2, 114, "two brothers and one very long night.", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+            break;
+        case 2:
+            print_small_text(SCREEN_WIDTH / 2, 96, "But out on the water, a single", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+            print_small_text(SCREEN_WIDTH / 2, 114, "purple spore drifts toward the shore...", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+            break;
+        default:
+            print_small_text(SCREEN_WIDTH / 2, 76, "<COL_F03030FF>MARIO EVIL", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+            print_small_text(SCREEN_WIDTH / 2, 94, "THE END", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+            str_copy(buf, "Escaped with ", sizeof(buf));
+            num_to_str(nb, left / 60); str_append(buf, nb, sizeof(buf));
+            str_append(buf, (left % 60) < 10 ? ":0" : ":", sizeof(buf));
+            num_to_str(nb, left % 60); str_append(buf, nb, sizeof(buf));
+            str_append(buf, " left", sizeof(buf));
+            print_small_text(SCREEN_WIDTH / 2, 120, buf, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+            if (t > 70 + 150 * 3 + 30 && ((t / 20) & 1)) print_small_text(SCREEN_WIDTH / 2, 190, "PRESS START", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+            break;
+    }
+}
+
 void mansion_render_hud(void) {
     s32 prompt = gMansion.nearPrompt;
+    if (gMansion.endTimer > 0) {
+        draw_ending();
+        return;
+    }
     if (gMansion.menu == MENU_TITLE) {
         draw_title();
         return;
@@ -1087,6 +1209,28 @@ void mansion_render_hud(void) {
         print_small_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 56, "B: Open item box", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
     } else if (prompt == 2) {
         print_small_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 56, "B: Save (uses 1 Ink Ribbon)", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+    } else if (prompt == 3) {
+        print_small_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 56, "B: Use console", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+    } else if (prompt == 4) {
+        print_small_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 56, "B: Talk to Luigi", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+    }
+    if (gMansion.escape == 1) {
+        char tb[24];
+        char nb[14];
+        s32 secs = gMansion.escapeTime / 30;
+        s32 low = gMansion.escapeTime < 3600;
+        str_copy(tb, (low && (gMansion.escapeTime / 15) % 2) ? "<COL_FFFFFFFF>ESCAPE " : "<COL_F03030FF>ESCAPE ", sizeof(tb));
+        num_to_str(nb, secs / 60); str_append(tb, nb, sizeof(tb));
+        str_append(tb, (secs % 60) < 10 ? ":0" : ":", sizeof(tb));
+        num_to_str(nb, secs % 60); str_append(tb, nb, sizeof(tb));
+        print_small_text(SAFE_R, 10, tb, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL, 1);
+        if (low) draw_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 200, 0, 0, 18 + 14 * ((gMansion.escapeTime / 15) % 2));
+    }
+    if (gMansion.tyrant == 1 && gMansion.bossMax > 0) {
+        s32 w = (gMansion.bossHp * 120) / gMansion.bossMax;
+        print_small_text(SCREEN_WIDTH / 2, 22, "TYRANT", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+        draw_box(SCREEN_WIDTH / 2 - 60, 34, SCREEN_WIDTH / 2 + 60, 40, 40, 20, 20, 255);
+        draw_box(SCREEN_WIDTH / 2 - 60, 34, SCREEN_WIDTH / 2 - 60 + w, 40, 200, 40, 200, 255);
     }
     if (has_gun()) {
         char ab[24];
@@ -1186,7 +1330,10 @@ void bhv_mansion_file_loop(void) {
 void bhv_mansion_typewriter_loop(void) {
     if (o->oDistanceToMario < 190.0f && gMansion.menu == MENU_NONE) {
         gMansion.nearPrompt = 2;
-        if (gPlayer1Controller->buttonPressed & B_BUTTON) {
+        if ((gPlayer1Controller->buttonPressed & B_BUTTON) && gMansion.escape != 0) {
+            mansion_message("No time to save!");
+            play_sound(SOUND_MENU_CAMERA_BUZZ, gGlobalSoundSource);
+        } else if (gPlayer1Controller->buttonPressed & B_BUTTON) {
             s32 i, found = -1;
             for (i = 0; i < MANSION_INV_SLOTS; i++) if (gMansion.inv[i].id == MI_RIBBON) { found = i; break; }
             if (found < 0) {
@@ -1211,7 +1358,47 @@ void bhv_mansion_itembox_loop(void) {
     }
 }
 
+/* ---- Tier 3: console, Luigi -------------------------------------------- */
+
+void bhv_mansion_console_loop(void) {
+    if (!obj_in_current_room()) return;
+    if (o->oDistanceToMario < 200.0f && gMansion.menu == MENU_NONE && gMansion.escape == 0) {
+        gMansion.nearPrompt = 3;
+        if ((gPlayer1Controller->buttonPressed & B_BUTTON) && gMansion.wantMenu == MENU_NONE) {
+            gMansion.escape = 1;
+            gMansion.escapeTime = 9000;      // 5:00 at 30 fps
+            if (gMansion.tyrant == 0) gMansion.tyrant = 1;
+            gMansion.files |= (1u << 9);
+            gMansion.wantMenu = MENU_FILES;
+            gMansion.fileSel = file_list_pos(9);
+            play_sound(SOUND_MENU_MESSAGE_APPEAR, gGlobalSoundSource);
+        }
+    }
+}
+
+void bhv_mansion_luigi_loop(void) {
+    struct MarioState *m = gMarioState;
+    if (!obj_in_current_room()) return;
+    o->oFaceAngleYaw = atan2s(m->pos[2] - o->oPosZ, m->pos[0] - o->oPosX);
+    if (o->oDistanceToMario < 210.0f && gMansion.menu == MENU_NONE) {
+        gMansion.nearPrompt = 4;
+        if ((gPlayer1Controller->buttonPressed & B_BUTTON) && gMansion.wantMenu == MENU_NONE) {
+            if (gMansion.tyrant == 2) {
+                gMansion.gate = 1;
+                mansion_message("Luigi: Go! The tunnel! I'm behind you.");
+                play_sound(SOUND_MENU_STAR_SOUND, gGlobalSoundSource);
+            } else if (gMansion.escape == 0) {
+                mansion_message("Luigi: Mario... the console. Burn it.");
+            } else {
+                mansion_message("Luigi: Kill it! I'll hold the door!");
+            }
+        }
+    }
+}
+
 /* ---- zombies ---------------------------------------------------------- */
+
+#define BOSS_FLAG(obj) (((obj)->oBehParams >> 8) & 1)
 
 static void zombie_moan(struct Object *z) {
     static u8 sMoanRot = 0;
@@ -1253,15 +1440,26 @@ void bhv_mansion_zombie_init(void) {
     o->oBuoyancy = 1.5f;
     cur_obj_scale(1.7f);
     cur_obj_init_animation(0);
+    if (BOSS_FLAG(o)) {
+        // Tyrant Bowser: custom static model, huge, sleeps in its capsule until the console is used
+        cur_obj_scale(0.7f);
+        o->oWallHitboxRadius = 110.0f;
+        o->oAction = 4;
+        gMansion.bossMax = (u8) o->oHealth;
+        gMansion.bossHp = (u8) o->oHealth;
+    }
 }
 
 void bhv_mansion_zombie_loop(void) {
     struct MarioState *m = gMarioState;
     f32 dist = o->oDistanceToMario;
+    s32 boss = BOSS_FLAG(o);
+    f32 biteDist = boss ? 210.0f : 115.0f;
 
     if (!obj_in_current_room()) return;
     if (gMansion.menu != MENU_NONE) return;
     if (o->oSubAction > 0) o->oSubAction--;   // bite / hit cooldown
+    if (boss && o->oAction != 4) gMansion.bossHp = (u8) MAX(0, o->oHealth);
 
     switch (o->oAction) {
         case 0: // lurk until Mario is near
@@ -1274,21 +1472,30 @@ void bhv_mansion_zombie_loop(void) {
             }
             break;
         case 1: // shamble toward Mario
-            cur_obj_rotate_yaw_toward(o->oAngleToMario, 0x120);
-            o->oForwardVel = 4.5f;
-            if ((o->oTimer % 105) == 60) zombie_moan(o);
-            if (dist < 115.0f && o->oSubAction == 0 && !(m->action & ACT_FLAG_INVULNERABLE) && m->invincTimer == 0) {
+            cur_obj_rotate_yaw_toward(o->oAngleToMario, boss ? 0x0B0 : 0x120);
+            o->oForwardVel = boss ? 8.0f : 4.5f;
+            if ((o->oTimer % (boss ? 80 : 105)) == 40) zombie_moan(o);
+            if (dist < biteDist && o->oSubAction == 0 && !(m->action & ACT_FLAG_INVULNERABLE) && m->invincTimer == 0) {
                 m->interactObj = o;
-                m->hurtCounter += 8;    // two wedges of health
+                m->hurtCounter += boss ? 14 : 8;    // two wedges of health (boss: three and a half)
                 m->faceAngle[1] = obj_angle_to_object(m->marioObj, o);
-                m->forwardVel = -14.0f;
+                m->forwardVel = boss ? -24.0f : -14.0f;
                 set_mario_action(m, ACT_BACKWARD_GROUND_KB, 0);
                 play_sound(SOUND_MARIO_ATTACKED, m->marioObj->header.gfx.cameraToObject);
                 play_sound(SOUND_OBJ2_PIRANHA_PLANT_BITE, o->header.gfx.cameraToObject);
-                o->oSubAction = 70;
+                o->oSubAction = boss ? 85 : 70;
                 o->oForwardVel = 0.0f;
             }
             if (o->oSubAction > 0 && o->oSubAction > 40) o->oForwardVel = 0.0f;
+            break;
+        case 4: // dormant (Tyrant waiting in the capsule)
+            o->oForwardVel = 0.0f;
+            if (gMansion.tyrant == 1) {
+                o->oAction = 1;
+                o->oSubAction = 40;
+                mansion_message("Tyrant Bowser breaks free!");
+                play_sound(SOUND_MEVIL_ZDEATH, o->header.gfx.cameraToObject);
+            }
             break;
         case 2: // staggered
             o->oForwardVel *= 0.85f;
@@ -1296,6 +1503,18 @@ void bhv_mansion_zombie_loop(void) {
             break;
         case 3: // dying
             o->oForwardVel = 0.0f;
+            if (boss) {
+                o->header.gfx.scale[1] *= 0.978f;
+                if (o->oTimer > 80) {
+                    gMansion.tyrant = 2;
+                    gMansion.bossHp = 0;
+                    uid_set(gMansion.killed, UID);
+                    mansion_message("Tyrant Bowser is down. Find Luigi!");
+                    obj_mark_for_deletion(o);
+                    return;
+                }
+                break;
+            }
             o->header.gfx.scale[1] *= 0.93f;
             if (o->oTimer > 36) {
                 uid_set(gMansion.killed, UID);
@@ -1306,7 +1525,7 @@ void bhv_mansion_zombie_loop(void) {
     }
 
     // Mario's punches and kicks
-    if (o->oAction != 3 && (m->action & ACT_FLAG_ATTACKING) && dist < 170.0f && o->oSubAction < 60) {
+    if (!boss && o->oAction != 3 && (m->action & ACT_FLAG_ATTACKING) && dist < 170.0f && o->oSubAction < 60) {
         s16 toZombie = obj_angle_to_object(m->marioObj, o);
         if (abs_angle_diff(toZombie, m->faceAngle[1]) < 0x3000 && o->oHealth > 0) {
             if (!(o->oInteractStatus & 0x1)) {
@@ -1333,13 +1552,13 @@ void bhv_mansion_zombie_loop(void) {
         f32 x = o->oPosX, y = o->oPosY, z = o->oPosZ;
         f32 d;
         struct Object *other;
-        f32_find_wall_collision(&x, &y, &z, 25.0f, 52.0f);
-        f32_find_wall_collision(&x, &y, &z, 50.0f, 52.0f);
+        f32_find_wall_collision(&x, &y, &z, boss ? 60.0f : 25.0f, 52.0f);
+        f32_find_wall_collision(&x, &y, &z, boss ? 120.0f : 50.0f, 52.0f);
         o->oPosX = x;
         o->oPosZ = z;
 
         other = cur_obj_find_nearest_object_with_behavior(bhvMansionZombie, &d);
-        if (other != NULL && d < 85.0f && d > 0.5f) {
+        if (other != NULL && !boss && d < 85.0f && d > 0.5f) {
             f32 push = (85.0f - d) * 0.5f;
             s16 away = obj_angle_to_object(other, o);
             o->oPosX += sins(away) * push;

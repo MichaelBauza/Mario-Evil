@@ -1,8 +1,9 @@
-"""Mario EVIL -- Tier 2 map: ground floor, west wing, east wing, courtyard, guardhouse, second floor."""
+"""Mario EVIL -- map: Tier 2 (mansion) + Tier 3 (fountain stairwell, cellar, Kamek's lab, escape tunnel, dock)."""
 
 ITEM_IDS = {'herb_g': 1, 'herb_r': 2, 'herb_b': 3, 'ribbon': 4, 'key': 5, 'gun': 6, 'ammo': 10}
 FILES = {1: "Peach's Letter", 2: "Toad Gardener's Diary", 3: "Researcher Toad's Letter",
-         4: "Kamek's Orders", 5: "Specimen 42 Report", 6: "Spore Containment Memo", 7: "Luigi's Journal"}
+         4: "Kamek's Orders", 5: "Specimen 42 Report", 6: "Spore Containment Memo", 7: "Luigi's Journal",
+         8: "Kamek's Lab Log", 9: "Self-Destruct Notice"}
 
 
 def cams_along_x(r, ya=0.86, inset=200, fov=52, front='N'):
@@ -83,7 +84,8 @@ ROOMS.append(kitchen)
 # ---- Courtyard (open sky) ---------------------------------------------------
 court = room('court', 'Courtyard', 1500, -2300, 6500, -1000, 900, floor='mans_grass', wall='mans_stone', panel='mans_stone',
              wainscot=0, sky=True, ambient=0.50,
-             boxes=[dict(x0=3800, z0=-1850, x1=4200, z1=-1450, y1=120, side='mans_marble', top='mans_marble')],
+             boxes=[dict(x0=3800, z0=-1850, x1=4200, z1=-1450, y1=120, side='mans_marble', top='mans_marble'),
+                   dict(x0=3880, z0=-1450, x1=4120, z1=-1370, y1=14, side='mans_wood', top='mans_door')],
              lights=[(2500, 400, -1650, 0.25, 900), (5500, 400, -1650, 0.25, 900)],
              objs=[dict(kind='zombie', pos=(3000, -1400), yaw=0xC000), dict(kind='zombie', pos=(4800, -1900), yaw=0x4000),
                    dict(kind='zombie', pos=(5600, -1300), yaw=0x8000),
@@ -151,6 +153,61 @@ bed = room('bed', 'Bedroom', -1800, 3600, 0, 4800, 700, floor='mans_floor', carp
 bed['cams'] = cams_along_x(bed, front='N')
 ROOMS.append(bed)
 
+# ======================= TIER 3: below the courtyard fountain =======================
+# ---- Fountain stairwell -------------------------------------------------------
+stair = room('stair', 'Fountain Stairwell', 4400, 100, 6000, 600, 600, floor='mans_stone', wainscot=300,
+             lights=[(4900, 450, 350, 0.40, 600), (5500, 450, 350, 0.40, 600)],
+             objs=[dict(kind='zombie', pos=(5300, 330), yaw=0xC000), dict(kind='herb_b', pos=(5000, 180))])
+stair['cams'] = cams_along_x(stair, ya=0.9, inset=120, fov=60, front='N')
+ROOMS.append(stair)
+
+# ---- Cellar (third save point) ----------------------------------------------------
+cellar = room('cellar', 'Cellar', 6300, 0, 7700, 1000, 700, floor='mans_stone', wainscot=300,
+              boxes=[dict(x0=7380, z0=40, x1=7660, z1=260, y1=100, side='mans_wood', top='mans_wood'),
+                     dict(x0=6392, z0=892, x1=6508, z1=958, y1=60, hidden=True)],
+              lights=[(7000, 520, 450, 0.80, 800)],
+              objs=[dict(kind='typewriter', pos=(7520, 150), y=100, yaw=0x8000), dict(kind='box', pos=(6450, 925), yaw=0x4000),
+                    dict(kind='ribbon', pos=(6500, 100)), dict(kind='ribbon', pos=(7600, 550)),
+                    dict(kind='ammo', pos=(7550, 880), amount=15), dict(kind='herb_g', pos=(6700, 880)),
+                    dict(kind='herb_r', pos=(7250, 880))])
+cellar['cams'] = [dict(pos=(7650, 600, 950), look=(6900, 60, 350), zone=(6300, 0, 7700, 1000), fov=58)]
+ROOMS.append(cellar)
+
+# ---- Kamek's Laboratory (boss) ----------------------------------------------------
+lab = room('lab', "Kamek's Laboratory", 5800, 1400, 7800, 3200, 900, floor='mans_stone', wall='mans_stone', panel='mans_marble',
+           wainscot=350, ambient=0.30,
+           boxes=[dict(x0=6000, z0=1800, x1=6400, z1=2000, y1=110, side='mans_marble', top='mans_marble'),
+                  dict(x0=7350, z0=2100, x1=7650, z1=2300, y1=110, side='mans_marble', top='mans_marble'),
+                  dict(x0=5880, z0=2300, x1=6080, z1=2600, y1=100, side='mans_marble', top='mans_marble'),
+                  dict(x0=5850, z0=1450, x1=5970, z1=1570, y1=880, side='mans_marble', top='mans_marble'),
+                  dict(x0=6560, z0=3040, x1=6680, z1=3160, y1=880, side='mans_marble', top='mans_marble'),
+                  dict(x0=7320, z0=3040, x1=7440, z1=3160, y1=880, side='mans_marble', top='mans_marble')],
+           lights=[(6800, 700, 2300, 0.55, 1500), (6000, 500, 2900, 0.30, 700), (7500, 500, 1700, 0.30, 700)],
+           objs=[dict(kind='file', file=8, pos=(6200, 1900), y=110),
+                 dict(kind='console', pos=(5980, 2450), y=100, yaw=0x4000),
+                 dict(kind='zombie', pos=(7000, 2950), yaw=0x8000, hp=30, boss=1),
+                 dict(kind='luigi', pos=(7560, 3000), yaw=0xA000),
+                 dict(kind='ammo', pos=(6000, 2900), amount=15), dict(kind='ammo', pos=(7600, 2550), amount=15),
+                 dict(kind='herb_r', pos=(6500, 2700)), dict(kind='herb_g', pos=(7300, 2700))])
+lab['cams'] = cams_along_x(lab, ya=0.8, inset=150, fov=55, front='N')
+ROOMS.append(lab)
+
+# ---- Escape tunnel ------------------------------------------------------------------
+tunnel = room('tunnel', 'Service Tunnel', 5400, 3600, 7000, 4100, 600, floor='mans_stone', wainscot=300, ambient=0.30,
+              lights=[(5800, 450, 3850, 0.45, 700), (6600, 450, 3850, 0.45, 700)],
+              objs=[dict(kind='zombie', pos=(6000, 3800), yaw=0x4000), dict(kind='zombie', pos=(6500, 3900), yaw=0xC000)])
+tunnel['cams'] = cams_along_x(tunnel, ya=0.9, inset=120, fov=60, front='S')
+ROOMS.append(tunnel)
+
+# ---- Escape dock (open sky) ---------------------------------------------------------
+dock = room('dock', 'Escape Dock', 3800, 3300, 5000, 4400, 900, floor='mans_stone', wall='mans_stone', panel='mans_stone',
+            wainscot=0, sky=True, ambient=0.55,
+            boxes=[dict(x0=3900, z0=3650, x1=4300, z1=4050, y1=60, side='mans_wood', top='mans_wood')],
+            lights=[(4300, 400, 3850, 0.35, 900)],
+            objs=[])
+dock['cams'] = [dict(pos=(4900, 700, 3400), look=(4100, 60, 3900), zone=(3800, 3300, 5000, 4400), fov=55)]
+ROOMS.append(dock)
+
 DOORS = [
     dict(id='hall_e',  room='hall',   wall='E', at=0,     to='dining_w'),
     dict(id='dining_w', room='dining', wall='W', at=0,     to='hall_e'),
@@ -178,6 +235,16 @@ DOORS = [
     dict(id='gal_w',   room='gal',   wall='W', at=2700,    to='corr2_e'),
     dict(id='corr2_s', room='corr2', wall='S', at=-800,    to='bed_n'),
     dict(id='bed_n',   room='bed',   wall='N', at=-800,    to='corr2_s'),
+    dict(id='court_hatch', room='court', virtual=(4000, -1440), n=(0, 1), to='stair_w'),
+    dict(id='stair_w', room='stair', wall='W', at=350,     to='court_hatch'),
+    dict(id='stair_e', room='stair', wall='E', at=350,     to='cellar_w'),
+    dict(id='cellar_w', room='cellar', wall='W', at=350,   to='stair_e'),
+    dict(id='cellar_s', room='cellar', wall='S', at=7000,  to='lab_n'),
+    dict(id='lab_n',   room='lab',   wall='N', at=7000,    to='cellar_s'),
+    dict(id='lab_s',   room='lab',   wall='S', at=6300,    to='tun_n', key=9),
+    dict(id='tun_n',   room='tunnel', wall='N', at=6300,   to='lab_s'),
+    dict(id='tun_w',   room='tunnel', wall='W', at=3850,   to='dock_e'),
+    dict(id='dock_e',  room='dock',  wall='E', at=3850,    to='tun_w'),
 ]
 
 START = (-2800, 0, 0xC000)   # (x, z, yaw): inside the hall facing west

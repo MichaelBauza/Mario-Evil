@@ -20,6 +20,12 @@ for r in ROOMS:
         if o.get('y', 0) == 0 and o['kind'] != 'box' and in_box(r, x, z, 60): print('OBJ IN PROP', r['id'], o); bad += 1
 by = {d['id']: d for d in DOORS}
 for d in DOORS:
+    if 'virtual' in d:
+        r = R[d['room']]; cx, cz = d['virtual']; n = d['n']
+        sx, sz = cx+n[0]*210, cz+n[1]*210
+        if in_box(r, sx, sz, 90): print('ARRIVAL IN PROP', d['id']); bad += 1
+        if d['to'] not in by or by[d['to']]['to'] != d['id']: print('UNPAIRED', d['id']); bad += 1
+        continue
     r = R[d['room']]; w = d['wall']; at = d['at']
     if w in 'NS':
         lo, hi = r['x0'], r['x1']; n = (0, 1 if w == 'N' else -1); cx, cz = at, (r['z0'] if w == 'N' else r['z1'])
@@ -33,6 +39,6 @@ for d in DOORS:
         if (ox-sx)**2 + (oz-sz)**2 < 200**2: print('ITEM NEAR ARRIVAL', d['id'], o['kind']); bad += 1
     if d['to'] not in by or by[d['to']]['to'] != d['id']: print('UNPAIRED', d['id']); bad += 1
     for e in DOORS:
-        if e is not d and e['room'] == d['room'] and e['wall'] == w and abs(e['at']-at) < 500: print('DOORS CLOSE', d['id'], e['id']); bad += 1
+        if e is not d and 'wall' in e and e['room'] == d['room'] and e['wall'] == w and abs(e['at']-at) < 500: print('DOORS CLOSE', d['id'], e['id']); bad += 1
 print('map problems:', bad)
 sys.exit(1 if bad else 0)

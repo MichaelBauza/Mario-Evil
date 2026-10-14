@@ -281,6 +281,80 @@ def pistol_held():
         out.tris.append((tx(p0), tx(p1), tx(p2), apply(R, n0), apply(R, n1), apply(R, n2), c))
     return out
 
+
+def console():
+    """Wall-less lab console: slanted screen with a red warning display; keys face +z."""
+    m = Mesh()
+    m.box((0, 40, 0), (110, 80, 60), (70, 74, 84))
+    m.box((0, 85, -6), (104, 14, 40), (50, 54, 64), rot(pitch=-25))
+    m.box((0, 108, -14), (96, 52, 8), (24, 26, 32), rot(pitch=-12))
+    m.box((0, 108, -9.5), (80, 38, 2), (200, 40, 40), rot(pitch=-12))
+    for k in range(5):
+        m.box((-36 + k*18, 78, 14), (8, 4, 8), (230, 200, 70) if k % 2 else (200, 60, 60))
+    return m
+
+def luigi():
+    m = Mesh()
+    SK = (236, 190, 150); GRN = (50, 160, 60); OVR = (60, 90, 200)
+    for sx in (-1, 1):
+        m.box((sx*20, 32, 0), (28, 64, 30), OVR)                     # legs
+        m.box((sx*20, 4, 10), (30, 10, 46), (90, 54, 34))            # shoes
+        m.box((sx*47, 90, 0), (20, 56, 22), GRN)                      # arms
+        m.box((sx*47, 56, 0), (20, 14, 22), (240, 240, 240))          # gloves
+    m.box((0, 70, 0), (68, 40, 40), OVR)
+    m.box((0, 104, 0), (70, 36, 40), GRN)
+    m.box((0, 78, 21), (24, 24, 3), (232, 200, 70))                  # buttons plate
+    m.box((0, 142, 0), (52, 46, 48), SK)                             # head
+    m.box((0, 136, 28), (16, 14, 14), SK)                            # nose
+    m.box((0, 126, 25), (40, 8, 8), (70, 44, 28))                    # moustache
+    m.box((-12, 148, 25), (8, 8, 3), (30, 30, 40)); m.box((12, 148, 25), (8, 8, 3), (30, 30, 40))
+    m.box((0, 168, -2), (58, 14, 54), GRN)                            # cap
+    m.box((0, 162, 30), (56, 6, 26), GRN)                             # brim
+    m.box((-6, 108, 21), (30, 14, 3), (120, 30, 30))                  # bandage
+    return m
+
+def tyrant():
+    """Tyrant Bowser: hulking spore-mutated Bowser, facing +z.  ~520 tall."""
+    m = Mesh()
+    SK = (92, 70, 120); SKD = (60, 44, 84); BELLY = (170, 150, 110); SHELL = (40, 36, 42)
+    SPIKE = (200, 190, 170); RED = (230, 30, 30); PURP = (150, 60, 190)
+    for sx in (-1, 1):
+        m.box((sx*85, 22, 25), (96, 44, 130), SKD)                    # feet
+        for k in (-1, 0, 1):
+            m.cyl((sx*85 + k*30, 22, 98), 9, 36, SPIKE, n=5, r_top=0.5, R=rot(pitch=90))   # claws
+        m.box((sx*85, 125, 0), (84, 160, 84), SK)                     # legs
+    m.box((0, 255, 0), (260, 110, 170), SK)                           # hips / waist
+    m.box((0, 250, 88), (190, 90, 14), BELLY)                         # belly
+    m.box((0, 385, 0), (330, 170, 190), SK)                           # chest
+    m.box((0, 380, 98), (230, 110, 12), BELLY)
+    for sx in (-1, 1):
+        m.box((sx*215, 380, 25), (84, 200, 90), SK, rot(roll=sx*10))  # arms
+        m.box((sx*232, 270, 55), (84, 70, 84), SKD, rot(roll=sx*6))   # forearm
+        for k in (-1, 0, 1):
+            m.cyl((sx*232 + k*26, 235, 100), 10, 50, SPIKE, n=5, r_top=0.5, R=rot(pitch=90))
+        for k in range(2):
+            m.cyl((sx*(165 + k*32), 475 + k*8, 0), 24, 80, SPIKE, n=6, r_top=0.5, R=rot(roll=-sx*20))  # shoulder spikes
+    # head
+    m.box((0, 520, 50), (170, 120, 170), SK)
+    m.box((0, 492, 150), (130, 56, 90), SKD)                          # snout
+    for k in range(-2, 3):
+        m.cyl((k*24, 462, 190), 7, 26, SPIKE, n=4, r_top=0.5, R=rot(pitch=180))   # lower teeth point up
+    for sx in (-1, 1):
+        m.box((sx*42, 545, 132), (32, 18, 12), RED)                   # glowing eyes
+        m.cyl((sx*70, 600, 20), 20, 130, SPIKE, n=6, r_top=0.5, R=rot(roll=-sx*18))   # horns
+    m.cyl((0, 620, 10), 40, 20, (200, 40, 40), n=8, r_top=8)           # hair crest
+    # spore growth on the shoulder / back
+    m.cyl((120, 520, -40), 12, 60, (190, 180, 150), n=6)
+    m.cyl((120, 560, -40), 60, 34, PURP, n=10, r_top=14)
+    m.cyl((-100, 420, -110), 10, 40, (190, 180, 150), n=6)
+    m.cyl((-100, 448, -110), 40, 24, PURP, n=10, r_top=10)
+    # shell
+    m.box((0, 395, -125), (300, 220, 70), SHELL)
+    for ix in (-1, 0, 1):
+        for iy in (0, 1):
+            m.cyl((ix*95, 345 + iy*105, -190), 34, 85, SPIKE, n=6, r_top=0.5, R=rot(pitch=-90))
+    return m
+
 MODELS = {
     'item_herb_g': lambda: herb(None),
     'item_herb_r': lambda: herb('r'),
@@ -295,6 +369,9 @@ MODELS = {
     'item_gun': pistol,
     'item_ammo': ammo_box,
     'held_gun': pistol_held,
+    'item_console': console,
+    'item_luigi': luigi,
+    'boss_tyrant': tyrant,
 }
 
 def _sb(v):

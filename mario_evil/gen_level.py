@@ -27,13 +27,13 @@ TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil',
             'mans_door', 'mans_wood', 'mans_marble', 'mans_grass',
             'mans_door_k1', 'mans_door_k2', 'mans_door_k3']
 ICONS = ['item_herb_g', 'item_herb_r', 'item_herb_b', 'item_key', 'item_ribbon', 'item_file',
-         'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo', 'held_gun']   # 3D models (models.py)
+         'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo', 'held_gun', 'item_console', 'item_luigi', 'boss_tyrant']   # 3D models (models.py)
 
 def door_emblem(d):
     """Key id whose emblem is painted on this door: its own key, or the key of the door it connects to."""
-    if d.get('key'): return d['key']
+    if d.get('key'): return d['key'] if d['key'] < 8 else 0   # keys 8+ are story locks, no emblem
     for o in DOORS:
-        if o['id'] == d['to'] and o.get('key'): return o['key']
+        if o['id'] == d['to'] and o.get('key'): return o['key'] if o['key'] < 8 else 0
     return 0
 
 def door_tex(d):
@@ -146,7 +146,7 @@ def build_room(room):
         g.visible = True
     # doors (drawn proud of the wall; wall collision already blocks)
     for d in DOORS:
-        if d['room'] != room['id']: continue
+        if d['room'] != room['id'] or 'virtual' in d: continue
         O, A, n = wall_of(room, d['wall'])
         al = norm(A)
         c = add(O, mul(al, d['at'] - (O[0] if abs(al[0]) > .5 else O[2])))
@@ -336,10 +336,13 @@ def emit_all():
     dt.append('};\n\nconst struct MansionDoor gMansionDoors[MANSION_NUM_DOORS] = {\n')
     for d in DOORS:
         r = ROOMS[roomidx[d['room']]]
-        O, A, n = wall_of(r, d['wall'])
-        al = norm(A)
-        cx = O[0] + (al[0] * (d['at'] - O[0]) if abs(al[0]) > .5 else 0)
-        cz = O[2] + (al[2] * (d['at'] - O[2]) if abs(al[2]) > .5 else 0)
+        if 'virtual' in d:
+            cx, cz = d['virtual']; n = (d['n'][0], 0, d['n'][1])
+        else:
+            O, A, n = wall_of(r, d['wall'])
+            al = norm(A)
+            cx = O[0] + (al[0] * (d['at'] - O[0]) if abs(al[0]) > .5 else 0)
+            cz = O[2] + (al[2] * (d['at'] - O[2]) if abs(al[2]) > .5 else 0)
         sx, sz = cx + n[0]*210, cz + n[2]*210
         yaw = int(round(math.atan2(n[0], n[2]) / (2*math.pi) * 65536)) & 0xFFFF
         dest = didx[d['to']]
@@ -376,7 +379,10 @@ def emit_all():
             elif kind == 'box':
                 objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionItemBox),\n' % (models['item_box'], x, y + 10, z, yaw * 360 // 65536))
             elif kind == 'zombie':
-                objs.append('    OBJECT(/*model*/ MODEL_GOOMBA, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionZombie),\n' % (x, y, z, yaw * 360 // 65536, (o.get('hp', 3) << 24) | nuid()))
+                mdl = models['boss_tyrant'] if o.get('boss') else 'MODEL_GOOMBA'
+                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionZombie),\n' % (mdl, x, y, z, yaw * 360 // 65536, (o.get('hp', 3) << 24) | (o.get('boss', 0) << 8) | nuid()))
+            elif kind in ('console', 'luigi'):
+                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ %s),\n' % (models['item_' + kind], x, y + 10, z, yaw * 360 // 65536, 'bhvMansionConsole' if kind == 'console' else 'bhvMansionLuigi'))
             else:
                 raise SystemExit('unknown object kind ' + kind)
     sx, sz, syaw = START
