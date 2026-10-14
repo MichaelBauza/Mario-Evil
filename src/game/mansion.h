@@ -83,6 +83,12 @@ struct MansionState {
     u8  bossHp, bossMax;
     u16 escapeTime;     // frames left on the self-destruct countdown
     s16 endTimer;       // >0 while the ending plays
+    // cinematics (mansion_cine.c)
+    u8  cine;           // 0 none, otherwise cinematic index + 1
+    u8  cineStep;
+    s16 cineT;          // frames into the current step
+    u16 cineChars;      // dialogue characters revealed so far
+    u32 cineSeen;       // bit per cinematic that has already played this session
 };
 
 extern struct MansionState gMansion;
@@ -118,6 +124,7 @@ void bhv_mansion_itembox_loop(void);
 void bhv_mansion_console_loop(void);
 void bhv_mansion_luigi_loop(void);
 void bhv_mansion_prop_loop(void);
+void bhv_mansion_actor_loop(void);
 void bhv_mansion_heldgun_loop(void);
 void bhv_mansion_zombie_init(void);
 void bhv_mansion_zombie_loop(void);

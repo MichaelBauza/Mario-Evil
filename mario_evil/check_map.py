@@ -15,10 +15,10 @@ def in_box(r, x, z, m):
     return any(p['x0']-m < x < p['x1']+m and p['z0']-m < z < p['z1']+m for p in r.get('boxes', []))
 for r in ROOMS:
     for o in r.get('objs', []):
-        if o['kind'] == 'prop': continue
+        if o['kind'] in ('prop', 'actor'): continue
         x, z = o['pos']
         if not (r['x0']+60 < x < r['x1']-60 and r['z0']+60 < z < r['z1']-60): print('OBJ OUT', r['id'], o); bad += 1
-        if o['kind'] == 'prop': continue
+        if o['kind'] in ('prop', 'actor'): continue
         if o.get('y', 0) == 0 and o['kind'] != 'box' and in_box(r, x, z, 60): print('OBJ IN PROP', r['id'], o); bad += 1
 by = {d['id']: d for d in DOORS}
 for d in DOORS:
@@ -37,7 +37,7 @@ for d in DOORS:
     sx, sz = cx+n[0]*210, cz+n[1]*210
     if in_box(r, sx, sz, 90): print('ARRIVAL IN PROP', d['id']); bad += 1
     for o in r.get('objs', []):
-        if o['kind'] == 'prop': continue
+        if o['kind'] in ('prop', 'actor'): continue
         ox, oz = o['pos']
         if (ox-sx)**2 + (oz-sz)**2 < 200**2: print('ITEM NEAR ARRIVAL', d['id'], o['kind']); bad += 1
     if d['to'] not in by or by[d['to']]['to'] != d['id']: print('UNPAIRED', d['id']); bad += 1

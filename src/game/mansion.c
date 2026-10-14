@@ -21,6 +21,7 @@
 #include "puppyprint.h"
 #include "object_fields.h"
 #include "mansion.h"
+#include "mansion_cine.h"
 
 /* ------------------------------------------------------------------------ */
 /* data                                                                     */
@@ -256,6 +257,7 @@ static void snapshot_load(void) {
 extern f32 gMusicVolumeTrim;
 
 s32 lvl_mansion_init(UNUSED s16 arg, UNUSED s32 unused) {
+    gMansion.cine = 0;          // a cinematic never carries over into a reloaded level
     gMusicVolumeTrim = 0.35f;   // keep the music quiet so the sound effects carry the dread
     // Items/enemies collected before the last typewriter save stay gone; anything after it is restored.
     if (gMansion.hasSave) {
@@ -303,6 +305,7 @@ void mansion_camera(struct Camera *c) {
     s32 i, pick = 0;
     s32 fresh = (gMansion.camIdx < 0 || gMansion.camRoom != gMansion.room || gMansion.camIdx >= r->camCount);
 
+    if (mansion_cine_camera(c)) return;         // a cinematic is driving the camera
     if (gMansion.camCooldown > 0) gMansion.camCooldown--;
 
     // Which zone is Mario in?
@@ -544,6 +547,11 @@ void mansion_pre_update(void) {
     if (gMansion.msgTimer > 0) gMansion.msgTimer--;
     if (gMansion.flash > 0) gMansion.flash--;
     gMansion.nearPrompt = 0;
+    if (gMansion.cine) {                        // cinematic: Mario is locked, the script drives everything
+        mansion_cine_pre();
+        zero_player_input();
+        return;
+    }
 
     if (gMansion.endTimer > 0) {
         // ending: the last page waits for START / A, then the game resets to the main menu
@@ -763,6 +771,7 @@ void mansion_post_update(void) {
     s32 r = find_room(m->pos[0], m->pos[2]);
     if (r >= 0 && gMansion.doorState == 0) { gMansion.room = r; gMansion.visited |= 1u << r; }
     update_doors();
+    mansion_cine_check();
     mansion_footsteps(m);
     if (gMansion.escape == 1 && gMansion.endTimer == 0) {
         if (gMansion.escapeTime > 0) gMansion.escapeTime--;
@@ -798,7 +807,7 @@ void mansion_post_update(void) {
 }
 
 s32 mansion_wants_pause(void) {
-    if (gMansion.doorState != 0 || gMansion.endTimer > 0) return FALSE;
+    if (gMansion.doorState != 0 || gMansion.endTimer > 0 || gMansion.cine) return FALSE;
     if (gMansion.wantMenu != MENU_NONE) return TRUE;
     return (gPlayer1Controller->buttonPressed & START_BUTTON) != 0;
 }
@@ -1344,6 +1353,7 @@ void mansion_render_hud(void) {
         print_small_text(SAFE_R, SCREEN_HEIGHT - 32, ab, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL, 1);
         if (gMansion.aiming) print_small_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 32, "A: Fire", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
     }
+    mansion_cine_render();
     if (gMansion.flash > 0) draw_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 255, 240, 200, 50);
     if (gMansion.fade > 0) draw_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, gMansion.fade);
 }
@@ -1482,6 +1492,11 @@ void bhv_mansion_console_loop(void) {
 
 // Set dressing (fountain, chandeliers, vines...): drawn only while Mario is in the room it stands in.
 void bhv_mansion_prop_loop(void) {
+    obj_in_current_room();
+}
+
+/* Cinematic actor: a prop that the cinematic script can move and turn. Hides itself outside its room. */
+void bhv_mansion_actor_loop(void) {
     obj_in_current_room();
 }
 

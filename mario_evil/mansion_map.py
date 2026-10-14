@@ -273,6 +273,11 @@ add('dining', on_wall('dining', 'N', 600, 'vine'), pot(-800, -600),
     *[dict(kind='prop', model='chair', pos=(x, -290), y=0, yaw=0) for x in (-300, 0, 300)],
     *[dict(kind='prop', model='chair', pos=(x, 290), y=0, yaw=0x8000) for x in (-300, 0, 300)])
 dining['boxes'][0]['hidden'] = True                  # collision only; the table model is drawn instead
+# collision for the chairs (seat + high back) and the fireplace; the models are drawn on top
+for (cx, cz, back) in [(-300, -290, -1), (0, -290, -1), (300, -290, -1), (-300, 290, 1), (0, 290, 1), (300, 290, 1)]:
+    dining['boxes'].append(dict(x0=cx - 65, z0=cz - 60, x1=cx + 65, z1=cz + 60, y1=95, side='mans_wood', top='mans_wood', hidden=True))
+    dining['boxes'].append(dict(x0=cx - 65, z0=cz + back * 52 - 7, x1=cx + 65, z1=cz + back * 52 + 7, y1=260, side='mans_wood', top='mans_wood', hidden=True))
+dining['boxes'].append(dict(x0=-230, z0=626, x1=230, z1=776, y1=300, side='mans_stone', top='mans_stone', hidden=True))   # fireplace
 RM['dining'].setdefault('lights', []).append((0, 170, 546, 0.60, 650, (1.00, 0.70, 0.36)))   # fireplace glow
 add('corr_n', lamp_on('corr_n', 'S', -400, 380), on_wall('corr_n', 'N', 300, 'vine'))
 portrait('corr_n', 'S', 700, 3, y=300)
