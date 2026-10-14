@@ -119,14 +119,6 @@ const GeoLayout mansion_geo_item_luigi[] = {
    GEO_END(),
 };
 
-const GeoLayout mansion_geo_boss_tyrant[] = {
-   GEO_NODE_START(),
-   GEO_OPEN_NODE(),
-      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_boss_tyrant),
-   GEO_CLOSE_NODE(),
-   GEO_END(),
-};
-
 const GeoLayout mansion_geo_prop_fountain[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),

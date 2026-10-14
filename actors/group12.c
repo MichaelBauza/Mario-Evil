@@ -21,6 +21,11 @@ UNUSED static const u64 binid_2 = 2;
 #include "bowser/flames_data.inc.c"
 UNUSED static const u64 binid_3 = 3;
 
+#include "mario_evil/gen_actors/mv_toad/model.inc.c"
+#include "mario_evil/gen_actors/mv_toad/anims/data.inc.c"
+#include "mario_evil/gen_actors/mv_toad/anims/table.inc.c"
+UNUSED static const u64 binid_mvtoad = 100;
+
 #include "bomb/model.inc.c"
 UNUSED static const u64 binid_4 = 4;
 

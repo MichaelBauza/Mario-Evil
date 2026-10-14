@@ -29,7 +29,7 @@ TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil',
             'mans_door_k1', 'mans_door_k2', 'mans_door_k3',
             'mans_brick', 'mans_cobble', 'mans_rail', 'mans_gate', 'mans_portrait1', 'mans_portrait2', 'mans_portrait3']
 ICONS = ['item_herb_g', 'item_herb_r', 'item_herb_b', 'item_key', 'item_ribbon', 'item_file',
-         'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo', 'held_gun', 'item_console', 'item_luigi', 'boss_tyrant',
+         'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo', 'held_gun', 'item_console', 'item_luigi',
          'prop_fountain', 'prop_chandelier', 'prop_lamp', 'prop_pot', 'prop_clock', 'prop_stairs', 'prop_vine', 'prop_table', 'prop_chair', 'prop_fireplace']   # 3D models (models.py)
 
 def door_emblem(d):
@@ -400,7 +400,7 @@ def emit_all():
             elif kind == 'box':
                 objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionItemBox),\n' % (models['item_box'], x, y + 10, z, yaw * 360 // 65536))
             elif kind == 'zombie':
-                mdl = models['boss_tyrant'] if o.get('boss') else 'MODEL_GOOMBA'
+                mdl = 'MODEL_BOWSER' if o.get('boss') else 'MODEL_GOOMBA'
                 objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionZombie),\n' % (mdl, x, y, z, yaw * 360 // 65536, (o.get('hp', 3) << 24) | (o.get('boss', 0) << 8) | nuid()))
             elif kind == 'prop':
                 objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionProp),\n' % (models['prop_' + o['model']], x, y, z, yaw * 360 // 65536))

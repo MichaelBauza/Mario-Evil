@@ -603,7 +603,6 @@ MODELS = {
     'held_gun': pistol_held,
     'item_console': console,
     'item_luigi': luigi,
-    'boss_tyrant': tyrant,
     'prop_fountain': fountain,
     'prop_chandelier': chandelier,
     'prop_lamp': lamp,

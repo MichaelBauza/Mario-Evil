@@ -11,5 +11,7 @@
 #include "impact_ring/geo.inc.c"
 #include "yellow_sphere/geo.inc.c"
 #include "bowser/geo.inc.c"
+#include "mario_evil/gen_actors/mv_toad/mv_toad.h"
+#include "mario_evil/gen_actors/mv_toad/geo.inc.c"
 #include "bomb/geo.inc.c"
 #include "impact_smoke/geo.inc.c"

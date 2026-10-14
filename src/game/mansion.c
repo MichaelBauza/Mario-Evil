@@ -22,7 +22,8 @@
 #include "object_fields.h"
 #include "mansion.h"
 #include "mansion_cine.h"
-#include "actors/group15.h"
+#include "actors/group12.h"
+#include "mario_evil/gen_actors/mv_toad/mv_toad.h"
 
 /* ------------------------------------------------------------------------ */
 /* data                                                                     */
@@ -1512,7 +1513,7 @@ void bhv_mansion_actor_loop(void) {
     if (!obj_in_current_room()) return;
     if ((o->oBehParams & 0xFF) == 1) {           // actor 1 = the Toad (the real SM64 model + animations)
         if (o->oAnimations == NULL) {
-            o->oAnimations = (struct Animation **) toad_seg6_anims_0600FB58;
+            o->oAnimations = (struct Animation **) mvtoad_seg6_anims_0600FB58;
             cur_obj_init_animation(TOAD_ANIM_WEST_STANDING);
             o->oOpacity = 255;     // toad_geo's transparency ASM reads oOpacity: 0 would make him invisible
         }
@@ -1566,7 +1567,7 @@ static void mansion_footsteps(struct MarioState *m) {
         sStride += speed;
         if (sStride >= need) {
             sStride -= need;
-            play_sound(sFoot ? SOUND_MEVIL_STEP2 : SOUND_MEVIL_STEP1, gGlobalSoundSource);
+            play_sound(sFoot ? SOUND_OBJ_BOWSER_WALK : SOUND_MEVIL_STEP1, gGlobalSoundSource);   // one heavy Tyrant-style thud per stride
             sFoot ^= 1;
         }
     } else {
@@ -1588,10 +1589,13 @@ void bhv_mansion_zombie_init(void) {
     cur_obj_scale(1.7f);
     cur_obj_init_animation(0);
     if (BOSS_FLAG(o)) {
-        // Tyrant Bowser: custom static model, huge, sleeps in its capsule until the console is used
-        cur_obj_scale(0.7f);
+        // Tyrant Bowser: the real SM64 Bowser model, sleeps in its capsule until the console is used
+        cur_obj_scale(1.3f);
         o->oWallHitboxRadius = 110.0f;
         o->oAction = 4;
+        o->oOpacity = 255;      // bowser_geo's coloring ASM reads oOpacity: 0 would make him invisible
+        o->oAnimations = (struct Animation **) bowser_seg6_anims_06057690;
+        cur_obj_init_animation(BOWSER_ANIM_IDLE);
         gMansion.bossMax = (u8) o->oHealth;
         gMansion.bossHp = (u8) o->oHealth;
     }
@@ -1642,6 +1646,7 @@ void bhv_mansion_zombie_loop(void) {
                 o->oSubAction = 40;
                 mansion_message("Tyrant Bowser breaks free!");
                 play_sound(SOUND_MEVIL_ZDEATH, o->header.gfx.cameraToObject);
+                if (boss) cur_obj_init_animation(BOWSER_ANIM_SLOW_GAIT);
             }
             break;
         case 2: // staggered
@@ -1651,6 +1656,7 @@ void bhv_mansion_zombie_loop(void) {
         case 3: // dying
             o->oForwardVel = 0.0f;
             if (boss) {
+                if (o->oTimer == 0) cur_obj_init_animation(BOWSER_ANIM_BROKEN);
                 o->header.gfx.scale[1] *= 0.978f;
                 if (o->oTimer > 80) {
                     gMansion.tyrant = 2;
