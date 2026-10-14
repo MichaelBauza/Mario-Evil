@@ -298,8 +298,37 @@ def desk_at(rid, box_index, yaw=0):
 add('save', lamp_on('save', 'E', -3000, 380), on_wall('save', 'N', 3700, 'vine'))
 desk_at('save', 0)                                    # typewriter desk
 add('corr_w', lamp_on('corr_w', 'N', -6500, 380), on_wall('corr_w', 'S', -7200, 'vine'))
-add('kitchen', lamp_on('kitchen', 'S', 2800, 380), on_wall('kitchen', 'N', 3200, 'vine'), pot(3300, 650), pot(1750, -700, 0x6000))
-desk_at('kitchen', 0)                                 # counter
+add('kitchen', lamp_on('kitchen', 'S', 2800, 380), on_wall('kitchen', 'N', 3200, 'vine'), pot(3300, 560))
+desk_at('kitchen', 0)                                 # dining table
+RM['kitchen']['boxes'][0].update(x0=2330, z0=-110, x1=2670, z1=110)   # collision matches the desk model
+
+# ---- kitchen dressing (reference art): brick walls, appliances along the south wall, giant mushrooms, rug, chairs ----
+RM['kitchen'].update(wall='mans_brick', panel='mans_brick', wainscot=0, carpets=[(2020, -340, 2980, 340)])
+def kbox(x0, x1, y1, z0=668, z1=800):
+    RM['kitchen']['boxes'].append(dict(x0=x0, z0=z0, x1=x1, z1=z1, y1=y1, side='mans_wood', top='mans_wood', hidden=True))
+# (fridge, stove, counter, sink-counter) run left to right along the south wall; models project -z into the room
+for (x, mdl, w, h) in ((1755, 'fridge', 150, 330), (1935, 'stove', 190, 100), (2290, 'counter', 500, 100), (2800, 'sink', 500, 100)):
+    add('kitchen', on_wall('kitchen', 'S', x, mdl, inset=2))
+    kbox(x - w // 2, x + w // 2, h)
+# cookware and little mushrooms on the worktops (y = worktop height)
+add('kitchen',
+    dict(kind='prop', model='kpot', pos=(1935, 750), y=100, yaw=0x1000), dict(kind='prop', model='kpot', pos=(2180, 740), y=100, yaw=0),
+    dict(kind='prop', model='kpot', pos=(2950, 745), y=100, yaw=0x3000),
+    dict(kind='prop', model='cup', pos=(2600, 730), y=100, yaw=0), dict(kind='prop', model='cup', pos=(2660, 750), y=100, yaw=0x2000),
+    dict(kind='prop', model='mushroom', pos=(2420, 740), y=100, yaw=0x2000), dict(kind='prop', model='mushroom', pos=(2700, 730), y=100, yaw=0x6000),
+    # giant mushrooms in the two north corners
+    dict(kind='prop', model='mushroom_big', pos=(3270, -660), y=0, yaw=0x1000), dict(kind='prop', model='mushroom_big', pos=(1730, -670), y=0, yaw=0x5000),
+    # chairs around the table (same convention as the dining room: chair faces +z, back rail on its -z side)
+    *[dict(kind='prop', model='chair', pos=(x, -170), y=0, yaw=0) for x in (2420, 2580)],
+    *[dict(kind='prop', model='chair', pos=(x, 170), y=0, yaw=0x8000) for x in (2420, 2580)])
+for (cx, cz, back) in [(2420, -170, -1), (2580, -170, -1), (2420, 170, 1), (2580, 170, 1)]:
+    kbox(cx - 65, cx + 65, 95, cz - 60, cz + 60)
+    kbox(cx - 65, cx + 65, 260, cz + back * 52 - 7, cz + back * 52 + 7)
+for (cx, cz) in ((3270, -660), (1730, -670)):
+    kbox(cx - 35, cx + 35, 400, cz - 35, cz + 35)    # giant mushroom stalks (collision only)
+# CAUTION signs above the counters and on the side walls
+for (wall, at) in (('S', 2300), ('E', -250), ('N', 1900)):
+    RM['kitchen'].setdefault('decor', []).append(dict(tex='mans_caution', wall=wall, at=at, w=100, h=130, y0=330))
 add('guard', lamp_on('guard', 'N', 7300, 360), on_wall('guard', 'S', 7600, 'vine'))
 desk_at('guard', 0)                                   # typewriter desk
 chand('lib', -7000, 1700); portrait('lib', 'N', -6600, 1, y=360); portrait('lib', 'S', -7300, 2, y=360)

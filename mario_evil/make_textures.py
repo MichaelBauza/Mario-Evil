@@ -292,5 +292,14 @@ user_floor('tex_courtyard_brick.jpg', 'mans_brick', periods=3)      # courtyard 
 # framed oil paintings hung on room walls: the whole square canvas, squashed to 32x32 like the other textures
 for _pname in ('bowser', 'drybones', 'mushroom', 'goomba', 'peach'):
     user_floor('tex_paint_%s.jpg' % _pname, 'mans_paint_%s' % _pname, periods=6)
+# yellow CAUTION sign with the user's mushroom painting in the middle (kitchen walls)
+_im = new((226, 186, 44, 255)); _d = ImageDraw.Draw(_im)
+_d.rectangle([0, 0, 31, 31], outline=(20, 18, 14, 255)); _d.rectangle([1, 1, 30, 30], outline=(20, 18, 14, 255))
+_d.rectangle([3, 3, 28, 8], fill=(20, 18, 14, 255))
+for _x in range(5, 27, 4): _d.line([_x, 5, _x + 1, 5], fill=(226, 186, 44, 255))      # "text" dashes on the header band
+_m = Image.open(os.path.join(HERE, 'tex_paint_mushroom.jpg')).convert('RGBA').resize((17, 17), Image.LANCZOS)
+_im.paste(_m, (7, 10)); _d.rectangle([6, 9, 24, 27], outline=(20, 18, 14, 255))
+_d.line([4, 29, 27, 29], fill=(20, 18, 14, 255))
+noise(_im, 6, 31); save(_im, 'mans_caution')
 
 print('textures written')

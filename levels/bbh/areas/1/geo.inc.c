@@ -207,6 +207,70 @@ const GeoLayout mansion_geo_prop_fireplace[] = {
    GEO_END(),
 };
 
+const GeoLayout mansion_geo_prop_fridge[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_fridge),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_stove[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_stove),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_counter[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_counter),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_sink[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_sink),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_kpot[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_kpot),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_cup[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_cup),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_mushroom[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_mushroom),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_mushroom_big[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_mushroom_big),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
 const GeoLayout mansion_geo_area[] = {
    GEO_NODE_SCREEN_AREA(10, SCREEN_CENTER_X, SCREEN_CENTER_Y, SCREEN_CENTER_X, SCREEN_CENTER_Y),
    GEO_OPEN_NODE(),

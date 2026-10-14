@@ -536,6 +536,86 @@ def desk():
     m.box((70, 68, 104), (24, 10, 4), BRASS)                        # drawer pull
     return m
 
+# ---- kitchen set (origin = floor centre of the BACK face; each piece projects +z, like the fireplace) ----
+ENAMEL = (190, 182, 156); ENAMEL_D = (118, 112, 96); SLAB = (176, 166, 138); POTRUST = (112, 66, 40)
+SHROOM_CAP = (166, 38, 38); SHROOM_STEM = (214, 200, 164); SHROOM_SPOT = (232, 226, 210)
+
+def fridge():
+    """Grimy two-door fridge, 150 wide x 130 deep x 330 tall."""
+    m = Mesh()
+    m.box((0, 165, 65), (150, 330, 130), ENAMEL)
+    m.box((0, 215, 131), (150, 4, 4), ENAMEL_D)                    # door seam
+    m.box((-56, 262, 137), (6, 62, 8), METAL_D); m.box((-56, 168, 137), (6, 72, 8), METAL_D)   # handles
+    m.box((10, 36, 131), (96, 56, 2), ENAMEL_D)                    # grime smear
+    m.box((0, 332, 65), (150, 4, 130), ENAMEL_D)
+    return m
+
+def stove():
+    """Four-burner stove with oven, 190 wide x 130 deep x 90 tall (+ raised back)."""
+    m = Mesh()
+    m.box((0, 45, 65), (190, 90, 130), ENAMEL)
+    m.box((0, 92, 65), (194, 6, 134), ENAMEL_D)                    # cooktop
+    m.box((0, 130, 6), (190, 80, 12), ENAMEL)                      # back panel
+    for (x, z) in ((-46, 42), (46, 42), (-46, 96), (46, 96)):
+        m.cyl((x, 97, z), 24, 4, METAL_D, n=10)                    # burners
+    for x in (-60, -20, 20, 60):
+        m.cyl((x, 74, 132), 6, 8, METAL_D, n=6, R=rot(pitch=90))   # knobs
+    m.box((0, 36, 132), (150, 46, 4), ENAMEL_D)                    # oven door
+    m.box((0, 38, 135), (100, 26, 3), (24, 22, 20))                # oven window
+    m.box((0, 62, 138), (120, 5, 6), METAL_D)                      # oven handle
+    return m
+
+def counter(sink=False):
+    """Kitchen counter run, 500 wide x 130 deep x 100 tall; the sink variant has a basin and tap."""
+    m = Mesh()
+    m.box((0, 45, 65), (500, 90, 130), ENAMEL)
+    m.box((0, 95, 65), (510, 10, 138), SLAB)                       # worktop
+    for x in (-190, -65, 65, 190):
+        m.box((x, 44, 131), (112, 74, 3), ENAMEL_D)                # cabinet doors
+        m.box((x + 40, 62, 134), (6, 18, 4), METAL_D)
+    if sink:
+        m.box((0, 100, 78), (170, 4, 92), (40, 38, 34))            # basin
+        m.cyl((0, 126, 22), 5, 52, METAL, n=6)                     # tap stem
+        m.box((0, 150, 38), (6, 6, 40), METAL)                     # spout
+    return m
+
+def kpot():
+    """Rusty cooking pot, ~44 tall. Origin = base centre."""
+    m = Mesh()
+    m.cyl((0, 22, 0), 26, 44, POTRUST, n=10)
+    m.cyl((0, 44, 0), 22, 3, (30, 24, 20), n=10)                   # dark contents
+    for sx in (-1, 1):
+        m.box((sx * 29, 34, 0), (8, 5, 8), METAL_D)                # handles
+    return m
+
+def cup():
+    """Stained mug, 18 tall."""
+    m = Mesh()
+    m.cyl((0, 9, 0), 7, 18, (210, 204, 188), n=8)
+    m.box((9, 10, 0), (4, 9, 3), (210, 204, 188))
+    return m
+
+def mushroom():
+    """Little Super-Mushroom-style fungus, ~60 tall."""
+    m = Mesh()
+    m.cyl((0, 14, 0), 10, 28, SHROOM_STEM, n=8)
+    m.sphere((0, 34, 0), 30, SHROOM_CAP, nlat=4, nlon=8, squash=(1, 0.7, 1))
+    for (x, y, z) in ((12, 52, 8), (-14, 48, 6), (0, 50, -16)):
+        m.sphere((x, y, z), 7, SHROOM_SPOT, nlat=2, nlon=4)
+    return m
+
+def mushroom_big():
+    """Giant spotted mushroom growing out of the floor, ~390 tall, with two small ones at its base."""
+    m = Mesh()
+    m.cyl((0, 160, 0), 24, 320, SHROOM_STEM, n=8, r_top=15)
+    m.sphere((0, 330, 0), 120, SHROOM_CAP, nlat=5, nlon=10, squash=(1, 0.5, 1))
+    for (x, y, z) in ((48, 378, 30), (-62, 366, -22), (8, 388, -62), (-8, 390, 46), (70, 352, -36)):
+        m.sphere((x, y, z), 20, SHROOM_SPOT, nlat=2, nlon=5, squash=(1, 0.5, 1))
+    for (x, z, h) in ((78, 44, 44), (-70, 52, 34)):
+        m.cyl((x, h / 2, z), 8, h, SHROOM_STEM, n=6)
+        m.sphere((x, h + 6, z), 24, SHROOM_CAP, nlat=3, nlon=6, squash=(1, 0.6, 1))
+    return m
+
 def fireplace():
     """Stone fireplace against a wall. Origin at floor centre of the back; projects +z (150 deep), 420 wide, mantel ~300."""
     m = Mesh()
@@ -626,6 +706,14 @@ MODELS = {
     'prop_vine': vine,
     'prop_table': table,
     'prop_desk': desk,
+    'prop_fridge': fridge,
+    'prop_stove': stove,
+    'prop_counter': counter,
+    'prop_sink': lambda: counter(sink=True),
+    'prop_kpot': kpot,
+    'prop_cup': cup,
+    'prop_mushroom': mushroom,
+    'prop_mushroom_big': mushroom_big,
     'prop_chair': chair,
     'prop_fireplace': fireplace,
 }

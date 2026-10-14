@@ -149,6 +149,10 @@ ALIGNED8 static const Texture mans_paint_peach_tex[] = {
 #include "levels/bbh/mans_paint_peach.rgba16.inc.c"
 };
 
+ALIGNED8 static const Texture mans_caution_tex[] = {
+#include "levels/bbh/mans_caution.rgba16.inc.c"
+};
+
 ALIGNED8 static const Texture mans_title_tex[] = {
 #include "levels/bbh/mans_title.rgba16.inc.c"
 };
