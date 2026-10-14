@@ -267,7 +267,13 @@ portrait('hall', 'S', -4350, 1); portrait('hall', 'S', -2750, 3); portrait('hall
 
 # -- other rooms
 chand('dining', 0, 0); portrait('dining', 'S', -500, 2); portrait('dining', 'S', 500, 3); portrait('dining', 'N', -600, 1)
-add('dining', lamp_on('dining', 'S', 0, 400), on_wall('dining', 'N', 600, 'vine'), pot(-800, -600))
+add('dining', on_wall('dining', 'N', 600, 'vine'), pot(-800, -600),
+    dict(kind='prop', model='table', pos=(0, 0), y=0, yaw=0),
+    on_wall('dining', 'S', 0, 'fireplace', inset=24),
+    *[dict(kind='prop', model='chair', pos=(x, -290), y=0, yaw=0) for x in (-300, 0, 300)],
+    *[dict(kind='prop', model='chair', pos=(x, 290), y=0, yaw=0x8000) for x in (-300, 0, 300)])
+dining['boxes'][0]['hidden'] = True                  # collision only; the table model is drawn instead
+RM['dining'].setdefault('lights', []).append((0, 170, 546, 0.60, 650, (1.00, 0.70, 0.36)))   # fireplace glow
 add('corr_n', lamp_on('corr_n', 'S', -400, 380), on_wall('corr_n', 'N', 300, 'vine'))
 portrait('corr_n', 'S', 700, 3, y=300)
 add('save', lamp_on('save', 'E', -3000, 380), on_wall('save', 'N', 3700, 'vine'))

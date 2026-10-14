@@ -491,6 +491,57 @@ def stairs():
         vine_strand(m, [(p[0], 40 + t * 28 + 18 * math.sin(t * 1.3), p[2]) for t, p in enumerate(pts)], r=5)
     return m
 
+def table():
+    """Dining table, 900 long (x) x 400 deep (z), top at y=160, with a candelabra and a cloth runner."""
+    m = Mesh()
+    CLOTH = (150, 140, 120)
+    m.box((0, 150, 0), (900, 20, 400), WOOD)                       # top
+    m.box((0, 141, 0), (860, 4, 360), WOOD_D)                      # apron shadow
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            m.box((sx * 410, 70, sz * 170), (34, 140, 34), WOOD_D)  # legs
+    m.box((0, 162, 0), (300, 2, 220), CLOTH)                       # runner
+    m.cyl((0, 170, 0), 16, 10, BRASS, n=8)                         # candelabra base
+    m.cyl((0, 240, 0), 4, 130, BRASS, n=6)                         # stem
+    for k in range(3):
+        x = (k - 1) * 46
+        m.cyl((x, 290, 0), 7, 40, (230, 220, 190), n=6)           # candles
+        m.sphere((x, 316, 0), 6, (255, 170, 70), nlat=2, nlon=4)   # flames
+    return m
+
+def chair():
+    """High-back dining chair. Origin at floor centre; sits facing +z, back rail on the -z side."""
+    m = Mesh()
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            m.box((sx * 52, 42, sz * 50), (16, 84, 16), WOOD_D)  # legs
+    m.box((0, 92, 0), (130, 14, 120), WOOD)                        # seat
+    m.box((0, 160, -55), (130, 12, 12), WOOD_D)                    # back rails
+    m.box((0, 210, -55), (130, 12, 12), WOOD_D)
+    for sx in (-1, 1):
+        m.box((sx * 52, 150, -55), (14, 130, 14), WOOD_D)           # back posts
+    m.box((0, 260, -55), (140, 14, 16), WOOD)                      # crest rail
+    return m
+
+def fireplace():
+    """Stone fireplace against a wall. Origin at floor centre of the back; projects +z (150 deep), 420 wide, mantel ~300."""
+    m = Mesh()
+    FIRE = (255, 140, 40); EMBER = (200, 70, 20); SOOT = (22, 16, 14)
+    m.box((0, 140, 75), (420, 280, 150), STONE_D)                  # body
+    m.box((0, 150, 152), (300, 300, 4), STONE)                     # front face
+    for sx in (-1, 1):
+        m.box((sx * 165, 150, 158), (70, 300, 16), STONE)          # pillars
+    m.box((0, 303, 176), (460, 16, 60), STONE)                     # mantel shelf
+    m.box((0, 6, 90), (460, 12, 180), STONE_D)                     # hearth
+    m.box((0, 104, 156), (230, 170, 6), SOOT)                      # firebox opening
+    m.box((0, 30, 142), (150, 22, 22), WOOD_D); m.box((0, 30, 118), (130, 20, 20), WOOD)   # logs
+    m.cyl((0, 80, 130), 38, 90, FIRE, n=6, r_top=12)               # flames
+    m.cyl((-30, 70, 130), 22, 60, EMBER, n=6, r_top=6)
+    for sx in (-1, 1):
+        m.cyl((sx * 120, 330, 176), 9, 44, (230, 220, 190), n=6)   # mantel candles
+        m.sphere((sx * 120, 356, 176), 6, (255, 170, 70), nlat=2, nlon=4)
+    return m
+
 def vine():
     """Hanging thorn vine for walls: ~420 tall, origin at the bottom centre, wanders in x with a little z."""
     m = Mesh()
@@ -527,6 +578,9 @@ MODELS = {
     'prop_clock': clock,
     'prop_stairs': stairs,
     'prop_vine': vine,
+    'prop_table': table,
+    'prop_chair': chair,
+    'prop_fireplace': fireplace,
 }
 
 def _sb(v):
