@@ -141,6 +141,7 @@ extern const LevelScript level_bbh_entry[];
 
 
 
+
 // MANSION-BEGIN (generated)
 extern const GeoLayout mansion_geo_area[];
 extern const Collision mansion_collision[];
