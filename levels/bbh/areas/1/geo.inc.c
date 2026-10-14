@@ -207,14 +207,6 @@ const GeoLayout mansion_geo_prop_fireplace[] = {
    GEO_END(),
 };
 
-const GeoLayout mansion_geo_prop_toad[] = {
-   GEO_NODE_START(),
-   GEO_OPEN_NODE(),
-      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_toad),
-   GEO_CLOSE_NODE(),
-   GEO_END(),
-};
-
 const GeoLayout mansion_geo_area[] = {
    GEO_NODE_SCREEN_AREA(10, SCREEN_CENTER_X, SCREEN_CENTER_Y, SCREEN_CENTER_X, SCREEN_CENTER_Y),
    GEO_OPEN_NODE(),

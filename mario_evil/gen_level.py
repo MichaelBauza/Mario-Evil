@@ -30,7 +30,7 @@ TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil',
             'mans_brick', 'mans_cobble', 'mans_rail', 'mans_gate', 'mans_portrait1', 'mans_portrait2', 'mans_portrait3']
 ICONS = ['item_herb_g', 'item_herb_r', 'item_herb_b', 'item_key', 'item_ribbon', 'item_file',
          'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo', 'held_gun', 'item_console', 'item_luigi', 'boss_tyrant',
-         'prop_fountain', 'prop_chandelier', 'prop_lamp', 'prop_pot', 'prop_clock', 'prop_stairs', 'prop_vine', 'prop_table', 'prop_chair', 'prop_fireplace', 'prop_toad']   # 3D models (models.py)
+         'prop_fountain', 'prop_chandelier', 'prop_lamp', 'prop_pot', 'prop_clock', 'prop_stairs', 'prop_vine', 'prop_table', 'prop_chair', 'prop_fireplace']   # 3D models (models.py)
 
 def door_emblem(d):
     """Key id whose emblem is painted on this door: its own key, or the key of the door it connects to."""
@@ -405,7 +405,7 @@ def emit_all():
             elif kind == 'prop':
                 objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionProp),\n' % (models['prop_' + o['model']], x, y, z, yaw * 360 // 65536))
             elif kind == 'actor':     # movable cinematic prop, addressed by its actor number
-                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionActor),\n' % (models['prop_' + o['model']], x, y, z, yaw * 360 // 65536, o['actor']))
+                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionActor),\n' % ('MODEL_TOAD' if o['model'] == 'toad_rom' else models['prop_' + o['model']], x, y, z, yaw * 360 // 65536, o['actor']))
             elif kind in ('console', 'luigi'):
                 objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ %s),\n' % (models['item_' + kind], x, y + 10, z, yaw * 360 // 65536, 'bhvMansionConsole' if kind == 'console' else 'bhvMansionLuigi'))
             else:

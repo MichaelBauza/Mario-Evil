@@ -22,6 +22,7 @@
 #include "object_fields.h"
 #include "mansion.h"
 #include "mansion_cine.h"
+#include "actors/group15.h"
 
 /* ------------------------------------------------------------------------ */
 /* data                                                                     */
@@ -1508,7 +1509,17 @@ void bhv_mansion_prop_loop(void) {
 
 /* Cinematic actor: a prop that the cinematic script can move and turn. Hides itself outside its room. */
 void bhv_mansion_actor_loop(void) {
-    obj_in_current_room();
+    if (!obj_in_current_room()) return;
+    if ((o->oBehParams & 0xFF) == 1) {           // actor 1 = the Toad (the real SM64 model + animations)
+        if (o->oAnimations == NULL) {
+            o->oAnimations = (struct Animation **) toad_seg6_anims_0600FB58;
+            cur_obj_init_animation(TOAD_ANIM_WEST_STANDING);
+        }
+        if (gMarioObject != NULL && !gMansion.cine && dist_between_objects(o, gMarioObject) < 700.0f) {
+            cur_obj_rotate_yaw_toward(obj_angle_to_object(o, gMarioObject), 0x400);   // turn to face Mario
+        }
+        o->oFaceAngleYaw = o->oMoveAngleYaw;
+    }
 }
 
 void bhv_mansion_luigi_loop(void) {
