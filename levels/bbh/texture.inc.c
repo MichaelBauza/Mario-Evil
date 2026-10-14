@@ -32,3 +32,76 @@ ALIGNED8 static const Texture bbh_seg7_texture_07003400[] = {
 ALIGNED8 static const Texture bbh_seg7_texture_07004400[] = {
 #include "levels/bbh/6.rgba16.inc.c"
 };
+// MANSION-BEGIN (generated)
+ALIGNED8 static const Texture mans_floor_tex[] = {
+#include "levels/bbh/mans_floor.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_carpet_tex[] = {
+#include "levels/bbh/mans_carpet.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_wall_tex[] = {
+#include "levels/bbh/mans_wall.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_panel_tex[] = {
+#include "levels/bbh/mans_panel.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_ceil_tex[] = {
+#include "levels/bbh/mans_ceil.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_stone_tex[] = {
+#include "levels/bbh/mans_stone.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_door_tex[] = {
+#include "levels/bbh/mans_door.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_wood_tex[] = {
+#include "levels/bbh/mans_wood.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_marble_tex[] = {
+#include "levels/bbh/mans_marble.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture item_herb_g_tex[] = {
+#include "levels/bbh/item_herb_g.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture item_herb_r_tex[] = {
+#include "levels/bbh/item_herb_r.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture item_herb_b_tex[] = {
+#include "levels/bbh/item_herb_b.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture item_key_tex[] = {
+#include "levels/bbh/item_key.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture item_ribbon_tex[] = {
+#include "levels/bbh/item_ribbon.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture item_file_tex[] = {
+#include "levels/bbh/item_file.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture item_box_tex[] = {
+#include "levels/bbh/item_box.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture item_typewriter_tex[] = {
+#include "levels/bbh/item_typewriter.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture item_gun_tex[] = {
+#include "levels/bbh/item_gun.rgba16.inc.c"
+};
+

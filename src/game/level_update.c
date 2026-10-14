@@ -33,6 +33,7 @@
 #include "puppyprint.h"
 #include "level_commands.h"
 #include "debug.h"
+#include "mansion.h"
 
 #include "config.h"
 
@@ -1005,6 +1006,10 @@ s32 play_mode_normal(void) {
     warp_area();
     check_instant_warp();
 
+    if (gCurrLevelNum == LEVEL_BBH) {
+        mansion_pre_update();
+    }
+
 #ifdef PUPPYPRINT_DEBUG
 #ifdef BETTER_REVERB
     if (sPPDebugPage != PUPPYPRINT_PAGE_RAM && sPPDebugPage != PUPPYPRINT_PAGE_LEVEL_SELECT && sPPDebugPage != PUPPYPRINT_PAGE_BETTER_REVERB) {
@@ -1022,6 +1027,9 @@ s32 play_mode_normal(void) {
     }
     area_update_objects();
 #endif
+    if (gCurrLevelNum == LEVEL_BBH) {
+        mansion_post_update();
+    }
     update_hud_values();
     if (gCurrentArea != NULL) {
 #ifdef PUPPYPRINT_DEBUG
@@ -1047,11 +1055,14 @@ s32 play_mode_normal(void) {
             set_play_mode(PLAY_MODE_CHANGE_LEVEL);
         } else if (sTransitionTimer != 0) {
             set_play_mode(PLAY_MODE_CHANGE_AREA);
-        } else if (pressed_pause()) {
+        } else if (pressed_pause() || (gCurrLevelNum == LEVEL_BBH && mansion_wants_pause())) {
             lower_background_noise(1);
             cancel_rumble();
             gCameraMovementFlags |= CAM_MOVE_PAUSE_SCREEN;
             set_play_mode(PLAY_MODE_PAUSED);
+            if (gCurrLevelNum == LEVEL_BBH) {
+                mansion_enter_pause();
+            }
         }
     }
     
@@ -1059,6 +1070,10 @@ s32 play_mode_normal(void) {
 }
 
 s32 play_mode_paused(void) {
+    if (gCurrLevelNum == LEVEL_BBH) {
+        mansion_paused_update();
+        return FALSE;
+    }
     if (gMenuOptSelectIndex == MENU_OPT_NONE) {
         set_menu_mode(MENU_MODE_RENDER_PAUSE_SCREEN);
     } else if (gMenuOptSelectIndex == MENU_OPT_DEFAULT) {

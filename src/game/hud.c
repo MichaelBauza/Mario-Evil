@@ -19,6 +19,7 @@
 #include "puppyprint.h"
 
 #include "config.h"
+#include "mansion.h"
 
 /* @file hud.c
  * This file implements HUD rendering and power meter animations.
@@ -706,6 +707,11 @@ void render_hud_camera_status(void) {
  */
 void render_hud(void) {
     s16 hudDisplayFlags = gHudDisplay.flags;
+
+    if (gCurrLevelNum == LEVEL_BBH) {
+        mansion_render_hud();
+        return;
+    }
 
     if (hudDisplayFlags == HUD_DISPLAY_NONE) {
         sPowerMeterHUD.animation = POWER_METER_HIDDEN;

@@ -1,0 +1,352 @@
+#!/usr/bin/env python3
+"""
+Mario EVIL level generator.
+
+Reads the room definitions in mansion_map.py and writes:
+  levels/bbh/areas/1/mansion_model.inc.c   room display lists (vertex-lit, textured)
+  levels/bbh/areas/1/collision.inc.c       collision for every room
+  levels/bbh/areas/1/geo.inc.c             area geo layout + item billboard geos
+  levels/bbh/script.c                      level script (objects, warps)
+  levels/bbh/header.h                      externs
+  levels/bbh/texture.inc.c (appended)      texture arrays (idempotent marker block)
+  src/game/mansion_data.inc.c              rooms / cameras / doors / pickups tables for game code
+Run from the repo root:  python3 mario_evil/gen_level.py
+"""
+import math, os, sys
+sys.path.insert(0, os.path.dirname(__file__))
+from mansion_map import ROOMS, DOORS, ITEM_IDS, FILES, START
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LV = os.path.join(ROOT, 'levels', 'bbh')
+TILE = 256.0          # world units per texture repeat
+DOOR_W, DOOR_H = 300, 340
+CELL = 520            # max vertex-lighting cell size
+
+TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil', 'mans_stone',
+            'mans_door', 'mans_wood', 'mans_marble']
+ICONS = ['item_herb_g', 'item_herb_r', 'item_herb_b', 'item_key', 'item_ribbon', 'item_file',
+         'item_box', 'item_typewriter', 'item_gun']
+
+def sub(a, b): return (a[0]-b[0], a[1]-b[1], a[2]-b[2])
+def add(a, b): return (a[0]+b[0], a[1]+b[1], a[2]+b[2])
+def mul(a, k): return (a[0]*k, a[1]*k, a[2]*k)
+def dot(a, b): return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+def cross(a, b): return (a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0])
+def length(a): return math.sqrt(dot(a, a))
+def norm(a):
+    l = length(a); return (a[0]/l, a[1]/l, a[2]/l)
+def s16(v): return int(round(v))
+
+class RoomGeo:
+    def __init__(self, room):
+        self.room = room
+        self.faces = {}      # tex -> list of cells; cell = (verts[4], tris_idx_order)
+        self.col = []        # collision quads: (p0,p1,p2,p3, desired normal)
+
+    # light --------------------------------------------------------------
+    def shade(self, p):
+        r = self.room
+        v = r.get('ambient', 0.62)
+        for (lx, ly, lz, inten, rad) in r.get('lights', []):
+            d2 = (p[0]-lx)**2 + (p[1]-ly)**2 + (p[2]-lz)**2
+            v += inten / (1.0 + d2 / (rad * rad))
+        v *= 1.0 - 0.22 * max(0.0, min(1.0, p[1] / max(1, r['h'])))
+        v = max(0.12, min(1.0, v))
+        return (int(255 * v), int(238 * v), int(205 * v))
+
+    # faces --------------------------------------------------------------
+    def face(self, tex, O, U, V, normal, collide=False, uvflip_v=False, cell=CELL, lit=True):
+        """Parallelogram O + s*U + t*V, s,t in [0,1].  `normal` = desired outward normal."""
+        lu, lv = length(U), length(V)
+        nu = max(1, int(math.ceil(lu / cell))); nv = max(1, int(math.ceil(lv / cell)))
+        uh, vh = norm(U), norm(V)
+        u_off = (dot(O, uh) * 1024.0 / TILE) % 1024.0
+        v_off = (dot(O, vh) * 1024.0 / TILE) % 1024.0
+        def vert(i, j):
+            p = add(O, add(mul(U, i / nu), mul(V, j / nv)))
+            u = u_off + (lu * i / nu) * 1024.0 / TILE
+            v = v_off + (lv * j / nv) * 1024.0 / TILE
+            if uvflip_v: v = v_off + (lv * (nv - j) / nv) * 1024.0 / TILE
+            col = self.shade(p) if lit else (255, 255, 255)
+            return (p, (s16(u), s16(v)), col)
+        # decide winding once for the whole face
+        pa = O; pb = add(O, U); pc = add(add(O, U), V)
+        flip = dot(cross(sub(pb, pa), sub(pc, pa)), normal) < 0
+        lst = self.faces.setdefault(tex, [])
+        for i in range(nu):
+            for j in range(nv):
+                q = [vert(i, j), vert(i+1, j), vert(i+1, j+1), vert(i, j+1)]
+                lst.append((q, flip))
+        if collide:
+            self.col.append((pa, pb, pc, add(O, V), normal))
+
+    def box(self, x0, z0, x1, z1, y0, y1, side, top, collide=True):
+        # +y top
+        self.face(top, (x0, y1, z0), (x1-x0, 0, 0), (0, 0, z1-z0), (0, 1, 0), collide)
+        # -z side (north)
+        self.face(side, (x0, y0, z0), (x1-x0, 0, 0), (0, y1-y0, 0), (0, 0, -1), collide, uvflip_v=True)
+        self.face(side, (x0, y0, z1), (x1-x0, 0, 0), (0, y1-y0, 0), (0, 0, 1), collide, uvflip_v=True)
+        self.face(side, (x0, y0, z0), (0, 0, z1-z0), (0, y1-y0, 0), (-1, 0, 0), collide, uvflip_v=True)
+        self.face(side, (x1, y0, z0), (0, 0, z1-z0), (0, y1-y0, 0), (1, 0, 0), collide, uvflip_v=True)
+
+def wall_of(room, side):
+    """returns (origin, along-vector, inward-normal, coordinate along) for a wall."""
+    x0, z0, x1, z1, h = room['x0'], room['z0'], room['x1'], room['z1'], room['h']
+    if side == 'N': return ((x0, 0, z0), (x1-x0, 0, 0), (0, 0, 1))
+    if side == 'S': return ((x0, 0, z1), (x1-x0, 0, 0), (0, 0, -1))
+    if side == 'W': return ((x0, 0, z0), (0, 0, z1-z0), (1, 0, 0))
+    if side == 'E': return ((x1, 0, z0), (0, 0, z1-z0), (-1, 0, 0))
+    raise ValueError(side)
+
+def build_room(room):
+    g = RoomGeo(room)
+    x0, z0, x1, z1, h = room['x0'], room['z0'], room['x1'], room['z1'], room['h']
+    W, D = x1-x0, z1-z0
+    floor = room.get('floor', 'mans_floor')
+    # floor (collides), ceiling (collides), 4 walls (collide)
+    g.face(floor, (x0, 0, z0), (W, 0, 0), (0, 0, D), (0, 1, 0), True)
+    # carpet runner
+    for (cx0, cz0, cx1, cz1) in room.get('carpets', []):
+        g.face('mans_carpet', (cx0, 3, cz0), (cx1-cx0, 0, 0), (0, 0, cz1-cz0), (0, 1, 0), False)
+    g.face(room.get('ceil', 'mans_ceil'), (x0, h, z0), (W, 0, 0), (0, 0, D), (0, -1, 0), True)
+    wall = room.get('wall', 'mans_wall'); panel = room.get('panel', 'mans_panel')
+    for side in 'NSEW':
+        O, A, n = wall_of(room, side)
+        # lower wainscot (panel) and upper wallpaper
+        wh = room.get('wainscot', 330)
+        if wh > 0:
+            g.face(panel, O, A, (0, wh, 0), n, True, uvflip_v=True)
+            g.face(wall, add(O, (0, wh, 0)), A, (0, h-wh, 0), n, True, uvflip_v=True)
+        else:
+            g.face(wall, O, A, (0, h, 0), n, True, uvflip_v=True)
+    # props
+    for p in room.get('boxes', []):
+        g.box(p['x0'], p['z0'], p['x1'], p['z1'], p.get('y0', 0), p['y1'], p.get('side', 'mans_wood'), p.get('top', 'mans_wood'), p.get('collide', True))
+    # doors (drawn proud of the wall; wall collision already blocks)
+    for d in DOORS:
+        if d['room'] != room['id']: continue
+        O, A, n = wall_of(room, d['wall'])
+        al = norm(A)
+        c = add(O, mul(al, d['at'] - (O[0] if abs(al[0]) > .5 else O[2])))
+        base = add(sub(c, mul(al, DOOR_W/2)), mul(n, 4))
+        g.face('mans_door', base, mul(al, DOOR_W), (0, DOOR_H, 0), n, False, uvflip_v=True, lit=False, cell=2000)
+        # lintel
+        lb = add(sub(c, mul(al, DOOR_W/2+30)), mul(n, 6))
+        g.face('mans_wood', add(lb, (0, DOOR_H, 0)), mul(al, DOOR_W+60), (0, 40, 0), n, False, uvflip_v=True, cell=2000)
+        for sgn in (-1, 1):
+            pb = add(add(c, mul(al, sgn*(DOOR_W/2+15))), mul(n, 6))
+            g.face('mans_wood', sub(pb, mul(al, 15)), mul(al, 30), (0, DOOR_H+40, 0), n, False, uvflip_v=True, cell=2000)
+    return g
+
+def validate():
+    bad = 0
+    for r in ROOMS:
+        for i, c in enumerate(r['cams']):
+            x, y, z = c['pos']
+            if not (r['x0'] < x < r['x1'] and r['z0'] < z < r['z1'] and 0 < y < r['h']):
+                print('ERROR: camera %s/%d is outside the room' % (r['id'], i)); bad += 1
+            for b in r.get('boxes', []):
+                m = 150
+                if b['x0'] - m < x < b['x1'] + m and b['z0'] - m < z < b['z1'] + m and y < b['y1'] + m:
+                    print('ERROR: camera %s/%d is within %d units of a prop' % (r['id'], i, m)); bad += 1
+            for o in r.get('objs', []):
+                pass
+    if bad: raise SystemExit(1)
+
+def emit_all():
+    validate()
+    geos = [build_room(r) for r in ROOMS]
+    # ---------------- model.inc.c ------------------------------------------------
+    out = ['// Generated by mario_evil/gen_level.py -- do not edit by hand\n']
+    tilesetup = (
+        '    gsDPPipeSync(),\n'
+        '    gsDPSetCombineMode(G_CC_MODULATERGBA, G_CC_MODULATERGBA),\n'
+        '    gsSPClearGeometryMode(G_LIGHTING),\n'
+        '    gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 0, 0, G_TX_LOADTILE, 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOLOD),\n'
+        '    gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),\n'
+        '    gsDPTileSync(),\n'
+        '    gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 8, 0, G_TX_RENDERTILE, 0, G_TX_WRAP | G_TX_NOMIRROR, 5, G_TX_NOLOD, G_TX_WRAP | G_TX_NOMIRROR, 5, G_TX_NOLOD),\n'
+        '    gsDPSetTileSize(0, 0, 0, (32 - 1) << G_TEXTURE_IMAGE_FRAC, (32 - 1) << G_TEXTURE_IMAGE_FRAC),\n')
+    tileend = ('    gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),\n'
+               '    gsDPPipeSync(),\n'
+               '    gsDPSetCombineMode(G_CC_SHADE, G_CC_SHADE),\n'
+               '    gsSPSetGeometryMode(G_LIGHTING),\n'
+               '    gsSPEndDisplayList(),\n};\n\n')
+    def vtx_line(v):
+        (p, uv, col) = v
+        return '    {{{%6d, %6d, %6d}, 0, {%6d, %6d}, {0x%02x, 0x%02x, 0x%02x, 0xff}}},\n' % (s16(p[0]), s16(p[1]), s16(p[2]), uv[0], uv[1], col[0], col[1], col[2])
+    for r, g in zip(ROOMS, geos):
+        body = []
+        for tex, cells in g.faces.items():
+            arr = 'mansion_vtx_%s_%s' % (r['id'], tex)
+            out.append('static const Vtx %s[] = {\n' % arr)
+            for (q, flip) in cells:
+                for v in q: out.append(vtx_line(v))
+            out.append('};\n\n')
+            body.append('    gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, %s_tex),\n' % tex)
+            body.append('    gsDPLoadSync(),\n')
+            body.append('    gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),\n')
+            n = len(cells); k = 0
+            while k < n:
+                m = min(7, n - k)  # 7 quads = 28 verts per load
+                body.append('    gsSPVertex(&%s[%d], %d, 0),\n' % (arr, k*4, m*4))
+                tris = []
+                for c in range(m):
+                    b = c*4; flip = cells[k+c][1]
+                    t1, t2 = ((b, b+1, b+2), (b, b+2, b+3)) if not flip else ((b, b+2, b+1), (b, b+3, b+2))
+                    tris += [t1, t2]
+                for i in range(0, len(tris), 2):
+                    if i+1 < len(tris):
+                        a, b2 = tris[i], tris[i+1]
+                        body.append('    gsSP2Triangles(%d, %d, %d, 0x0, %d, %d, %d, 0x0),\n' % (a + b2))
+                    else:
+                        body.append('    gsSP1Triangle(%d, %d, %d, 0x0),\n' % tris[i])
+                k += m
+        out.append('const Gfx mansion_dl_%s[] = {\n' % r['id'])
+        out.append(tilesetup); out += body; out.append(tileend)
+    # item billboards
+    for ic in ICONS:
+        out.append('static const Vtx mansion_vtx_%s[] = {\n' % ic)
+        out.append('    {{{   -50,      0,      0}, 0, {     0,    992}, {0xff, 0xff, 0xff, 0xff}}},\n')
+        out.append('    {{{    50,      0,      0}, 0, {   992,    992}, {0xff, 0xff, 0xff, 0xff}}},\n')
+        out.append('    {{{    50,    100,      0}, 0, {   992,      0}, {0xff, 0xff, 0xff, 0xff}}},\n')
+        out.append('    {{{   -50,    100,      0}, 0, {     0,      0}, {0xff, 0xff, 0xff, 0xff}}},\n};\n\n')
+        out.append('const Gfx mansion_dl_%s[] = {\n' % ic)
+        out.append(tilesetup)
+        out.append('    gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, %s_tex),\n    gsDPLoadSync(),\n' % ic)
+        out.append('    gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),\n')
+        out.append('    gsSPVertex(mansion_vtx_%s, 4, 0),\n    gsSP2Triangles(0, 1, 2, 0x0, 0, 2, 3, 0x0),\n' % ic)
+        out.append(tileend)
+    open(os.path.join(LV, 'areas', '1', 'mansion_model.inc.c'), 'w').write(''.join(out))
+
+    # ---------------- collision --------------------------------------------------
+    verts = []; vidx = {}
+    def vi(p):
+        k = (s16(p[0]), s16(p[1]), s16(p[2]))
+        if k not in vidx: vidx[k] = len(verts); verts.append(k)
+        return vidx[k]
+    tris = []
+    for g in geos:
+        for (p0, p1, p2, p3, n) in g.col:
+            flip = dot(cross(sub(p1, p0), sub(p2, p0)), n) < 0
+            a, b, c, d = vi(p0), vi(p1), vi(p2), vi(p3)
+            tris += [(a, c, b), (a, d, c)] if flip else [(a, b, c), (a, c, d)]
+    col = ['// Generated by mario_evil/gen_level.py -- do not edit by hand\n',
+           'const Collision mansion_collision[] = {\n    COL_INIT(),\n    COL_VERTEX_INIT(%d),\n' % len(verts)]
+    for v in verts: col.append('    COL_VERTEX(%d, %d, %d),\n' % v)
+    col.append('    COL_TRI_INIT(SURFACE_DEFAULT, %d),\n' % len(tris))
+    for t in tris: col.append('    COL_TRI(%d, %d, %d),\n' % t)
+    col.append('    COL_TRI_STOP(),\n    COL_END(),\n};\n')
+    open(os.path.join(LV, 'areas', '1', 'collision.inc.c'), 'w').write(''.join(col))
+    print('rooms', len(ROOMS), 'collision verts', len(verts), 'tris', len(tris))
+
+    # ---------------- geo ----------------------------------------------------------
+    geo = ['// Generated by mario_evil/gen_level.py -- do not edit by hand\n']
+    for ic in ICONS:
+        geo.append('const GeoLayout mansion_geo_%s[] = {\n   GEO_NODE_START(),\n   GEO_OPEN_NODE(),\n' % ic)
+        geo.append('      GEO_BILLBOARD(),\n      GEO_OPEN_NODE(),\n         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_%s),\n      GEO_CLOSE_NODE(),\n' % ic)
+        geo.append('   GEO_CLOSE_NODE(),\n   GEO_END(),\n};\n\n')
+    geo.append('const GeoLayout mansion_geo_area[] = {\n')
+    geo.append('   GEO_NODE_SCREEN_AREA(10, SCREEN_CENTER_X, SCREEN_CENTER_Y, SCREEN_CENTER_X, SCREEN_CENTER_Y),\n   GEO_OPEN_NODE(),\n')
+    geo.append('      GEO_ZBUFFER(0),\n      GEO_OPEN_NODE(),\n         GEO_NODE_ORTHO(100),\n         GEO_OPEN_NODE(),\n')
+    geo.append('            GEO_BACKGROUND_COLOR(0x0001),\n         GEO_CLOSE_NODE(),\n      GEO_CLOSE_NODE(),\n')
+    geo.append('      GEO_ZBUFFER(1),\n      GEO_OPEN_NODE(),\n         GEO_CAMERA_FRUSTUM_WITH_FUNC(45, 100, 12800, geo_camera_fov),\n         GEO_OPEN_NODE(),\n')
+    geo.append('            GEO_CAMERA(CAMERA_MODE_FIXED, 0, 600, 600, 0, 0, 0, geo_camera_main),\n            GEO_OPEN_NODE(),\n')
+    geo.append('               GEO_SWITCH_CASE(%d, geo_switch_mansion_room),\n               GEO_OPEN_NODE(),\n' % len(ROOMS))
+    for r in ROOMS:
+        geo.append('                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_%s),\n' % r['id'])
+    geo.append('               GEO_CLOSE_NODE(),\n               GEO_RENDER_OBJ(),\n')
+    geo.append('            GEO_CLOSE_NODE(),\n         GEO_CLOSE_NODE(),\n      GEO_CLOSE_NODE(),\n   GEO_CLOSE_NODE(),\n   GEO_END(),\n};\n')
+    open(os.path.join(LV, 'areas', '1', 'geo.inc.c'), 'w').write(''.join(geo))
+
+    # ---------------- header.h ---------------------------------------------------
+    hdr = open(os.path.join(LV, 'header.h')).read()
+    start = hdr.find('// MANSION-BEGIN')
+    if start != -1:
+        hdr = hdr[:start] + hdr[hdr.find('// MANSION-END') + len('// MANSION-END\n'):]
+    blk = ['// MANSION-BEGIN (generated)\n', 'extern const GeoLayout mansion_geo_area[];\n', 'extern const Collision mansion_collision[];\n']
+    for ic in ICONS:
+        blk.append('extern const GeoLayout mansion_geo_%s[];\nextern const Gfx mansion_dl_%s[];\n' % (ic, ic))
+    for r in ROOMS: blk.append('extern const Gfx mansion_dl_%s[];\n' % r['id'])
+    blk.append('// MANSION-END\n')
+    endif = hdr.rfind('#endif')
+    hdr = hdr[:endif] + ''.join(blk) + '\n' + hdr[endif:]
+    open(os.path.join(LV, 'header.h'), 'w').write(hdr)
+
+    # ---------------- texture.inc.c ------------------------------------------
+    tx = open(os.path.join(LV, 'texture.inc.c')).read()
+    m = tx.find('// MANSION-BEGIN')
+    if m != -1: tx = tx[:m]
+    tx += '// MANSION-BEGIN (generated)\n'
+    for t in TEXTURES + ICONS:
+        tx += 'ALIGNED8 static const Texture %s_tex[] = {\n#include "levels/bbh/%s.rgba16.inc.c"\n};\n\n' % (t, t)
+    open(os.path.join(LV, 'texture.inc.c'), 'w').write(tx)
+
+    # ---------------- game data tables -----------------------------------------------
+    roomidx = {r['id']: i for i, r in enumerate(ROOMS)}
+    didx = {d['id']: i for i, d in enumerate(DOORS)}
+    cams = []; rows = []
+    for r in ROOMS:
+        first = len(cams)
+        for c in r['cams']:
+            cams.append(c)
+        rows.append((r, first, len(r['cams'])))
+    dt = ['// Generated by mario_evil/gen_level.py -- do not edit by hand\n#define MANSION_NUM_ROOMS %d\n#define MANSION_NUM_DOORS %d\n#define MANSION_NUM_CAMS %d\n\n' % (len(ROOMS), len(DOORS), len(cams))]
+    dt.append('const struct MansionRoom gMansionRooms[MANSION_NUM_ROOMS] = {\n')
+    for (r, first, cnt) in rows:
+        dt.append('    { %d, %d, %d, %d, %d, %d, "%s" },\n' % (r['x0'], r['z0'], r['x1'], r['z1'], first, cnt, r['name']))
+    dt.append('};\n\nconst struct MansionCam gMansionCams[MANSION_NUM_CAMS] = {\n')
+    for c in cams:
+        z = c['zone']; p = c['pos']; f = c['look']
+        dt.append('    { %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d },\n' % (z[0], z[1], z[2], z[3], p[0], p[1], p[2], f[0], f[1], f[2], c.get('fov', 50)))
+    dt.append('};\n\nconst struct MansionDoor gMansionDoors[MANSION_NUM_DOORS] = {\n')
+    for d in DOORS:
+        r = ROOMS[roomidx[d['room']]]
+        O, A, n = wall_of(r, d['wall'])
+        al = norm(A)
+        cx = O[0] + (al[0] * (d['at'] - O[0]) if abs(al[0]) > .5 else 0)
+        cz = O[2] + (al[2] * (d['at'] - O[2]) if abs(al[2]) > .5 else 0)
+        sx, sz = cx + n[0]*210, cz + n[2]*210
+        yaw = int(round(math.atan2(n[0], n[2]) / (2*math.pi) * 65536)) & 0xFFFF
+        dest = didx[d['to']]
+        dt.append('    { %d, %d, %d, %d, %d, %d, %d, %d, %d, 0x%04X },  // %s\n' % (roomidx[d['room']], s16(cx), s16(cz), s16(n[0]), s16(n[2]), dest, d.get('key', 0), s16(sx), s16(sz), yaw, d['id']))
+    dt.append('};\n')
+    open(os.path.join(ROOT, 'src', 'game', 'mansion_data.inc.c'), 'w').write(''.join(dt))
+
+    # ---------------- script.c -----------------------------------------------------
+    models = {k: 'MODEL_LEVEL_GEOMETRY_%02X' % (3 + i) for i, k in enumerate(ICONS)}
+    sc = open(os.path.join(os.path.dirname(__file__), 'script_template.c')).read()
+    loads = ''.join('    LOAD_MODEL_FROM_GEO(%s, mansion_geo_%s),\n' % (models[k], k) for k in ICONS)
+    objs = []
+    uid = [0]
+    def nuid():
+        uid[0] += 1
+        return uid[0]
+    for r in ROOMS:
+        for o in r.get('objs', []):
+            kind = o['kind']; x, z = o['pos']; y = o.get('y', 0)
+            yaw = o.get('yaw', 0)
+            if kind in ITEM_IDS:
+                iid = ITEM_IDS[kind]
+                icon = {'herb_g': 'item_herb_g', 'herb_r': 'item_herb_r', 'herb_b': 'item_herb_b', 'ribbon': 'item_ribbon',
+                        'key': 'item_key', 'gun': 'item_gun'}[kind.split(':')[0]]
+                par = (iid << 24) | (o.get('amount', 1) << 16) | (o.get('keyid', 0) << 8) | nuid()
+                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionPickup),\n' % (models[icon], x, y + 10, z, yaw * 360 // 65536, par))
+            elif kind == 'file':
+                par = (o['file'] << 24)
+                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, 0, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionFile),\n' % (models['item_file'], x, y + 10, z, par))
+            elif kind == 'typewriter':
+                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, 0, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionTypewriter),\n' % (models['item_typewriter'], x, y + 10, z))
+            elif kind == 'box':
+                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, 0, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionItemBox),\n' % (models['item_box'], x, y + 10, z))
+            elif kind == 'zombie':
+                objs.append('    OBJECT(/*model*/ MODEL_GOOMBA, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionZombie),\n' % (x, y, z, yaw * 360 // 65536, (o.get('hp', 3) << 24) | nuid()))
+            else:
+                raise SystemExit('unknown object kind ' + kind)
+    sx, sz, syaw = START
+    sc = (sc.replace('/*@@LOADS@@*/', loads).replace('/*@@OBJECTS@@*/', ''.join(objs))
+            .replace('@@START_X@@', str(sx)).replace('@@START_Z@@', str(sz)).replace('@@START_YAW@@', str(syaw * 360 // 65536)))
+    open(os.path.join(LV, 'script.c'), 'w').write(sc)
+
+if __name__ == '__main__':
+    emit_all()

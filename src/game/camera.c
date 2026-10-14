@@ -26,6 +26,7 @@
 #include "engine/graph_node.h"
 #include "level_table.h"
 #include "config.h"
+#include "mansion.h"
 #include "puppyprint.h"
 #include "profiling.h"
 
@@ -3083,6 +3084,11 @@ void update_camera(struct Camera *c) {
 #endif // ENABLE_VANILLA_CAM_PROCESSING
 
     update_lakitu(c);
+    if (gCurrLevelNum == LEVEL_BBH) {
+        mansion_camera(c);
+        sFOVState.fov = gMansionFov;
+        sFOVState.fovOffset = 0.f;
+    }
 #ifdef PUPPYCAM
     }
     // Just a cute little bit that syncs puppycamera up to vanilla when playing a vanilla cutscene :3

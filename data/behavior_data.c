@@ -56,6 +56,7 @@
 
 #include "make_const_nonconst.h"
 #include "behavior_data.h"
+#include "game/mansion.h"
 
 #define BC_B(a) _SHIFTL(a, 24, 8)
 #define BC_BB(a, b) (_SHIFTL(a, 24, 8) | _SHIFTL(b, 16, 8))
@@ -6075,3 +6076,51 @@ const BehaviorScript bhvIntroScene[] = {
 };
 
 
+
+// ---- Mario EVIL ----
+const BehaviorScript bhvMansionPickup[] = {
+    BEGIN(OBJ_LIST_LEVEL),
+    OR_INT(oFlags, (OBJ_FLAG_COMPUTE_DIST_TO_MARIO | OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE)),
+    CALL_NATIVE(bhv_mansion_pickup_init),
+    BEGIN_LOOP(),
+        CALL_NATIVE(bhv_mansion_pickup_loop),
+    END_LOOP(),
+};
+
+const BehaviorScript bhvMansionFile[] = {
+    BEGIN(OBJ_LIST_LEVEL),
+    OR_INT(oFlags, (OBJ_FLAG_COMPUTE_DIST_TO_MARIO | OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE)),
+    CALL_NATIVE(bhv_mansion_file_init),
+    BEGIN_LOOP(),
+        CALL_NATIVE(bhv_mansion_file_loop),
+    END_LOOP(),
+};
+
+const BehaviorScript bhvMansionTypewriter[] = {
+    BEGIN(OBJ_LIST_LEVEL),
+    OR_INT(oFlags, (OBJ_FLAG_COMPUTE_DIST_TO_MARIO | OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE)),
+    BEGIN_LOOP(),
+        CALL_NATIVE(bhv_mansion_typewriter_loop),
+    END_LOOP(),
+};
+
+const BehaviorScript bhvMansionItemBox[] = {
+    BEGIN(OBJ_LIST_LEVEL),
+    OR_INT(oFlags, (OBJ_FLAG_COMPUTE_DIST_TO_MARIO | OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE)),
+    BEGIN_LOOP(),
+        CALL_NATIVE(bhv_mansion_itembox_loop),
+    END_LOOP(),
+};
+
+const BehaviorScript bhvMansionZombie[] = {
+    BEGIN(OBJ_LIST_GENACTOR),
+    OR_INT(oFlags, (OBJ_FLAG_COMPUTE_ANGLE_TO_MARIO | OBJ_FLAG_COMPUTE_DIST_TO_MARIO | OBJ_FLAG_SET_FACE_YAW_TO_MOVE_YAW | OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE)),
+    DROP_TO_FLOOR(),
+    LOAD_ANIMATIONS(oAnimations, goomba_seg8_anims_0801DA4C),
+    SET_HOME(),
+    SET_OBJ_PHYSICS(/*Wall hitbox radius*/ 40, /*Gravity*/ -400, /*Bounciness*/ -50, /*Drag strength*/ 1000, /*Friction*/ 1000, /*Buoyancy*/ 0, /*Unused*/ 0, 0),
+    CALL_NATIVE(bhv_mansion_zombie_init),
+    BEGIN_LOOP(),
+        CALL_NATIVE(bhv_mansion_zombie_loop),
+    END_LOOP(),
+};

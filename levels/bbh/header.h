@@ -111,4 +111,35 @@ extern const struct MovtexQuadCollection bbh_movtex_merry_go_round_water_side[];
 // script
 extern const LevelScript level_bbh_entry[];
 
+
+
+
+// MANSION-BEGIN (generated)
+extern const GeoLayout mansion_geo_area[];
+extern const Collision mansion_collision[];
+extern const GeoLayout mansion_geo_item_herb_g[];
+extern const Gfx mansion_dl_item_herb_g[];
+extern const GeoLayout mansion_geo_item_herb_r[];
+extern const Gfx mansion_dl_item_herb_r[];
+extern const GeoLayout mansion_geo_item_herb_b[];
+extern const Gfx mansion_dl_item_herb_b[];
+extern const GeoLayout mansion_geo_item_key[];
+extern const Gfx mansion_dl_item_key[];
+extern const GeoLayout mansion_geo_item_ribbon[];
+extern const Gfx mansion_dl_item_ribbon[];
+extern const GeoLayout mansion_geo_item_file[];
+extern const Gfx mansion_dl_item_file[];
+extern const GeoLayout mansion_geo_item_box[];
+extern const Gfx mansion_dl_item_box[];
+extern const GeoLayout mansion_geo_item_typewriter[];
+extern const Gfx mansion_dl_item_typewriter[];
+extern const GeoLayout mansion_geo_item_gun[];
+extern const Gfx mansion_dl_item_gun[];
+extern const Gfx mansion_dl_hall[];
+extern const Gfx mansion_dl_dining[];
+extern const Gfx mansion_dl_corr_n[];
+extern const Gfx mansion_dl_save[];
+extern const Gfx mansion_dl_corr_w[];
+// MANSION-END
+
 #endif
