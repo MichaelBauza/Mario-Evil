@@ -260,6 +260,18 @@ void mansion_camera(struct Camera *c) {
                         cam->fz + (mz - cam->fz) * 0.18f };
         s16 yaw;
 
+        if (gMansion.doorState == 1) {
+            // door cinematic: close-up on the door from inside the room, creeping forward
+            const struct MansionDoor *dd = &gMansionDoors[gMansion.doorTarget];
+            f32 k = (f32) gMansion.doorTimer / 66.0f;
+            f32 dist = 330.0f - 90.0f * k;
+            pos[0] = dd->x + dd->nx * dist; pos[1] = 170.0f; pos[2] = dd->z + dd->nz * dist;
+            focus[0] = dd->x; focus[1] = 165.0f; focus[2] = dd->z;
+            gMansion.camLatch = 0;
+            gMansionFov = 50;
+        } else {
+            gMansionFov = cam->fov;
+        }
         gMansion.camIdx = pick;
         vec3f_copy(c->pos, pos);
         vec3f_copy(c->focus, focus);
@@ -285,7 +297,6 @@ void mansion_camera(struct Camera *c) {
         gLakituState.roll = 0;
         gLakituState.posHSpeed = 0.f;
         gLakituState.posVSpeed = 0.f;
-        gMansionFov = cam->fov;
     }
 }
 
@@ -336,6 +347,75 @@ void mansion_pre_update(void) {
     }
 }
 
+/* RE1-style door cinematic: the camera cuts to a close-up of the door, the door swings open onto
+   darkness while the camera creeps forward, then it fades out and Mario appears on the far side. */
+#define DOOR_ANIM_LEN    66
+#define DOOR_OPEN_START  10
+#define DOOR_OPEN_END    50
+#define DOOR_FADE_START  52
+#define DOOR_W 300
+#define DOOR_H 340
+
+extern const Gfx mansion_door_begin_dl[];
+extern const Gfx mansion_door_end_dl[];
+
+static f32 door_open_amount(void) {
+    f32 t = ((f32) gMansion.doorTimer - DOOR_OPEN_START) / (DOOR_OPEN_END - DOOR_OPEN_START);
+    if (t < 0.f) t = 0.f;
+    if (t > 1.f) t = 1.f;
+    return t * t * (3.f - 2.f * t);
+}
+
+static void set_vtx(Vtx *v, s32 x, s32 y, s32 z, s32 u, s32 w, u8 r, u8 g, u8 b) {
+    v->v.ob[0] = x; v->v.ob[1] = y; v->v.ob[2] = z;
+    v->v.flag = 0;
+    v->v.tc[0] = u; v->v.tc[1] = w;
+    v->v.cn[0] = r; v->v.cn[1] = g; v->v.cn[2] = b; v->v.cn[3] = 0xFF;
+}
+
+Gfx *geo_mansion_door_anim(s32 callContext, struct GraphNode *node, UNUSED void *context) {
+    if (callContext == GEO_CONTEXT_RENDER && gMansion.doorState == 1) {
+        const struct MansionDoor *d = &gMansionDoors[gMansion.doorTarget];
+        struct GraphNodeGenerated *gen = (struct GraphNodeGenerated *) node;
+        Vtx *v = alloc_display_list(8 * sizeof(Vtx));
+        Gfx *dl = alloc_display_list(8 * sizeof(Gfx));
+        Gfx *g = dl;
+        s32 ax = (d->nz != 0) ? 1 : 0;     // along-wall axis matches the generator (x for N/S walls, z for E/W)
+        s32 az = (d->nz != 0) ? 0 : 1;
+        s16 ang = (s16) (door_open_amount() * 0x3800);
+        f32 sn = sins(ang), cs = coss(ang);
+        s32 hx = d->x - ax * DOOR_W / 2 + d->nx * 9, hz = d->z - az * DOOR_W / 2 + d->nz * 9;       // hinge
+        s32 ex = hx + (s32) (ax * DOOR_W * cs) - (s32) (d->nx * DOOR_W * sn);                      // free end
+        s32 ez = hz + (s32) (az * DOOR_W * cs) - (s32) (d->nz * DOOR_W * sn);
+        f32 dim = 1.0f - 0.55f * sn;
+        u8 lr = (u8) (d->lr * dim), lg = (u8) (d->lg * dim), lb = (u8) (d->lb * dim);
+        s32 ox0 = d->x - ax * DOOR_W / 2 + d->nx * 7, oz0 = d->z - az * DOOR_W / 2 + d->nz * 7;
+        s32 ox1 = d->x + ax * DOOR_W / 2 + d->nx * 7, oz1 = d->z + az * DOOR_W / 2 + d->nz * 7;
+
+        SET_GRAPH_NODE_LAYER(gen->fnNode.node.flags, LAYER_TRANSPARENT_INTER);
+
+        // 0-3: the dark doorway behind the leaf
+        set_vtx(&v[0], ox0, 0,      oz0, 0, 0, 0, 0, 0);
+        set_vtx(&v[1], ox1, 0,      oz1, 0, 0, 0, 0, 0);
+        set_vtx(&v[2], ox1, DOOR_H, oz1, 0, 0, 0, 0, 0);
+        set_vtx(&v[3], ox0, DOOR_H, oz0, 0, 0, 0, 0, 0);
+        // 4-7: the swinging door leaf, texture mapped once across its face
+        set_vtx(&v[4], hx, 0,      hz, 0,    1020, lr, lg, lb);
+        set_vtx(&v[5], ex, 0,      ez, 1020, 1020, lr, lg, lb);
+        set_vtx(&v[6], ex, DOOR_H, ez, 1020, 0,    lr, lg, lb);
+        set_vtx(&v[7], hx, DOOR_H, hz, 0,    0,    lr, lg, lb);
+
+        gSPDisplayList(g++, mansion_door_begin_dl);
+        gSPVertex(g++, v, 8, 0);
+        gSP2Triangles(g++, 0, 1, 2, 0x0, 0, 2, 3, 0x0);
+        gSP2Triangles(g++, 4, 5, 6, 0x0, 4, 6, 7, 0x0);
+        gSPDisplayList(g++, mansion_door_end_dl);
+        gSPEndDisplayList(g);
+        return dl;
+    }
+    return NULL;
+}
+
 static s32 door_locked(s32 idx) {
     const struct MansionDoor *d = &gMansionDoors[idx];
     return d->key != 0 && !(gMansion.lockedUnlocked[idx >> 3] & (1 << (idx & 7)));
@@ -375,8 +455,10 @@ static void update_doors(void) {
 
     if (gMansion.doorState == 1) {
         gMansion.doorTimer++;
-        gMansion.fade = MIN(255, gMansion.doorTimer * 255 / 14);
-        if (gMansion.doorTimer >= 14) {
+        if (gMansion.doorTimer == 6) play_sound(SOUND_GENERAL_OPEN_WOOD_DOOR, gGlobalSoundSource);
+        gMansion.fade = (gMansion.doorTimer > DOOR_FADE_START)
+            ? MIN(255, (gMansion.doorTimer - DOOR_FADE_START) * 255 / (DOOR_ANIM_LEN - DOOR_FADE_START)) : 0;
+        if (gMansion.doorTimer >= DOOR_ANIM_LEN) {
             door_teleport();
             gMansion.doorState = 2;
             gMansion.doorTimer = 0;
@@ -422,7 +504,9 @@ static void update_doors(void) {
         gMansion.doorTimer = 0;
         gMansion.doorTarget = i;
         gMansion.doorPush = 0;
-        play_sound(SOUND_GENERAL_OPEN_WOOD_DOOR, gGlobalSoundSource);
+        m->forwardVel = 0.f;
+        m->vel[0] = m->vel[1] = m->vel[2] = 0.f;
+        set_mario_action(m, ACT_IDLE, 0);
         return;
     }
     gMansion.doorPush = 0;
@@ -433,6 +517,8 @@ void mansion_post_update(void) {
     s32 r = find_room(m->pos[0], m->pos[2]);
     if (r >= 0 && gMansion.doorState == 0) gMansion.room = r;
     update_doors();
+    if (gMansion.doorState == 1) m->marioObj->header.gfx.node.flags |= GRAPH_RENDER_INVISIBLE;
+    else m->marioObj->header.gfx.node.flags &= ~GRAPH_RENDER_INVISIBLE;
 }
 
 s32 mansion_wants_pause(void) {

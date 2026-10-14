@@ -56,7 +56,7 @@ class RoomGeo:
         return (int(255 * v * 0.80), int(255 * v * 0.92), int(255 * v * 1.00))
 
     # faces --------------------------------------------------------------
-    def face(self, tex, O, U, V, normal, collide=False, uvflip_v=False, cell=CELL, lit=True):
+    def face(self, tex, O, U, V, normal, collide=False, uvflip_v=False, cell=CELL, lit=True, uv_once=False):
         """Parallelogram O + s*U + t*V, s,t in [0,1].  `normal` = desired outward normal."""
         lu, lv = length(U), length(V)
         nu = max(1, int(math.ceil(lu / cell))); nv = max(1, int(math.ceil(lv / cell)))
@@ -68,6 +68,9 @@ class RoomGeo:
             u = u_off + (lu * i / nu) * 1024.0 / TILE
             v = v_off + (lv * j / nv) * 1024.0 / TILE
             if uvflip_v: v = v_off + (lv * (nv - j) / nv) * 1024.0 / TILE
+            if uv_once:   # map the whole texture exactly once across the face (doors)
+                u = 1020.0 * i / nu
+                v = 1020.0 * ((nv - j) / nv if uvflip_v else j / nv)
             col = self.shade(p) if lit else (255, 255, 255)
             return (p, (s16(u), s16(v)), col)
         # decide winding once for the whole face
@@ -130,7 +133,7 @@ def build_room(room):
         al = norm(A)
         c = add(O, mul(al, d['at'] - (O[0] if abs(al[0]) > .5 else O[2])))
         base = add(sub(c, mul(al, DOOR_W/2)), mul(n, 4))
-        g.face('mans_door', base, mul(al, DOOR_W), (0, DOOR_H, 0), n, False, uvflip_v=True, lit=False, cell=2000)
+        g.face('mans_door', base, mul(al, DOOR_W), (0, DOOR_H, 0), n, False, uvflip_v=True, lit=True, cell=170, uv_once=True)
         # lintel
         lb = add(sub(c, mul(al, DOOR_W/2+30)), mul(n, 6))
         g.face('mans_wood', add(lb, (0, DOOR_H, 0)), mul(al, DOOR_W+60), (0, 40, 0), n, False, uvflip_v=True, cell=2000)
@@ -205,6 +208,16 @@ def emit_all():
                 k += m
         out.append('const Gfx mansion_dl_%s[] = {\n' % r['id'])
         out.append(tilesetup); out += body; out.append(tileend)
+    # door-opening cinematic: textured, unlit, no z-test, no culling (drawn by geo_mansion_door_anim)
+    out.append('const Gfx mansion_door_begin_dl[] = {\n')
+    out.append(tilesetup)
+    out.append('    gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, mans_door_tex),\n    gsDPLoadSync(),\n')
+    out.append('    gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),\n')
+    out.append('    gsDPSetRenderMode(G_RM_OPA_SURF, G_RM_OPA_SURF2),\n')
+    out.append('    gsSPClearGeometryMode(G_ZBUFFER | G_CULL_BACK),\n')
+    out.append('    gsSPEndDisplayList(),\n};\n\n')
+    out.append('const Gfx mansion_door_end_dl[] = {\n    gsSPSetGeometryMode(G_ZBUFFER | G_CULL_BACK),\n')
+    out.append(tileend)
     # item billboards
     for ic in ICONS:
         out.append('static const Vtx mansion_vtx_%s[] = {\n' % ic)
@@ -256,7 +269,7 @@ def emit_all():
     geo.append('               GEO_SWITCH_CASE(%d, geo_switch_mansion_room),\n               GEO_OPEN_NODE(),\n' % len(ROOMS))
     for r in ROOMS:
         geo.append('                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_%s),\n' % r['id'])
-    geo.append('               GEO_CLOSE_NODE(),\n               GEO_RENDER_OBJ(),\n')
+    geo.append('               GEO_CLOSE_NODE(),\n               GEO_RENDER_OBJ(),\n               GEO_ASM(0, geo_mansion_door_anim),\n')
     geo.append('            GEO_CLOSE_NODE(),\n         GEO_CLOSE_NODE(),\n      GEO_CLOSE_NODE(),\n   GEO_CLOSE_NODE(),\n   GEO_END(),\n};\n')
     open(os.path.join(LV, 'areas', '1', 'geo.inc.c'), 'w').write(''.join(geo))
 
@@ -268,6 +281,7 @@ def emit_all():
     blk = ['// MANSION-BEGIN (generated)\n', 'extern const GeoLayout mansion_geo_area[];\n', 'extern const Collision mansion_collision[];\n']
     for ic in ICONS:
         blk.append('extern const GeoLayout mansion_geo_%s[];\nextern const Gfx mansion_dl_%s[];\n' % (ic, ic))
+    blk.append('extern const Gfx mansion_door_begin_dl[];\nextern const Gfx mansion_door_end_dl[];\n')
     for r in ROOMS: blk.append('extern const Gfx mansion_dl_%s[];\n' % r['id'])
     blk.append('// MANSION-END\n')
     endif = hdr.rfind('#endif')
@@ -310,7 +324,8 @@ def emit_all():
         sx, sz = cx + n[0]*210, cz + n[2]*210
         yaw = int(round(math.atan2(n[0], n[2]) / (2*math.pi) * 65536)) & 0xFFFF
         dest = didx[d['to']]
-        dt.append('    { %d, %d, %d, %d, %d, %d, %d, %d, %d, 0x%04X },  // %s\n' % (roomidx[d['room']], s16(cx), s16(cz), s16(n[0]), s16(n[2]), dest, d.get('key', 0), s16(sx), s16(sz), yaw, d['id']))
+        lc = geos[roomidx[d['room']]].shade((cx + n[0]*60, 170, cz + n[2]*60))
+        dt.append('    { %d, %d, %d, %d, %d, %d, %d, %d, %d, 0x%04X, %d, %d, %d },  // %s\n' % (roomidx[d['room']], s16(cx), s16(cz), s16(n[0]), s16(n[2]), dest, d.get('key', 0), s16(sx), s16(sz), yaw, lc[0], lc[1], lc[2], d['id']))
     dt.append('};\n')
     open(os.path.join(ROOT, 'src', 'game', 'mansion_data.inc.c'), 'w').write(''.join(dt))
 

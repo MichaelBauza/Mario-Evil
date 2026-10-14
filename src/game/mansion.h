@@ -19,7 +19,7 @@ enum MansionMenu { MENU_NONE, MENU_ITEMS, MENU_FILES, MENU_BOX };
 
 struct MansionRoom { s16 x0, z0, x1, z1; u8 camFirst, camCount; const char *name; };
 struct MansionCam  { s16 zx0, zz0, zx1, zz1; s16 px, py, pz; s16 fx, fy, fz; u8 fov; };
-struct MansionDoor { u8 room; s16 x, z; s8 nx, nz; u8 dest; u8 key; s16 sx, sz; u16 yaw; };
+struct MansionDoor { u8 room; s16 x, z; s8 nx, nz; u8 dest; u8 key; s16 sx, sz; u16 yaw; u8 lr, lg, lb; };
 
 struct MansionSlot { u8 id; u8 extra; };
 
@@ -91,6 +91,7 @@ void mansion_enter_pause(void);
 void mansion_paused_update(void);
 void mansion_tank_input(struct MarioState *m);
 Gfx *geo_switch_mansion_room(s32 callContext, struct GraphNode *node, void *context);
+Gfx *geo_mansion_door_anim(s32 callContext, struct GraphNode *node, void *context);
 
 void mansion_message(const char *text);
 s32  mansion_inv_add(u8 id, u8 extra);

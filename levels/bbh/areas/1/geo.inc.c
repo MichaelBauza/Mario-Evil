@@ -123,6 +123,7 @@ const GeoLayout mansion_geo_area[] = {
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_corr_w),
                GEO_CLOSE_NODE(),
                GEO_RENDER_OBJ(),
+               GEO_ASM(0, geo_mansion_door_anim),
             GEO_CLOSE_NODE(),
          GEO_CLOSE_NODE(),
       GEO_CLOSE_NODE(),
