@@ -85,6 +85,34 @@ ALIGNED8 static const Texture mans_door_k3_tex[] = {
 #include "levels/bbh/mans_door_k3.rgba16.inc.c"
 };
 
+ALIGNED8 static const Texture mans_brick_tex[] = {
+#include "levels/bbh/mans_brick.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_cobble_tex[] = {
+#include "levels/bbh/mans_cobble.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_rail_tex[] = {
+#include "levels/bbh/mans_rail.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_gate_tex[] = {
+#include "levels/bbh/mans_gate.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_portrait1_tex[] = {
+#include "levels/bbh/mans_portrait1.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_portrait2_tex[] = {
+#include "levels/bbh/mans_portrait2.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_portrait3_tex[] = {
+#include "levels/bbh/mans_portrait3.rgba16.inc.c"
+};
+
 ALIGNED8 static const Texture mans_title_tex[] = {
 #include "levels/bbh/mans_title.rgba16.inc.c"
 };

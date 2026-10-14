@@ -1480,6 +1480,11 @@ void bhv_mansion_console_loop(void) {
     }
 }
 
+// Set dressing (fountain, chandeliers, vines...): drawn only while Mario is in the room it stands in.
+void bhv_mansion_prop_loop(void) {
+    obj_in_current_room();
+}
+
 void bhv_mansion_luigi_loop(void) {
     struct MarioState *m = gMarioState;
     if (!obj_in_current_room()) return;

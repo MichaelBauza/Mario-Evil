@@ -25,9 +25,11 @@ CELL = 520            # max vertex-lighting cell size
 
 TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil', 'mans_stone',
             'mans_door', 'mans_wood', 'mans_marble', 'mans_grass',
-            'mans_door_k1', 'mans_door_k2', 'mans_door_k3']
+            'mans_door_k1', 'mans_door_k2', 'mans_door_k3',
+            'mans_brick', 'mans_cobble', 'mans_rail', 'mans_gate', 'mans_portrait1', 'mans_portrait2', 'mans_portrait3']
 ICONS = ['item_herb_g', 'item_herb_r', 'item_herb_b', 'item_key', 'item_ribbon', 'item_file',
-         'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo', 'held_gun', 'item_console', 'item_luigi', 'boss_tyrant']   # 3D models (models.py)
+         'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo', 'held_gun', 'item_console', 'item_luigi', 'boss_tyrant',
+         'prop_fountain', 'prop_chandelier', 'prop_lamp', 'prop_pot', 'prop_clock', 'prop_stairs', 'prop_vine']   # 3D models (models.py)
 
 def door_emblem(d):
     """Key id whose emblem is painted on this door: its own key, or the key of the door it connects to."""
@@ -61,13 +63,17 @@ class RoomGeo:
     def shade(self, p):
         r = self.room
         # Spooky grade: dim ambient, weaker candle pools, cold tint, deeper falloff toward the ceiling.
-        v = r.get('ambient', 0.40)
-        for (lx, ly, lz, inten, rad) in r.get('lights', []):
+        base = (0.76, 0.96, 0.82)          # sickly green cast over everything
+        amb = r.get('ambient', 0.40)
+        v = [amb * base[0], amb * base[1], amb * base[2]]
+        for lt in r.get('lights', []):
+            (lx, ly, lz, inten, rad) = lt[:5]
+            col = lt[5] if len(lt) > 5 else base
             d2 = (p[0]-lx)**2 + (p[1]-ly)**2 + (p[2]-lz)**2
-            v += 0.75 * inten / (1.0 + d2 / (rad * rad))
-        v *= 1.0 - 0.35 * max(0.0, min(1.0, p[1] / max(1, r['h'])))
-        v = max(0.06, min(1.0, v))
-        return (int(255 * v * 0.80), int(255 * v * 0.92), int(255 * v * 1.00))
+            k = 0.75 * inten / (1.0 + d2 / (rad * rad))
+            for i in range(3): v[i] += k * col[i]
+        fall = 1.0 - 0.35 * max(0.0, min(1.0, p[1] / max(1, r['h'])))
+        return tuple(int(255 * max(0.06, min(1.0, v[i] * fall))) for i in range(3))
 
     # faces --------------------------------------------------------------
     def face(self, tex, O, U, V, normal, collide=False, uvflip_v=False, cell=CELL, lit=True, uv_once=False):
@@ -139,6 +145,18 @@ def build_room(room):
             g.face(wall, add(O, (0, wh, 0)), A, (0, h-wh, 0), n, True, uvflip_v=True)
         else:
             g.face(wall, O, A, (0, h, 0), n, True, uvflip_v=True)
+    # decor quads painted on the walls (gates, portraits) and the balcony rail band
+    for dc in room.get('decor', []):
+        O, A, n = wall_of(room, dc['wall'])
+        al = norm(A)
+        cen = add(O, mul(al, dc['at'] - (O[0] if abs(al[0]) > .5 else O[2])))
+        base = add(add(sub(cen, mul(al, dc['w'] / 2)), (0, dc['y0'], 0)), mul(n, 3))
+        g.face(dc['tex'], base, mul(al, dc['w']), (0, dc['h'], 0), n, False, uvflip_v=True, lit=True, cell=140, uv_once=True)
+    if room.get('rail'):
+        ry0, ry1 = room['rail']
+        for side in 'NSEW':
+            O, A, n = wall_of(room, side)
+            g.face('mans_rail', add(O, mul(n, 4)) if False else add(add(O, (0, ry0, 0)), mul(n, 3)), A, (0, ry1 - ry0, 0), n, False, uvflip_v=True, cell=300)
     # props
     for p in room.get('boxes', []):
         g.visible = not p.get('hidden', False)     # hidden = collision only (a 3D model object is drawn there)
@@ -353,7 +371,7 @@ def emit_all():
     open(os.path.join(ROOT, 'src', 'game', 'mansion_data.inc.c'), 'w').write(''.join(dt))
 
     # ---------------- script.c -----------------------------------------------------
-    models = {k: 'MODEL_LEVEL_GEOMETRY_%02X' % (3 + i) for i, k in enumerate(ICONS)}
+    models = {k: ('MODEL_LEVEL_GEOMETRY_%02X' % (3 + i) if i < 20 else '0x%02X' % (0xE8 + i - 20)) for i, k in enumerate(ICONS)}
     sc = open(os.path.join(os.path.dirname(__file__), 'script_template.c')).read()
     loads = ''.join('    LOAD_MODEL_FROM_GEO(%s, mansion_geo_%s),\n' % (models[k], k) for k in ICONS)
     objs = []
@@ -382,6 +400,8 @@ def emit_all():
             elif kind == 'zombie':
                 mdl = models['boss_tyrant'] if o.get('boss') else 'MODEL_GOOMBA'
                 objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionZombie),\n' % (mdl, x, y, z, yaw * 360 // 65536, (o.get('hp', 3) << 24) | (o.get('boss', 0) << 8) | nuid()))
+            elif kind == 'prop':
+                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionProp),\n' % (models['prop_' + o['model']], x, y, z, yaw * 360 // 65536))
             elif kind in ('console', 'luigi'):
                 objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ %s),\n' % (models['item_' + kind], x, y + 10, z, yaw * 360 // 65536, 'bhvMansionConsole' if kind == 'console' else 'bhvMansionLuigi'))
             else:

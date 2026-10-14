@@ -127,6 +127,62 @@ const GeoLayout mansion_geo_boss_tyrant[] = {
    GEO_END(),
 };
 
+const GeoLayout mansion_geo_prop_fountain[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_fountain),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_chandelier[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_chandelier),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_lamp[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_lamp),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_pot[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_pot),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_clock[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_clock),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_stairs[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_stairs),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_vine[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_vine),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
 const GeoLayout mansion_geo_area[] = {
    GEO_NODE_SCREEN_AREA(10, SCREEN_CENTER_X, SCREEN_CENTER_Y, SCREEN_CENTER_X, SCREEN_CENTER_Y),
    GEO_OPEN_NODE(),

@@ -208,6 +208,85 @@ dock = room('dock', 'Escape Dock', 3800, 3300, 5000, 4400, 900, floor='mans_ston
 dock['cams'] = [dict(pos=(4900, 700, 3400), look=(4100, 60, 3900), zone=(3800, 3300, 5000, 4400), fov=55)]
 ROOMS.append(dock)
 
+# ======================= v17 look: set dressing (concept art: green rot, thorn vines, slime) =======================
+import math
+RM = {r['id']: r for r in ROOMS}
+GREEN_GLOW = (0.55, 1.0, 0.65)
+
+def on_wall(rid, wall, at, model, y=0, inset=24):
+    """Prop standing against a wall facing into the room."""
+    r = RM[rid]
+    if wall == 'N': pos, yaw = (at, r['z0'] + inset), 0x0000
+    elif wall == 'S': pos, yaw = (at, r['z1'] - inset), 0x8000
+    elif wall == 'W': pos, yaw = (r['x0'] + inset, at), 0x4000
+    else: pos, yaw = (r['x1'] - inset, at), 0xC000
+    return dict(kind='prop', model=model, pos=pos, y=y, yaw=yaw)
+
+def lamp_on(rid, wall, at, y=400):
+    d = on_wall(rid, wall, at, 'lamp', y=y, inset=4)
+    r = RM[rid]
+    off = {'N': (0, 70), 'S': (0, -70), 'W': (70, 0), 'E': (-70, 0)}[wall]
+    r.setdefault('lights', []).append((d['pos'][0] + off[0], y + 30, d['pos'][1] + off[1], 0.55, 650, GREEN_GLOW))
+    return d
+
+def portrait(rid, wall, at, n, y=330):
+    RM[rid].setdefault('decor', []).append(dict(tex='mans_portrait%d' % n, wall=wall, at=at, w=110, h=140, y0=y))
+
+def chand(rid, x, z):
+    r = RM[rid]
+    r.setdefault('objs', []).append(dict(kind='prop', model='chandelier', pos=(x, z), y=r['h'] - 250, yaw=0))
+
+def add(rid, *objs):
+    RM[rid].setdefault('objs', []).extend(objs)
+
+def pot(x, z, yaw=0): return dict(kind='prop', model='pot', pos=(x, z), y=0, yaw=yaw)
+
+# -- Courtyard: brick walls, arched gates, balcony rail, cracked slime flagstones, the ghost fountain
+c = RM['court']
+c.update(floor='mans_cobble', wall='mans_brick', panel='mans_brick', rail=(780, 900), ambient=0.46)
+c['boxes'][0]['hidden'] = True                       # collision only; the fountain model is drawn instead
+for (wall, at) in (('N', 2300), ('N', 4650), ('N', 5900), ('S', 3900), ('S', 5300), ('W', -1650)):
+    c.setdefault('decor', []).append(dict(tex='mans_gate', wall=wall, at=at, w=320, h=400, y0=0))
+add('court', dict(kind='prop', model='fountain', pos=(4000, -1650), y=0, yaw=0),
+    lamp_on('court', 'N', 3000, 420), lamp_on('court', 'N', 5300, 420), lamp_on('court', 'S', 4600, 420),
+    on_wall('court', 'N', 2750, 'vine'), on_wall('court', 'N', 3950, 'vine'), on_wall('court', 'N', 5400, 'vine'),
+    on_wall('court', 'S', 3000, 'vine'), on_wall('court', 'S', 5900, 'vine'), on_wall('court', 'E', -2100, 'vine'),
+    pot(2600, -1380, 0x2000), pot(3400, -2080, 0x9000), pot(5200, -1260, 0x5000), pot(4650, -2200, 0xC000), pot(6200, -1330, 0x3000))
+
+# -- Main hall: grand staircase with vine railings, chandelier, grandfather clock, portraits
+RM['hall']['boxes'][0]['hidden'] = True
+add('hall', dict(kind='prop', model='stairs', pos=(-3500, -730), y=0, yaw=0), on_wall('hall', 'N', -4250, 'clock'),
+    lamp_on('hall', 'N', -3000, 430), lamp_on('hall', 'S', -4200, 430),
+    on_wall('hall', 'N', -4450, 'vine'), on_wall('hall', 'N', -2650, 'vine'), on_wall('hall', 'S', -2900, 'vine'),
+    pot(-4300, 600), pot(-2900, 700, 0x4000))
+chand('hall', -3500, 0)
+portrait('hall', 'S', -4350, 1); portrait('hall', 'S', -2750, 3); portrait('hall', 'E', -500, 2); portrait('hall', 'E', 500, 1)
+
+# -- other rooms
+chand('dining', 0, 0); portrait('dining', 'S', -500, 2); portrait('dining', 'S', 500, 3); portrait('dining', 'N', -600, 1)
+add('dining', lamp_on('dining', 'S', 0, 400), on_wall('dining', 'N', 600, 'vine'), pot(-800, -600))
+add('corr_n', lamp_on('corr_n', 'S', -400, 380), on_wall('corr_n', 'N', 300, 'vine'))
+portrait('corr_n', 'S', 700, 3, y=300)
+add('save', lamp_on('save', 'E', -3000, 380), on_wall('save', 'N', 3700, 'vine'))
+add('corr_w', lamp_on('corr_w', 'N', -6500, 380), on_wall('corr_w', 'S', -7200, 'vine'))
+add('kitchen', lamp_on('kitchen', 'S', 2800, 380), on_wall('kitchen', 'N', 3200, 'vine'), pot(3300, 650), pot(1750, -700, 0x6000))
+add('guard', lamp_on('guard', 'N', 7300, 360), on_wall('guard', 'S', 7600, 'vine'))
+chand('lib', -7000, 1700); portrait('lib', 'N', -6600, 1, y=360); portrait('lib', 'S', -7300, 2, y=360)
+add('lib', lamp_on('lib', 'E', 1700, 420), on_wall('lib', 'N', -7600, 'vine'), pot(-6300, 2250))
+chand('land', -3500, 2600); portrait('land', 'N', -2900, 3); portrait('land', 'S', -4000, 1)
+add('land', lamp_on('land', 'E', 2300, 430), on_wall('land', 'S', -3000, 'vine'), pot(-4350, 3050))
+add('corr2', lamp_on('corr2', 'N', -800, 380), on_wall('corr2', 'S', 200, 'vine'))
+chand('gal', 2200, 2700); portrait('gal', 'N', 1800, 2); portrait('gal', 'N', 2700, 3); portrait('gal', 'S', 1900, 1); portrait('gal', 'S', 2600, 2)
+add('gal', lamp_on('gal', 'E', 2200, 400), on_wall('gal', 'N', 1400, 'vine'), pot(3000, 3250))
+chand('bed', -900, 4200); portrait('bed', 'S', -900, 3, y=330)
+add('bed', lamp_on('bed', 'E', 4400, 380), on_wall('bed', 'N', -1650, 'vine'))
+add('stair', lamp_on('stair', 'N', 5000, 340), on_wall('stair', 'S', 5600, 'vine'))
+add('cellar', lamp_on('cellar', 'E', 600, 380), on_wall('cellar', 'N', 6600, 'vine'), pot(7550, 900))
+add('lab', lamp_on('lab', 'W', 3000, 420), lamp_on('lab', 'E', 1900, 420), on_wall('lab', 'N', 6200, 'vine'), pot(6100, 3100, 0x2000))
+add('tunnel', lamp_on('tunnel', 'S', 6200, 340), on_wall('tunnel', 'N', 5900, 'vine'))
+add('dock', lamp_on('dock', 'S', 4400, 400), on_wall('dock', 'E', 3600, 'vine'))
+
+
 DOORS = [
     dict(id='hall_e',  room='hall',   wall='E', at=0,     to='dining_w'),
     dict(id='dining_w', room='dining', wall='W', at=0,     to='hall_e'),

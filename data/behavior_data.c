@@ -6112,6 +6112,14 @@ const BehaviorScript bhvMansionConsole[] = {
     END_LOOP(),
 };
 
+const BehaviorScript bhvMansionProp[] = {
+    BEGIN(OBJ_LIST_LEVEL),
+    OR_INT(oFlags, (OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE)),
+    BEGIN_LOOP(),
+        CALL_NATIVE(bhv_mansion_prop_loop),
+    END_LOOP(),
+};
+
 const BehaviorScript bhvMansionLuigi[] = {
     BEGIN(OBJ_LIST_LEVEL),
     OR_INT(oFlags, (OBJ_FLAG_COMPUTE_DIST_TO_MARIO | OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE)),

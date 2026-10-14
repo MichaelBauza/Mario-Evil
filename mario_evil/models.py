@@ -95,6 +95,21 @@ class Mesh:
         else:
             self.tris.append((b0, t1, b1, n0, n1, n1, color)); self.tris.append((b0, t0, t1, n0, n0, n1, color))
 
+    def sphere(self, c, r, color, nlat=6, nlon=10, squash=(1.0, 1.0, 1.0)):
+        """Smooth-shaded ellipsoid (poles on +/-y)."""
+        def P(i, j):
+            th = math.pi * i / nlat; ph = 2 * math.pi * (j % nlon) / nlon
+            n = (math.sin(th) * math.cos(ph), math.cos(th), math.sin(th) * math.sin(ph))
+            return (c[0] + r * squash[0] * n[0], c[1] + r * squash[1] * n[1], c[2] + r * squash[2] * n[2]), n
+        for i in range(nlat):
+            for j in range(nlon):
+                (a, na), (b, nb), (cc, nc), (d, nd) = P(i, j), P(i, j + 1), P(i + 1, j + 1), P(i + 1, j)
+                for (p0, p1, p2, n0, n1, n2) in ((a, d, cc, na, nd, nc), (a, cc, b, na, nc, nb)):
+                    if p0 == p2 or p0 == p1 or p1 == p2: continue
+                    gn = v_cross(v_sub(p1, p0), v_sub(p2, p0))
+                    if v_dot(gn, v_sub(p0, c)) < 0: p1, p2, n1, n2 = p2, p1, n2, n1
+                    self.tris.append((p0, p1, p2, n0, n1, n2, color))
+
     def prism(self, pts2, thick, color, c=(0, 0, 0), R=IDENT):
         """Extrude a star-shaped polygon (list of (x,y) around the origin) along z by `thick`."""
         n = len(pts2); z = thick/2
@@ -355,6 +370,139 @@ def tyrant():
             m.cyl((ix*95, 345 + iy*105, -190), 34, 85, SPIKE, n=6, r_top=0.5, R=rot(pitch=-90))
     return m
 
+# ---- v17 set dressing (courtyard / hall concept art) ----------------------------------------------------
+STONE = (118, 124, 112); STONE_D = (84, 90, 80); MOSS = (52, 92, 50); VINE = (36, 72, 40); WATER = (30, 64, 52)
+GHOST = (206, 210, 198); CRACK = (120, 124, 112); FLAME = (140, 255, 150); IRON = (40, 42, 44)
+
+def vine_strand(m, pts, r=6, color=VINE, thorn=True):
+    """Chain of thin cylinders through 3D points, with little thorns."""
+    for k in range(len(pts) - 1):
+        a, b = pts[k], pts[k + 1]
+        d = v_sub(b, a); L = math.sqrt(v_dot(d, d))
+        if L < 1: continue
+        mid = ((a[0]+b[0])/2, (a[1]+b[1])/2, (a[2]+b[2])/2)
+        # rotate the cylinder's y axis onto d
+        yaw = math.degrees(math.atan2(d[0], d[2])); pitch = math.degrees(math.atan2(math.sqrt(d[0]**2 + d[2]**2), d[1]))
+        R = rot(yaw=yaw, pitch=pitch)
+        m.cyl(mid, r, L, color, n=5, R=R)
+        if thorn and k % 2 == 0:
+            side = apply(R, (1, 0, 0))
+            m.cyl(v_add(mid, (side[0]*r, side[1]*r, side[2]*r)), 3.5, 14, (150, 170, 110), n=4, r_top=0.4, R=rot(yaw=yaw, pitch=pitch, roll=-90))
+
+def fountain():
+    """Courtyard fountain: wide basin, column, bowl and a ghost statue (white Boo-like head, one red eye)."""
+    m = Mesh()
+    m.cyl((0, 55, 0), 205, 110, STONE, n=14)                               # basin wall
+    m.cyl((0, 112, 0), 214, 12, STONE_D, n=14)                              # rim
+    m.cyl((0, 104, 0), 188, 4, WATER, n=14)                                 # water
+    m.cyl((0, 175, 0), 46, 150, STONE, n=10, r_top=36)                      # column
+    m.cyl((0, 262, 0), 120, 36, STONE, n=12, r_top=70)                      # lower bowl
+    m.cyl((0, 262 + 20, 0), 104, 4, WATER, n=12)                            # upper water
+    m.cyl((0, 300, 0), 30, 70, STONE_D, n=8)                                # statue pedestal
+    m.sphere((0, 395, 0), 82, GHOST, nlat=6, nlon=10, squash=(1.0, 0.95, 0.95))       # head
+    m.box((0, 410, 76), (30, 30, 12), (230, 30, 30))                        # red eye
+    m.box((0, 410, 83), (14, 14, 6), (255, 190, 190))
+    m.box((0, 350, 70), (84, 26, 20), (30, 8, 8))                           # mouth
+    for k in range(-3, 4):
+        m.cyl((k*11, 358, 80), 4, 20, (240, 240, 230), n=4, r_top=0.4, R=rot(pitch=180))
+        m.cyl((k*11, 340, 80), 4, 16, (240, 240, 230), n=4, r_top=0.4)
+    for sx in (-1, 1):
+        m.sphere((sx*95, 330, 20), 24, GHOST, nlat=4, nlon=8)               # stubby arms
+    # thorny vines climbing the basin and the column
+    for (ph, hmax) in ((0.0, 330), (2.1, 250), (4.2, 300)):
+        pts = []
+        for t in range(9):
+            a = ph + t * 0.55; rr = 208 - t * 15 if t < 3 else 50
+            pts.append((rr * math.cos(a), 110 + t * hmax / 9, rr * math.sin(a)))
+        vine_strand(m, pts, r=6)
+    for k in range(6):
+        a = k * 1.05
+        m.sphere((205 * math.cos(a), 118, 205 * math.sin(a)), 14, MOSS, nlat=3, nlon=6)
+    return m
+
+def chandelier():
+    """Hangs from the ceiling: origin at the bottom of the ring, chain rises 250 up."""
+    m = Mesh()
+    m.cyl((0, 150, 0), 4, 200, IRON, n=5)
+    m.cyl((0, 45, 0), 26, 20, IRON, n=8, r_top=10)
+    ring = ring_pts(104, 14); inner = ring_pts(96, 14)
+    m.band(ring, inner, 8, IRON, c=(0, 30, 0), R=rot(pitch=90))
+    m.band(ring_pts(60, 12), ring_pts(54, 12), 6, IRON, c=(0, 50, 0), R=rot(pitch=90))
+    for k in range(6):
+        a = k * math.pi / 3
+        x, z = 100 * math.cos(a), 100 * math.sin(a)
+        m.cyl((x, 46, z), 8, 32, (220, 220, 200), n=6)
+        m.cyl((x, 70, z), 5, 16, FLAME, n=5, r_top=0.4)
+        m.cyl((x, 40 - 14, z), 3, 40, (110, 190, 90), n=4, r_top=1.2)       # slime dripping from the candles
+    m.sphere((0, 10, 0), 14, IRON, nlat=3, nlon=6)
+    return m
+
+def lamp():
+    """Wall lantern with green glass; origin = wall mount, sticks out along +z."""
+    m = Mesh()
+    m.box((0, 0, 4), (24, 60, 8), IRON)
+    m.box((0, 14, 28), (8, 8, 44), IRON)
+    m.cyl((0, 20, 52), 17, 38, (150, 255, 170), n=8, r_top=14)
+    m.cyl((0, 44, 52), 21, 10, IRON, n=8, r_top=7)
+    m.cyl((0, -2, 52), 18, 6, IRON, n=8)
+    return m
+
+def pot():
+    """Broken terracotta pot on its side."""
+    m = Mesh()
+    T = (160, 82, 52); TD = (108, 54, 36)
+    m.cyl((0, 26, 0), 26, 46, T, n=8, r_top=36, R=rot(roll=70))
+    m.cyl((22, 20, 6), 20, 8, TD, n=6, R=rot(roll=70))
+    for k in range(4):
+        a = k * 1.6
+        m.box((60 * math.cos(a) + 30, 3, 60 * math.sin(a)), (16, 5, 10), T, rot(yaw=k * 50))
+    m.sphere((-40, 8, 12), 14, (54, 40, 28), nlat=3, nlon=6)
+    return m
+
+def clock():
+    m = Mesh()
+    W = (62, 40, 26); WD = (40, 26, 16)
+    m.box((0, 14, 0), (64, 28, 44), WD)
+    m.box((0, 110, 0), (54, 164, 36), W)
+    m.box((0, 215, 0), (66, 50, 42), WD)
+    m.box((0, 218, 22), (40, 40, 3), (210, 214, 190))
+    m.box((0, 224, 24), (2, 16, 2), (20, 20, 20)); m.box((6, 218, 24), (14, 2, 2), (20, 20, 20))
+    m.box((0, 100, 19), (34, 90, 3), (22, 18, 14))
+    m.cyl((0, 80, 21), 9, 3, BRASS, n=8, R=rot(pitch=90))
+    return m
+
+def stairs():
+    """Grand staircase block, 600 wide (x) x 340 deep (z), rising toward -z (back wall) to 260; vine railings."""
+    m = Mesh()
+    N = 6
+    for i in range(N):
+        y1 = 260 * (i + 1) / N; zf = -170 + 340 * (N - 1 - i) / N + 340 / N     # front edge of this step
+        zb = -170
+        m.box((0, y1 / 2, (zf + zb) / 2), (600, y1, zf - zb), (96, 100, 90) if i % 2 == 0 else (82, 86, 78))
+        m.box((0, y1 - 2, zf - 3), (606, 6, 8), (60, 64, 58))
+    for sx in (-1, 1):
+        for k in range(8):
+            z = 160 - k * 40; y = 28 + (160 - z) / 340 * 260 + 40
+            m.box((sx * 292, y + 20, z), (6, 80, 6), IRON)
+        m.box((sx * 292, 140, -10), (10, 8, 360), IRON, rot(pitch=-37))
+        m.box((sx * 292, 286, -110), (14, 80, 14), (150, 150, 140))
+    for sx in (-1, 1):
+        pts = [(sx * 292, 300 - 15 * math.sin(t), 160 - t * 40) for t in range(9)]
+        vine_strand(m, [(p[0], 40 + t * 28 + 18 * math.sin(t * 1.3), p[2]) for t, p in enumerate(pts)], r=5)
+    return m
+
+def vine():
+    """Hanging thorn vine for walls: ~420 tall, origin at the bottom centre, wanders in x with a little z."""
+    m = Mesh()
+    pts = [(40 * math.sin(t * 0.8) + 12 * math.sin(t * 2.1), t * 52, 6 + 4 * math.sin(t * 1.7)) for t in range(9)]
+    vine_strand(m, pts, r=6)
+    pts2 = [(-30 + 36 * math.sin(t * 0.7 + 1), 60 + t * 44, 8) for t in range(7)]
+    vine_strand(m, pts2, r=4)
+    for (x, y) in ((pts[3][0], pts[3][1]), (pts[6][0], pts[6][1])):
+        m.sphere((x, y, 10), 16, MOSS, nlat=3, nlon=6, squash=(1, 0.5, 0.6))
+    return m
+
+
 MODELS = {
     'item_herb_g': lambda: herb(None),
     'item_herb_r': lambda: herb('r'),
@@ -372,6 +520,13 @@ MODELS = {
     'item_console': console,
     'item_luigi': luigi,
     'boss_tyrant': tyrant,
+    'prop_fountain': fountain,
+    'prop_chandelier': chandelier,
+    'prop_lamp': lamp,
+    'prop_pot': pot,
+    'prop_clock': clock,
+    'prop_stairs': stairs,
+    'prop_vine': vine,
 }
 
 def _sb(v):

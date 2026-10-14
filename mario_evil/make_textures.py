@@ -49,6 +49,101 @@ noise(im, 6, 8); save(im, 'mans_wood')
 im = new((150, 150, 140, 255)); d = ImageDraw.Draw(im)        # marble
 for k in range(5): d.line([random.Random(k).randint(0, 31), 0, random.Random(k+9).randint(0, 31), 31], fill=(110, 110, 104, 255))
 noise(im, 8, 9); save(im, 'mans_marble')
+# --- v17 look: textures matching the concept art ------------------------------------------------------
+HERE = os.path.dirname(os.path.abspath(__file__))
+def user_floor(src, name, periods=2):
+    """Crop `periods` repeats of the user's seamless 1024px floor texture (6 repeats per side) down to 32x32."""
+    im = Image.open(os.path.join(HERE, src)).convert('RGBA')
+    n = int(round(1024.0 / 6 * periods))
+    out = im.crop((0, 0, n, n)).resize((32, 32), Image.LANCZOS)
+    save(out, name)
+user_floor('tex_floor_marble.jpg', 'mans_floor')
+user_floor('tex_floor_carpet.jpg', 'mans_carpet')
+
+def seamless(img):
+    """Make a 32x32 texture tile without seams (offset cross-fade)."""
+    a = img.copy(); b = Image.new('RGBA', (32, 32)); b.paste(img, (16, 16)); b.paste(img, (-16, 16)); b.paste(img, (16, -16)); b.paste(img, (-16, -16))
+    pa, pb, po = a.load(), b.load(), Image.new('RGBA', (32, 32)); out = po.load()
+    for y in range(32):
+        for x in range(32):
+            wx = 1.0 - abs(x - 15.5) / 15.5; wy = 1.0 - abs(y - 15.5) / 15.5; w = max(0.0, min(1.0, min(wx, wy) * 2.0))
+            out[x, y] = tuple(int(pa[x, y][k] * w + pb[x, y][k] * (1 - w)) for k in range(4))
+    return po
+
+# green damask wallpaper (peeling)
+im = new((38, 54, 42, 255)); d = ImageDraw.Draw(im)
+for x in range(0, 32, 16):
+    for y in range(0, 32, 16):
+        d.ellipse([x+3, y+2, x+12, y+13], outline=(58, 82, 62, 255)); d.line([x+8, y+1, x+8, y+14], fill=(52, 74, 56, 255))
+        d.line([x+3, y+8, x+12, y+8], fill=(52, 74, 56, 255)); d.point([x+8, y+8], fill=(86, 112, 84, 255))
+for (sx, sy, ln) in ((5, 20, 9), (22, 4, 7), (13, 25, 6)):                      # damp stains running down
+    d.line([sx, sy, sx, sy + ln], fill=(26, 38, 30, 255)); d.line([sx + 1, sy, sx + 1, sy + ln - 3], fill=(30, 44, 34, 255))
+noise(im, 4, 13); save(seamless(im), 'mans_wall')
+# dark wood wainscot
+im = new((56, 36, 24, 255)); d = ImageDraw.Draw(im)
+for i in range(0, 32, 16):
+    d.rectangle([i+1, 2, i+14, 29], outline=(30, 18, 10, 255)); d.rectangle([i+3, 4, i+12, 27], outline=(78, 52, 32, 255))
+    d.line([i+4, 6, i+4, 25], fill=(64, 42, 26, 255))
+d.line([0, 31, 31, 31], fill=(26, 16, 10, 255)); d.line([0, 0, 31, 0], fill=(80, 56, 34, 255))
+noise(im, 5, 14); save(im, 'mans_panel')
+# mossy brick (courtyard walls) with a thorny vine
+im = new((70, 50, 42, 255)); d = ImageDraw.Draw(im)
+for row in range(8):
+    y = row * 4; off = 0 if row % 2 == 0 else 8
+    d.line([0, y, 31, y], fill=(34, 30, 28, 255))
+    for bx in range(-8, 32, 16): d.line([bx + off, y, bx + off, y + 3], fill=(34, 30, 28, 255))
+    for bx in range(-8, 32, 16):
+        sh = random.Random(row * 9 + bx).randint(-10, 10)
+        d.rectangle([bx + off + 1, y + 1, bx + off + 14, y + 3], fill=(70 + sh, 50 + sh // 2, 42 + sh // 2, 255))
+for (px, py, w) in ((2, 26, 10), (18, 2, 9), (20, 28, 8)):                       # moss
+    d.rectangle([px, py, px + w, py + 2], fill=(44, 78, 44, 255))
+d.line([4, 31, 9, 22, 14, 16, 17, 8, 24, 3, 28, 0], fill=(30, 68, 36, 255))     # vine
+for (tx, ty) in ((9, 22), (17, 8), (14, 16)): d.point([tx + 1, ty - 1], fill=(120, 150, 90, 255))
+noise(im, 5, 15); save(seamless(im), 'mans_brick')
+# cracked slime flagstones (courtyard floor)
+im = new((74, 78, 72, 255)); d = ImageDraw.Draw(im)
+for (x0, y0, x1, y1) in ((0, 0, 14, 10), (15, 0, 31, 13), (0, 11, 11, 31), (12, 14, 31, 22), (12, 23, 31, 31)):
+    sh = random.Random(x0 * 7 + y0).randint(-8, 8)
+    d.rectangle([x0, y0, x1, y1], fill=(74 + sh, 78 + sh, 72 + sh, 255), outline=(30, 34, 30, 255))
+d.line([4, 3, 8, 8, 6, 12], fill=(24, 26, 24, 255)); d.line([22, 15, 26, 19, 24, 22], fill=(24, 26, 24, 255))
+for (sx, sy, rx, ry) in ((16, 8, 5, 3), (4, 22, 6, 4), (24, 26, 5, 3)):          # toxic slime puddles
+    d.ellipse([sx - rx, sy - ry, sx + rx, sy + ry], fill=(52, 120, 44, 255)); d.ellipse([sx - rx + 2, sy - ry + 1, sx + rx - 3, sy + ry - 2], fill=(90, 170, 70, 255))
+noise(im, 5, 16); save(seamless(im), 'mans_cobble')
+# slate (corridors, cellar, lab): dark with moss
+im = new((60, 66, 62, 255)); d = ImageDraw.Draw(im)
+for i in range(0, 32, 16):
+    for j in range(0, 32, 16): d.rectangle([i, j, i+15, j+15], outline=(28, 32, 30, 255))
+for (px, py) in ((3, 4), (20, 18), (9, 24)): d.rectangle([px, py, px + 6, py + 2], fill=(46, 84, 48, 255))
+noise(im, 6, 17); save(im, 'mans_stone')
+# iron railing band (courtyard balcony)
+im = new((22, 24, 22, 255)); d = ImageDraw.Draw(im)
+d.rectangle([0, 0, 31, 3], fill=(80, 84, 76, 255)); d.rectangle([0, 28, 31, 31], fill=(80, 84, 76, 255))
+for x in range(2, 32, 8):
+    d.rectangle([x, 4, x + 1, 27], fill=(60, 66, 60, 255)); d.polygon([(x - 1, 4), (x + 2, 4), (x + 0.5, 0)], fill=(70, 76, 70, 255))
+noise(im, 3, 18); save(im, 'mans_rail')
+# arched iron gate in a mossy stone frame (drawn once on a wall)
+im = Image.new('RGBA', (32, 32), (84, 92, 82, 255)); d = ImageDraw.Draw(im)
+d.rectangle([4, 10, 27, 31], fill=(10, 12, 10, 255)); d.pieslice([4, 2, 27, 20], 180, 360, fill=(10, 12, 10, 255))
+d.arc([3, 1, 28, 21], 180, 360, fill=(120, 130, 112, 255)); d.arc([2, 0, 29, 22], 180, 360, fill=(52, 58, 50, 255))
+for x in range(7, 26, 3):
+    d.line([x, 5 if 9 < x < 22 else 11, x, 31], fill=(54, 62, 54, 255)); d.point([x, 4 if 9 < x < 22 else 10], fill=(90, 98, 88, 255))
+d.line([4, 18, 27, 18], fill=(44, 52, 44, 255)); d.line([4, 26, 27, 26], fill=(44, 52, 44, 255))
+d.line([5, 31, 8, 22, 6, 14, 10, 8], fill=(40, 90, 44, 255))                      # vines over the gate
+d.line([26, 31, 24, 24, 26, 15], fill=(40, 90, 44, 255))
+noise(im, 4, 19); save(im, 'mans_gate')
+# framed portraits (three faces)
+def portrait(name, bg, skin, hair, seed):
+    im = Image.new('RGBA', (32, 32), (46, 32, 18, 255)); d = ImageDraw.Draw(im)
+    d.rectangle([0, 0, 31, 31], outline=(150, 118, 52, 255)); d.rectangle([2, 2, 29, 29], outline=(80, 58, 26, 255))
+    d.rectangle([3, 3, 28, 28], fill=bg)
+    d.ellipse([10, 7, 21, 19], fill=skin); d.rectangle([13, 18, 18, 22], fill=skin)
+    d.pieslice([9, 5, 22, 17], 180, 360, fill=hair); d.polygon([(5, 28), (9, 22), (22, 22), (27, 28)], fill=(26, 24, 30, 255))
+    d.point([13, 12], fill=(10, 10, 10, 255)); d.point([18, 12], fill=(10, 10, 10, 255)); d.line([14, 16, 17, 16], fill=(90, 40, 40, 255))
+    noise(im, 5, seed); save(im, name)
+portrait('mans_portrait1', (36, 52, 44, 255), (170, 176, 150, 255), (30, 26, 22, 255), 21)
+portrait('mans_portrait2', (52, 44, 34, 255), (190, 160, 130, 255), (120, 80, 36, 255), 22)
+portrait('mans_portrait3', (30, 36, 52, 255), (176, 150, 140, 255), (60, 40, 50, 255), 23)
+
 # --- item icons (billboards, alpha) ---------------------------------------
 def icon(name, fn):
     im = Image.new('RGBA', (32, 32), (0, 0, 0, 0)); fn(ImageDraw.Draw(im)); save(im, name)
