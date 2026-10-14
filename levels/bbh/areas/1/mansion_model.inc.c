@@ -359,6 +359,13 @@ static const Vtx mansion_vtx_hall_mans_portrait2[] = {
     {{{ -2403,    470,   -555}, 0, {     0,      0}, {0xb0, 0x93, 0x6b, 0xff}}},
 };
 
+static const Vtx mansion_vtx_hall_mans_paint_peach[] = {
+    {{{ -3660,    300,   -897}, 0, {     0,   1020}, {0xd7, 0xb3, 0x84, 0xff}}},
+    {{{ -3540,    300,   -897}, 0, {  1020,   1020}, {0xdc, 0xb7, 0x85, 0xff}}},
+    {{{ -3540,    420,   -897}, 0, {  1020,      0}, {0xd4, 0xaf, 0x80, 0xff}}},
+    {{{ -3660,    420,   -897}, 0, {     0,      0}, {0xce, 0xac, 0x7e, 0xff}}},
+};
+
 static const Vtx mansion_vtx_hall_mans_marble[] = {
     {{{ -4000,    800,   -850}, 0, {   384,    696}, {0x9d, 0x85, 0x64, 0xff}}},
     {{{ -3880,    800,   -850}, 0, {   864,    696}, {0x9f, 0x87, 0x65, 0xff}}},
@@ -659,6 +666,11 @@ const Gfx mansion_dl_hall[] = {
     gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
     gsSPVertex(&mansion_vtx_hall_mans_portrait2[0], 4, 0),
+    gsSP2Triangles(0, 1, 2, 0x0, 0, 2, 3, 0x0),
+    gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, mans_paint_peach_tex),
+    gsDPLoadSync(),
+    gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
+    gsSPVertex(&mansion_vtx_hall_mans_paint_peach[0], 4, 0),
     gsSP2Triangles(0, 1, 2, 0x0, 0, 2, 3, 0x0),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, mans_marble_tex),
     gsDPLoadSync(),
@@ -2079,6 +2091,13 @@ static const Vtx mansion_vtx_corr_w_mans_wall[] = {
     {{{ -7500,    700,   -250}, 0, {    24,    176}, {0x7f, 0x6c, 0x52, 0xff}}},
 };
 
+static const Vtx mansion_vtx_corr_w_mans_paint_goomba[] = {
+    {{{ -6060,    300,    247}, 0, {     0,   1020}, {0xcc, 0xab, 0x7f, 0xff}}},
+    {{{ -5940,    300,    247}, 0, {  1020,   1020}, {0xbe, 0xa0, 0x77, 0xff}}},
+    {{{ -5940,    420,    247}, 0, {  1020,      0}, {0xb5, 0x99, 0x72, 0xff}}},
+    {{{ -6060,    420,    247}, 0, {     0,      0}, {0xc3, 0xa3, 0x79, 0xff}}},
+};
+
 static const Vtx mansion_vtx_corr_w_mans_door_k1[] = {
     {{{ -5804,      0,   -150}, 0, {     0,   1020}, {0xc2, 0xa4, 0x7a, 0xff}}},
     {{{ -5804,      0,      0}, 0, {   510,   1020}, {0xc2, 0xa4, 0x7a, 0xff}}},
@@ -2199,6 +2218,11 @@ const Gfx mansion_dl_corr_w[] = {
     gsSP2Triangles(0, 2, 1, 0x0, 0, 3, 2, 0x0),
     gsSP2Triangles(4, 5, 6, 0x0, 4, 6, 7, 0x0),
     gsSP2Triangles(8, 10, 9, 0x0, 8, 11, 10, 0x0),
+    gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, mans_paint_goomba_tex),
+    gsDPLoadSync(),
+    gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
+    gsSPVertex(&mansion_vtx_corr_w_mans_paint_goomba[0], 4, 0),
+    gsSP2Triangles(0, 2, 1, 0x0, 0, 3, 2, 0x0),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, mans_door_k1_tex),
     gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
@@ -2500,6 +2524,13 @@ static const Vtx mansion_vtx_kitchen_mans_wall[] = {
     {{{  1600,    700,    400}, 0, {  5696,    176}, {0x6e, 0x5e, 0x48, 0xff}}},
 };
 
+static const Vtx mansion_vtx_kitchen_mans_paint_mushroom[] = {
+    {{{  2940,    300,   -797}, 0, {     0,   1020}, {0x8f, 0x7b, 0x5f, 0xff}}},
+    {{{  3060,    300,   -797}, 0, {  1020,   1020}, {0x8c, 0x78, 0x5d, 0xff}}},
+    {{{  3060,    420,   -797}, 0, {  1020,      0}, {0x83, 0x71, 0x57, 0xff}}},
+    {{{  2940,    420,   -797}, 0, {     0,      0}, {0x86, 0x73, 0x59, 0xff}}},
+};
+
 static const Vtx mansion_vtx_kitchen_mans_door[] = {
     {{{  1604,      0,   -150}, 0, {     0,   1020}, {0xa0, 0x8a, 0x6b, 0xff}}},
     {{{  1604,      0,      0}, 0, {   510,   1020}, {0xa3, 0x8c, 0x6c, 0xff}}},
@@ -2659,6 +2690,11 @@ const Gfx mansion_dl_kitchen[] = {
     gsSPVertex(&mansion_vtx_kitchen_mans_wall[56], 8, 0),
     gsSP2Triangles(0, 2, 1, 0x0, 0, 3, 2, 0x0),
     gsSP2Triangles(4, 6, 5, 0x0, 4, 7, 6, 0x0),
+    gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, mans_paint_mushroom_tex),
+    gsDPLoadSync(),
+    gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
+    gsSPVertex(&mansion_vtx_kitchen_mans_paint_mushroom[0], 4, 0),
+    gsSP2Triangles(0, 1, 2, 0x0, 0, 2, 3, 0x0),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, mans_door_tex),
     gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
@@ -7386,6 +7422,13 @@ static const Vtx mansion_vtx_lab_mans_metal_plate[] = {
     {{{  5800,    900,   2750}, 0, {  5880,    376}, {0xaa, 0x8d, 0x67, 0xff}}},
 };
 
+static const Vtx mansion_vtx_lab_mans_paint_bowser[] = {
+    {{{  6440,    300,   1403}, 0, {     0,   1020}, {0xb5, 0x9a, 0x75, 0xff}}},
+    {{{  6560,    300,   1403}, 0, {  1020,   1020}, {0xba, 0x9e, 0x78, 0xff}}},
+    {{{  6560,    420,   1403}, 0, {  1020,      0}, {0xb2, 0x98, 0x73, 0xff}}},
+    {{{  6440,    420,   1403}, 0, {     0,      0}, {0xad, 0x94, 0x70, 0xff}}},
+};
+
 static const Vtx mansion_vtx_lab_mans_marble[] = {
     {{{  6000,    110,   1800}, 0, {   448,     32}, {0xc3, 0xa5, 0x7d, 0xff}}},
     {{{  6400,    110,   1800}, 0, {  2048,     32}, {0xd5, 0xb5, 0x88, 0xff}}},
@@ -7730,6 +7773,11 @@ const Gfx mansion_dl_lab[] = {
     gsSP2Triangles(12, 14, 13, 0x0, 12, 15, 14, 0x0),
     gsSP2Triangles(16, 18, 17, 0x0, 16, 19, 18, 0x0),
     gsSP2Triangles(20, 22, 21, 0x0, 20, 23, 22, 0x0),
+    gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, mans_paint_bowser_tex),
+    gsDPLoadSync(),
+    gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
+    gsSPVertex(&mansion_vtx_lab_mans_paint_bowser[0], 4, 0),
+    gsSP2Triangles(0, 1, 2, 0x0, 0, 2, 3, 0x0),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, mans_marble_tex),
     gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
@@ -7935,6 +7983,13 @@ static const Vtx mansion_vtx_tunnel_mans_metal_plate[] = {
     {{{  5400,    600,   3600}, 0, {    64,    176}, {0x7a, 0x68, 0x4e, 0xff}}},
 };
 
+static const Vtx mansion_vtx_tunnel_mans_paint_drybones[] = {
+    {{{  6740,    300,   3603}, 0, {     0,   1020}, {0xba, 0x9c, 0x74, 0xff}}},
+    {{{  6860,    300,   3603}, 0, {  1020,   1020}, {0xad, 0x91, 0x6d, 0xff}}},
+    {{{  6860,    420,   3603}, 0, {  1020,      0}, {0xa0, 0x87, 0x65, 0xff}}},
+    {{{  6740,    420,   3603}, 0, {     0,      0}, {0xad, 0x91, 0x6c, 0xff}}},
+};
+
 static const Vtx mansion_vtx_tunnel_mans_door[] = {
     {{{  6150,      0,   3604}, 0, {     0,   1020}, {0xe4, 0xbe, 0x8b, 0xff}}},
     {{{  6300,      0,   3604}, 0, {   510,   1020}, {0xe4, 0xbd, 0x8b, 0xff}}},
@@ -8052,6 +8107,11 @@ const Gfx mansion_dl_tunnel[] = {
     gsSP2Triangles(0, 2, 1, 0x0, 0, 3, 2, 0x0),
     gsSP2Triangles(4, 5, 6, 0x0, 4, 6, 7, 0x0),
     gsSP2Triangles(8, 10, 9, 0x0, 8, 11, 10, 0x0),
+    gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, mans_paint_drybones_tex),
+    gsDPLoadSync(),
+    gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),
+    gsSPVertex(&mansion_vtx_tunnel_mans_paint_drybones[0], 4, 0),
+    gsSP2Triangles(0, 1, 2, 0x0, 0, 2, 3, 0x0),
     gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, mans_door_tex),
     gsDPLoadSync(),
     gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),

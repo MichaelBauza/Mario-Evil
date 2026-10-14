@@ -129,6 +129,26 @@ ALIGNED8 static const Texture mans_portrait3_tex[] = {
 #include "levels/bbh/mans_portrait3.rgba16.inc.c"
 };
 
+ALIGNED8 static const Texture mans_paint_bowser_tex[] = {
+#include "levels/bbh/mans_paint_bowser.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_paint_drybones_tex[] = {
+#include "levels/bbh/mans_paint_drybones.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_paint_mushroom_tex[] = {
+#include "levels/bbh/mans_paint_mushroom.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_paint_goomba_tex[] = {
+#include "levels/bbh/mans_paint_goomba.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_paint_peach_tex[] = {
+#include "levels/bbh/mans_paint_peach.rgba16.inc.c"
+};
+
 ALIGNED8 static const Texture mans_title_tex[] = {
 #include "levels/bbh/mans_title.rgba16.inc.c"
 };

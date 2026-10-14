@@ -319,6 +319,15 @@ add('lab', lamp_on('lab', 'W', 3000, 420), lamp_on('lab', 'E', 1900, 420), on_wa
 add('tunnel', lamp_on('tunnel', 'S', 6200, 340), on_wall('tunnel', 'N', 5900, 'vine'))
 add('dock', lamp_on('dock', 'S', 4400, 400), on_wall('dock', 'E', 3600, 'vine'))
 
+# -- framed paintings (square canvases, 120 units, hung at eye level); each placed clear of doors and lamps
+def painting(rid, wall, at, tex, y=300, size=120):
+    RM[rid].setdefault('decor', []).append(dict(tex=tex, wall=wall, at=at, w=size, h=size, y0=y))
+painting('hall', 'N', -3600, 'mans_paint_peach')          # Peach: the castle hall
+painting('lab', 'N', 6500, 'mans_paint_bowser')          # Bowser: Kamek's lab
+painting('corr_w', 'S', -6000, 'mans_paint_goomba')      # Goomba: west corridor
+painting('kitchen', 'N', 3000, 'mans_paint_mushroom')    # Super Mushroom: kitchen
+painting('tunnel', 'N', 6800, 'mans_paint_drybones')     # Dry Bones: service tunnel
+
 
 DOORS = [
     dict(id='hall_e',  room='hall',   wall='E', at=0,     to='dining_w'),

@@ -289,5 +289,8 @@ user_floor('tex_courtyard_cement.jpg', 'mans_cement', periods=4)    # courtyard 
 user_floor('tex_metal_plate.jpg', 'mans_metal_plate', periods=2)    # riveted rusted plates: lab walls, tunnel walls
 user_floor('tex_metal_diamond.jpg', 'mans_metal_diamond', periods=2) # diamond plate + vents: tunnel and dock floors
 user_floor('tex_courtyard_brick.jpg', 'mans_brick', periods=3)      # courtyard walls; replaces the procedural mossy brick above
+# framed oil paintings hung on room walls: the whole square canvas, squashed to 32x32 like the other textures
+for _pname in ('bowser', 'drybones', 'mushroom', 'goomba', 'peach'):
+    user_floor('tex_paint_%s.jpg' % _pname, 'mans_paint_%s' % _pname, periods=6)
 
 print('textures written')
