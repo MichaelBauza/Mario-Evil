@@ -288,5 +288,6 @@ user_floor('tex_courtyard_grass.jpg', 'mans_grass', periods=2)      # courtyard 
 user_floor('tex_courtyard_cement.jpg', 'mans_cement', periods=4)    # courtyard walls/panels
 user_floor('tex_metal_plate.jpg', 'mans_metal_plate', periods=2)    # riveted rusted plates: lab walls, tunnel walls
 user_floor('tex_metal_diamond.jpg', 'mans_metal_diamond', periods=2) # diamond plate + vents: tunnel and dock floors
+user_floor('tex_courtyard_brick.jpg', 'mans_brick', periods=3)      # courtyard walls; replaces the procedural mossy brick above
 
 print('textures written')

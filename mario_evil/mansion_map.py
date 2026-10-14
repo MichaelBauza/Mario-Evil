@@ -246,7 +246,10 @@ def pot(x, z, yaw=0): return dict(kind='prop', model='pot', pos=(x, z), y=0, yaw
 
 # -- Courtyard: cracked cement walls, arched gates, balcony rail, overgrown grass, the ghost fountain
 c = RM['court']
-c.update(floor='mans_grass', wall='mans_cement', panel='mans_cement', rail=(780, 900), ambient=0.46)
+c.update(floor='mans_grass', wall='mans_brick', panel='mans_brick', rail=(780, 900), ambient=0.46)
+# cement pad across the middle of the yard (around the fountain); grass stays at both ends.
+# x-range from the layout sketch: grass is the outer ~29% at each end of the 5000-unit court.
+c.setdefault('pads', []).append((2930, -2300, 5045, -1000, 'mans_cement'))
 c['boxes'][0]['hidden'] = True                       # collision only; the fountain model is drawn instead
 for (wall, at) in (('N', 2300), ('N', 4650), ('N', 5900), ('S', 3900), ('S', 5300), ('W', -1650)):
     c.setdefault('decor', []).append(dict(tex='mans_gate', wall=wall, at=at, w=320, h=400, y0=0))

@@ -135,6 +135,9 @@ def build_room(room):
     # carpet runner
     for (cx0, cz0, cx1, cz1) in room.get('carpets', []):
         g.face('mans_carpet', (cx0, 3, cz0), (cx1-cx0, 0, 0), (0, 0, cz1-cz0), (0, 1, 0), False)
+    # texture pads over the floor (same overlay method as carpets): (x0, z0, x1, z1, texture)
+    for (px0, pz0, px1, pz1, ptex) in room.get('pads', []):
+        g.face(ptex, (px0, 3, pz0), (px1-px0, 0, 0), (0, 0, pz1-pz0), (0, 1, 0), False)
     if not room.get('sky'):
         g.face(room.get('ceil', 'mans_ceil'), (x0, h, z0), (W, 0, 0), (0, 0, D), (0, -1, 0), True)
     wall = room.get('wall', 'mans_wall'); panel = room.get('panel', 'mans_panel')
