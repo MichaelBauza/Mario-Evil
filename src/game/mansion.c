@@ -231,7 +231,10 @@ static void snapshot_load(void) {
 }
 
 // Called from the level script right after the normal level init (Mario exists and is placed).
+extern f32 gMusicVolumeTrim;
+
 s32 lvl_mansion_init(UNUSED s16 arg, UNUSED s32 unused) {
+    gMusicVolumeTrim = 0.35f;   // keep the music quiet so the sound effects carry the dread
     // Items/enemies collected before the last typewriter save stay gone; anything after it is restored.
     if (gMansion.hasSave) {
         snapshot_load();
@@ -409,6 +412,8 @@ static void gun_fire(struct MarioState *m, struct Object *target) {
         target->oForwardVel = 14.0f;
         target->oVelY = 5.0f;
         target->oAction = (target->oHealth <= 0) ? 3 : 2;
+        if (target->oHealth <= 0) play_sound(SOUND_OBJ_CHUCKYA_DEATH, target->header.gfx.cameraToObject);
+        else play_sound(SOUND_OBJ_KING_BOBOMB_TALK, target->header.gfx.cameraToObject);
         target->oTimer = 0;
         play_sound(SOUND_ACTION_HIT, target->header.gfx.cameraToObject);
     }
@@ -481,7 +486,7 @@ void mansion_pre_update(void) {
 #define DOOR_W 300
 #define DOOR_H 340
 
-extern const Gfx mansion_door_begin_dl[];
+extern const Gfx *const mansion_door_begin_dls[];
 extern const Gfx mansion_door_end_dl[];
 
 static f32 door_open_amount(void) {
@@ -530,7 +535,7 @@ Gfx *geo_mansion_door_anim(s32 callContext, struct GraphNode *node, UNUSED void 
         set_vtx(&v[6], ex, DOOR_H, ez, 1020, 0,    lr, lg, lb);
         set_vtx(&v[7], hx, DOOR_H, hz, 0,    0,    lr, lg, lb);
 
-        gSPDisplayList(g++, mansion_door_begin_dl);
+        gSPDisplayList(g++, mansion_door_begin_dls[d->emblem & 3]);
         gSPVertex(g++, v, 8, 0);
         gSP2Triangles(g++, 0, 1, 2, 0x0, 0, 2, 3, 0x0);
         gSP2Triangles(g++, 4, 5, 6, 0x0, 4, 6, 7, 0x0);
@@ -694,6 +699,28 @@ static s32 menu_dir(s32 *dx, s32 *dy) {
     return *dx != 0 || *dy != 0;
 }
 
+/* Files menu: only files that were picked up are browsable. fileSel indexes the collected list. */
+static s32 file_count(void) {
+    s32 f, n = 0;
+    for (f = 1; f <= NUM_FILES; f++) if ((gMansion.files >> f) & 1) n++;
+    return n;
+}
+
+// n-th collected file number (1-based file id), or 0 if none
+static s32 file_nth(s32 n) {
+    s32 f;
+    for (f = 1; f <= NUM_FILES; f++) {
+        if ((gMansion.files >> f) & 1) { if (n == 0) return f; n--; }
+    }
+    return 0;
+}
+
+static s32 file_list_pos(s32 file) {
+    s32 f, n = 0;
+    for (f = 1; f < file; f++) if ((gMansion.files >> f) & 1) n++;
+    return n;
+}
+
 static void close_menu(void) {
     gMansion.menu = MENU_NONE;
     raise_background_noise(1);
@@ -768,8 +795,9 @@ void mansion_paused_update(void) {
             }
         }
     } else if (gMansion.menu == MENU_FILES) {
-        if (dy || dx) {
-            gMansion.fileSel = (gMansion.fileSel + (dx ? dx : dy) + NUM_FILES) % NUM_FILES;
+        s32 cnt = file_count();
+        if ((dy || dx) && cnt > 1) {
+            gMansion.fileSel = (gMansion.fileSel + (dx ? dx : dy) + cnt) % cnt;
             play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource);
         }
         if (c->buttonPressed & (B_BUTTON | R_TRIG)) { gMansion.menu = MENU_ITEMS; play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource); }
@@ -925,25 +953,32 @@ static void draw_menu(void) {
     } else if (gMansion.menu == MENU_ITEMS) {
         draw_footer("A: use  Z: combine  R: files  B: close");
     } else if (gMansion.menu == MENU_FILES) {
-        s32 f = gMansion.fileSel + 1;
-        s32 have = (gMansion.files >> f) & 1;
-        char head[48];
-        char nbuf[14];
-        head[0] = '\0';
-        str_append(head, "FILE ", sizeof(head));
-        num_to_str(nbuf, f); str_append(head, nbuf, sizeof(head));
-        str_append(head, "/7   ", sizeof(head));
-        str_append(head, have ? sFileTitles[f] : "- - -", sizeof(head));
-        print_small_text(SAFE_L, 46, "<", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
-        print_small_text(SAFE_L + 14, 46, head, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
-        print_small_text(SAFE_R, 46, ">", PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL, 1);
-        draw_box(SAFE_L - 4, 60, SAFE_R + 4, 202, 30, 28, 24, 235);
-        if (have) {
-            draw_wrapped(SAFE_L + 4, 64, sFileText[f], (SAFE_R - SAFE_L) - 8, 10);
+        s32 cnt = file_count();
+        if (cnt == 0) {
+            draw_box(SAFE_L - 4, 60, SAFE_R + 4, 202, 30, 28, 24, 235);
+            print_small_text(SAFE_L, 46, "FILES", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+            print_small_text(SAFE_L + 4, 64, "You have not picked up any files.", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
         } else {
-            print_small_text(SAFE_L + 4, 64, "You have not found this file yet.", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+            s32 pos = gMansion.fileSel;
+            s32 f;
+            char head[48];
+            char nbuf[14];
+            if (pos < 0 || pos >= cnt) pos = 0;
+            f = file_nth(pos);
+            head[0] = '\0';
+            str_append(head, "FILE ", sizeof(head));
+            num_to_str(nbuf, pos + 1); str_append(head, nbuf, sizeof(head));
+            str_append(head, "/", sizeof(head));
+            num_to_str(nbuf, cnt); str_append(head, nbuf, sizeof(head));
+            str_append(head, "   ", sizeof(head));
+            str_append(head, sFileTitles[f], sizeof(head));
+            if (cnt > 1) print_small_text(SAFE_L, 46, "<", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+            print_small_text(SAFE_L + 14, 46, head, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+            if (cnt > 1) print_small_text(SAFE_R, 46, ">", PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL, 1);
+            draw_box(SAFE_L - 4, 60, SAFE_R + 4, 202, 30, 28, 24, 235);
+            draw_wrapped(SAFE_L + 4, 64, sFileText[f], (SAFE_R - SAFE_L) - 8, 10);
         }
-        draw_footer("Left/Right: change file   B: back");
+        draw_footer(file_count() > 1 ? "Left/Right: change file   B: back" : "B: back");
     }
 }
 
@@ -1011,6 +1046,7 @@ void bhv_mansion_pickup_loop(void) {
 
     if (!obj_in_current_room()) return;
     o->oPosY = o->oHomeY + 6.0f * sins(o->oTimer * 0x500);
+    o->oFaceAngleYaw += 0x180;   // slow turntable spin
     if (o->oDistanceToMario < 120.0f && gMansion.menu == MENU_NONE) {
         if (id == MI_AMMO) {
             // ammo goes straight to the weapon, it doesn't take an inventory slot
@@ -1049,10 +1085,11 @@ void bhv_mansion_file_loop(void) {
     u8 f = (o->oBehParams >> 24) & 0xFF;
     if (!obj_in_current_room()) return;
     o->oPosY = o->oHomeY + 6.0f * sins(o->oTimer * 0x500);
+    o->oFaceAngleYaw += 0x180;
     if (o->oDistanceToMario < 120.0f && gMansion.menu == MENU_NONE && gMansion.wantMenu == MENU_NONE) {
         gMansion.files |= (1u << f);
         gMansion.wantMenu = MENU_FILES;
-        gMansion.fileSel = f - 1;
+        gMansion.fileSel = file_list_pos(f);
         play_sound(SOUND_MENU_MESSAGE_APPEAR, gGlobalSoundSource);
         obj_mark_for_deletion(o);
     }
@@ -1116,12 +1153,15 @@ void bhv_mansion_zombie_loop(void) {
             o->oForwardVel = 0.0f;
             if (dist < 1100.0f) {
                 o->oAction = 1;
-                play_sound(SOUND_OBJ_GOOMBA_ALERT, o->header.gfx.cameraToObject);
+                play_sound(SOUND_OBJ_KING_BOBOMB_TALK, o->header.gfx.cameraToObject);   // low zombie moan
+            } else if (dist < 1900.0f && (o->oTimer % 150) == 75) {
+                play_sound(SOUND_OBJ_KING_BOBOMB_TALK, o->header.gfx.cameraToObject);
             }
             break;
         case 1: // shamble toward Mario
             cur_obj_rotate_yaw_toward(o->oAngleToMario, 0x120);
             o->oForwardVel = 4.5f;
+            if ((o->oTimer % 105) == 60) play_sound(SOUND_OBJ_KING_BOBOMB_TALK, o->header.gfx.cameraToObject);
             if (dist < 115.0f && o->oSubAction == 0 && !(m->action & ACT_FLAG_INVULNERABLE) && m->invincTimer == 0) {
                 m->interactObj = o;
                 m->hurtCounter += 8;    // two wedges of health
@@ -1129,6 +1169,7 @@ void bhv_mansion_zombie_loop(void) {
                 m->forwardVel = -14.0f;
                 set_mario_action(m, ACT_BACKWARD_GROUND_KB, 0);
                 play_sound(SOUND_MARIO_ATTACKED, m->marioObj->header.gfx.cameraToObject);
+                play_sound(SOUND_OBJ2_PIRANHA_PLANT_BITE, o->header.gfx.cameraToObject);
                 o->oSubAction = 70;
                 o->oForwardVel = 0.0f;
             }
@@ -1161,6 +1202,7 @@ void bhv_mansion_zombie_loop(void) {
                 o->oVelY = 8.0f;
                 play_sound(SOUND_ACTION_HIT, o->header.gfx.cameraToObject);
                 o->oAction = (o->oHealth <= 0) ? 3 : 2;
+                if (o->oHealth <= 0) play_sound(SOUND_OBJ_CHUCKYA_DEATH, o->header.gfx.cameraToObject);
                 o->oTimer = 0;
             }
         }

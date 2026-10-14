@@ -17,7 +17,7 @@ for r in ROOMS:
     for o in r.get('objs', []):
         x, z = o['pos']
         if not (r['x0']+60 < x < r['x1']-60 and r['z0']+60 < z < r['z1']-60): print('OBJ OUT', r['id'], o); bad += 1
-        if o.get('y', 0) == 0 and in_box(r, x, z, 60): print('OBJ IN PROP', r['id'], o); bad += 1
+        if o.get('y', 0) == 0 and o['kind'] != 'box' and in_box(r, x, z, 60): print('OBJ IN PROP', r['id'], o); bad += 1
 by = {d['id']: d for d in DOORS}
 for d in DOORS:
     r = R[d['room']]; w = d['wall']; at = d['at']

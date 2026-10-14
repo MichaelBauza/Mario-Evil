@@ -53,9 +53,10 @@ ROOMS.append(cn)
 
 # ---- Save Room -------------------------------------------------------------
 save = room('save', 'Save Room', 3000, -3500, 4000, -2500, 700, floor='mans_floor',
-            boxes=[dict(x0=3550, z0=-2850, x1=3850, z1=-2650, y1=110, side='mans_wood', top='mans_wood')],
+            boxes=[dict(x0=3550, z0=-2850, x1=3850, z1=-2650, y1=110, side='mans_wood', top='mans_wood'),
+                   dict(x0=3192, z0=-3383, x1=3308, z1=-3317, y1=60, hidden=True)],
             lights=[(3500, 520, -3000, 0.85, 800)],
-            objs=[dict(kind='typewriter', pos=(3700, -2750), y=110), dict(kind='box', pos=(3250, -3350)),
+            objs=[dict(kind='typewriter', pos=(3700, -2750), y=110, yaw=0x8000), dict(kind='box', pos=(3250, -3350), yaw=0),
                   dict(kind='ribbon', pos=(3800, -3300)), dict(kind='key', pos=(3750, -3050), keyid=1),
                   dict(kind='gun', pos=(3350, -3250)), dict(kind='ammo', pos=(3500, -3350), amount=15)])
 save['cams'] = [dict(pos=(3150, 600, -2650), look=(3550, 60, -3050), zone=(3000, -3500, 4000, -2500), fov=58)]
@@ -93,9 +94,10 @@ ROOMS.append(court)
 
 # ---- Guardhouse (second save point) -----------------------------------------
 guard = room('guard', 'Guardhouse', 6900, -2100, 8000, -1000, 650, floor='mans_floor',
-             boxes=[dict(x0=7450, z0=-2050, x1=7800, z1=-1850, y1=100, side='mans_wood', top='mans_wood')],
+             boxes=[dict(x0=7450, z0=-2050, x1=7800, z1=-1850, y1=100, side='mans_wood', top='mans_wood'),
+                    dict(x0=7067, z0=-1308, x1=7133, z1=-1192, y1=60, hidden=True)],
              lights=[(7450, 480, -1550, 0.80, 700)],
-             objs=[dict(kind='typewriter', pos=(7700, -1950), y=100), dict(kind='box', pos=(7100, -1250)),
+             objs=[dict(kind='typewriter', pos=(7700, -1950), y=100, yaw=0), dict(kind='box', pos=(7100, -1250), yaw=0x4000),
                    dict(kind='ribbon', pos=(7800, -1250)), dict(kind='herb_r', pos=(7500, -1200)),
                    dict(kind='ammo', pos=(7300, -1200), amount=15), dict(kind='file', file=7, pos=(7600, -1950), y=100)])
 guard['cams'] = [dict(pos=(7850, 560, -1150), look=(7300, 60, -1700), zone=(6900, -2100, 8000, -1000), fov=58)]

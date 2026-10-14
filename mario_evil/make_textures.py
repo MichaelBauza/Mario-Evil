@@ -106,4 +106,33 @@ def ammo(d):
         d.rectangle([x, 12, x + 4, 26], fill=(200, 160, 60, 255), outline=(110, 80, 20, 255))
         d.polygon([(x, 12), (x + 4, 12), (x + 2, 6)], fill=(170, 120, 50, 255), outline=(110, 80, 20, 255))
 icon('item_ammo', ammo)
+
+# --- doors marked with the emblem of the key that opens them ----------------------
+import math
+def door_emblem(name, col, kind):
+    im = new((84, 52, 30, 255)); d = ImageDraw.Draw(im)
+    d.rectangle([0, 0, 31, 31], outline=(34, 20, 10, 255)); d.rectangle([4, 3, 27, 14], outline=(52, 30, 16, 255))
+    d.rectangle([4, 17, 27, 28], outline=(52, 30, 16, 255)); d.ellipse([24, 19, 27, 22], fill=(190, 160, 60, 255))
+    noise(im, 4, 7)
+    d = ImageDraw.Draw(im)
+    cx, cy = 15.5, 15.5
+    d.ellipse([cx-12, cy-12, cx+12, cy+12], fill=(26, 20, 18, 255), outline=(190, 160, 60, 255), width=1)   # brass medallion
+    if kind == 'star':
+        pts = []
+        for i in range(10):
+            a = -math.pi / 2 + i * math.pi / 5; r = 10 if i % 2 == 0 else 4.2
+            pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+        d.polygon(pts, fill=col)
+    elif kind == 'moon':
+        d.ellipse([cx-9, cy-9, cx+9, cy+9], fill=col)
+        d.ellipse([cx-4, cy-11, cx+12, cy+7], fill=(26, 20, 18, 255))
+    else:
+        d.ellipse([cx-5, cy-5, cx+5, cy+5], fill=col)
+        for i in range(8):
+            a = i * math.pi / 4
+            d.line([cx + 7 * math.cos(a), cy + 7 * math.sin(a), cx + 11 * math.cos(a), cy + 11 * math.sin(a)], fill=col, width=2)
+    save(im, name)
+door_emblem('mans_door_k1', (240, 205, 70, 255), 'star')
+door_emblem('mans_door_k2', (160, 185, 240, 255), 'moon')
+door_emblem('mans_door_k3', (245, 140, 40, 255), 'sun')
 print('textures written')

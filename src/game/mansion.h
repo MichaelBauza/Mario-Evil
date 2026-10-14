@@ -19,7 +19,7 @@ enum MansionMenu { MENU_NONE, MENU_ITEMS, MENU_FILES, MENU_BOX };
 
 struct MansionRoom { s16 x0, z0, x1, z1; u8 camFirst, camCount; const char *name; };
 struct MansionCam  { s16 zx0, zz0, zx1, zz1; s16 px, py, pz; s16 fx, fy, fz; u8 fov; };
-struct MansionDoor { u8 room; s16 x, z; s8 nx, nz; u8 dest; u8 key; s16 sx, sz; u16 yaw; u8 lr, lg, lb; };
+struct MansionDoor { u8 room; s16 x, z; s8 nx, nz; u8 dest; u8 key; s16 sx, sz; u16 yaw; u8 lr, lg, lb; u8 emblem; };
 
 struct MansionSlot { u8 id; u8 extra; };
 

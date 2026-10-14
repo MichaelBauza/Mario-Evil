@@ -73,51 +73,15 @@ ALIGNED8 static const Texture mans_grass_tex[] = {
 #include "levels/bbh/mans_grass.rgba16.inc.c"
 };
 
-ALIGNED8 static const Texture item_herb_g_tex[] = {
-#include "levels/bbh/item_herb_g.rgba16.inc.c"
+ALIGNED8 static const Texture mans_door_k1_tex[] = {
+#include "levels/bbh/mans_door_k1.rgba16.inc.c"
 };
 
-ALIGNED8 static const Texture item_herb_r_tex[] = {
-#include "levels/bbh/item_herb_r.rgba16.inc.c"
+ALIGNED8 static const Texture mans_door_k2_tex[] = {
+#include "levels/bbh/mans_door_k2.rgba16.inc.c"
 };
 
-ALIGNED8 static const Texture item_herb_b_tex[] = {
-#include "levels/bbh/item_herb_b.rgba16.inc.c"
-};
-
-ALIGNED8 static const Texture item_key_tex[] = {
-#include "levels/bbh/item_key.rgba16.inc.c"
-};
-
-ALIGNED8 static const Texture item_ribbon_tex[] = {
-#include "levels/bbh/item_ribbon.rgba16.inc.c"
-};
-
-ALIGNED8 static const Texture item_file_tex[] = {
-#include "levels/bbh/item_file.rgba16.inc.c"
-};
-
-ALIGNED8 static const Texture item_box_tex[] = {
-#include "levels/bbh/item_box.rgba16.inc.c"
-};
-
-ALIGNED8 static const Texture item_typewriter_tex[] = {
-#include "levels/bbh/item_typewriter.rgba16.inc.c"
-};
-
-ALIGNED8 static const Texture item_gun_tex[] = {
-#include "levels/bbh/item_gun.rgba16.inc.c"
-};
-
-ALIGNED8 static const Texture item_key2_tex[] = {
-#include "levels/bbh/item_key2.rgba16.inc.c"
-};
-
-ALIGNED8 static const Texture item_key3_tex[] = {
-#include "levels/bbh/item_key3.rgba16.inc.c"
-};
-
-ALIGNED8 static const Texture item_ammo_tex[] = {
-#include "levels/bbh/item_ammo.rgba16.inc.c"
+ALIGNED8 static const Texture mans_door_k3_tex[] = {
+#include "levels/bbh/mans_door_k3.rgba16.inc.c"
 };
 

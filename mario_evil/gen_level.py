@@ -15,6 +15,7 @@ Run from the repo root:  python3 mario_evil/gen_level.py
 import math, os, sys
 sys.path.insert(0, os.path.dirname(__file__))
 from mansion_map import ROOMS, DOORS, ITEM_IDS, FILES, START
+import models as MDL
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LV = os.path.join(ROOT, 'levels', 'bbh')
@@ -23,9 +24,21 @@ DOOR_W, DOOR_H = 300, 340
 CELL = 520            # max vertex-lighting cell size
 
 TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil', 'mans_stone',
-            'mans_door', 'mans_wood', 'mans_marble', 'mans_grass']
+            'mans_door', 'mans_wood', 'mans_marble', 'mans_grass',
+            'mans_door_k1', 'mans_door_k2', 'mans_door_k3']
 ICONS = ['item_herb_g', 'item_herb_r', 'item_herb_b', 'item_key', 'item_ribbon', 'item_file',
-         'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo']
+         'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo']   # 3D models (models.py)
+
+def door_emblem(d):
+    """Key id whose emblem is painted on this door: its own key, or the key of the door it connects to."""
+    if d.get('key'): return d['key']
+    for o in DOORS:
+        if o['id'] == d['to'] and o.get('key'): return o['key']
+    return 0
+
+def door_tex(d):
+    k = door_emblem(d)
+    return 'mans_door_k%d' % k if k else 'mans_door'
 
 def sub(a, b): return (a[0]-b[0], a[1]-b[1], a[2]-b[2])
 def add(a, b): return (a[0]+b[0], a[1]+b[1], a[2]+b[2])
@@ -42,6 +55,7 @@ class RoomGeo:
         self.room = room
         self.faces = {}      # tex -> list of cells; cell = (verts[4], tris_idx_order)
         self.col = []        # collision quads: (p0,p1,p2,p3, desired normal)
+        self.visible = True  # False while adding collision-only props
 
     # light --------------------------------------------------------------
     def shade(self, p):
@@ -76,11 +90,12 @@ class RoomGeo:
         # decide winding once for the whole face
         pa = O; pb = add(O, U); pc = add(add(O, U), V)
         flip = dot(cross(sub(pb, pa), sub(pc, pa)), normal) < 0
-        lst = self.faces.setdefault(tex, [])
-        for i in range(nu):
-            for j in range(nv):
-                q = [vert(i, j), vert(i+1, j), vert(i+1, j+1), vert(i, j+1)]
-                lst.append((q, flip))
+        if self.visible:
+            lst = self.faces.setdefault(tex, [])
+            for i in range(nu):
+                for j in range(nv):
+                    q = [vert(i, j), vert(i+1, j), vert(i+1, j+1), vert(i, j+1)]
+                    lst.append((q, flip))
         if collide:
             self.col.append((pa, pb, pc, add(O, V), normal))
 
@@ -126,7 +141,9 @@ def build_room(room):
             g.face(wall, O, A, (0, h, 0), n, True, uvflip_v=True)
     # props
     for p in room.get('boxes', []):
+        g.visible = not p.get('hidden', False)     # hidden = collision only (a 3D model object is drawn there)
         g.box(p['x0'], p['z0'], p['x1'], p['z1'], p.get('y0', 0), p['y1'], p.get('side', 'mans_wood'), p.get('top', 'mans_wood'), p.get('collide', True))
+        g.visible = True
     # doors (drawn proud of the wall; wall collision already blocks)
     for d in DOORS:
         if d['room'] != room['id']: continue
@@ -134,7 +151,7 @@ def build_room(room):
         al = norm(A)
         c = add(O, mul(al, d['at'] - (O[0] if abs(al[0]) > .5 else O[2])))
         base = add(sub(c, mul(al, DOOR_W/2)), mul(n, 4))
-        g.face('mans_door', base, mul(al, DOOR_W), (0, DOOR_H, 0), n, False, uvflip_v=True, lit=True, cell=170, uv_once=True)
+        g.face(door_tex(d), base, mul(al, DOOR_W), (0, DOOR_H, 0), n, False, uvflip_v=True, lit=True, cell=170, uv_once=True)
         # lintel
         lb = add(sub(c, mul(al, DOOR_W/2+30)), mul(n, 6))
         g.face('mans_wood', add(lb, (0, DOOR_H, 0)), mul(al, DOOR_W+60), (0, 40, 0), n, False, uvflip_v=True, cell=2000)
@@ -210,28 +227,21 @@ def emit_all():
         out.append('const Gfx mansion_dl_%s[] = {\n' % r['id'])
         out.append(tilesetup); out += body; out.append(tileend)
     # door-opening cinematic: textured, unlit, no z-test, no culling (drawn by geo_mansion_door_anim)
-    out.append('const Gfx mansion_door_begin_dl[] = {\n')
-    out.append(tilesetup)
-    out.append('    gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, mans_door_tex),\n    gsDPLoadSync(),\n')
-    out.append('    gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),\n')
-    out.append('    gsDPSetRenderMode(G_RM_OPA_SURF, G_RM_OPA_SURF2),\n')
-    out.append('    gsSPClearGeometryMode(G_ZBUFFER | G_CULL_BACK),\n')
-    out.append('    gsSPEndDisplayList(),\n};\n\n')
+    door_texs = ['mans_door', 'mans_door_k1', 'mans_door_k2', 'mans_door_k3']
+    for ei, dtex in enumerate(door_texs):
+        out.append('const Gfx mansion_door_begin_dl%d[] = {\n' % ei)
+        out.append(tilesetup)
+        out.append('    gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, %s_tex),\n    gsDPLoadSync(),\n' % dtex)
+        out.append('    gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),\n')
+        out.append('    gsDPSetRenderMode(G_RM_OPA_SURF, G_RM_OPA_SURF2),\n')
+        out.append('    gsSPClearGeometryMode(G_ZBUFFER | G_CULL_BACK),\n')
+        out.append('    gsSPEndDisplayList(),\n};\n\n')
+    out.append('const Gfx *const mansion_door_begin_dls[] = { mansion_door_begin_dl0, mansion_door_begin_dl1, mansion_door_begin_dl2, mansion_door_begin_dl3 };\n\n')
     out.append('const Gfx mansion_door_end_dl[] = {\n    gsSPSetGeometryMode(G_ZBUFFER | G_CULL_BACK),\n')
     out.append(tileend)
-    # item billboards
+    # 3D item / prop models (models.py)
     for ic in ICONS:
-        out.append('static const Vtx mansion_vtx_%s[] = {\n' % ic)
-        out.append('    {{{   -50,      0,      0}, 0, {     0,    992}, {0xff, 0xff, 0xff, 0xff}}},\n')
-        out.append('    {{{    50,      0,      0}, 0, {   992,    992}, {0xff, 0xff, 0xff, 0xff}}},\n')
-        out.append('    {{{    50,    100,      0}, 0, {   992,      0}, {0xff, 0xff, 0xff, 0xff}}},\n')
-        out.append('    {{{   -50,    100,      0}, 0, {     0,      0}, {0xff, 0xff, 0xff, 0xff}}},\n};\n\n')
-        out.append('const Gfx mansion_dl_%s[] = {\n' % ic)
-        out.append(tilesetup)
-        out.append('    gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, %s_tex),\n    gsDPLoadSync(),\n' % ic)
-        out.append('    gsDPLoadBlock(G_TX_LOADTILE, 0, 0, 32 * 32 - 1, CALC_DXT(32, G_IM_SIZ_16b_BYTES)),\n')
-        out.append('    gsSPVertex(mansion_vtx_%s, 4, 0),\n    gsSP2Triangles(0, 1, 2, 0x0, 0, 2, 3, 0x0),\n' % ic)
-        out.append(tileend)
+        out.append(MDL.emit_model(ic, MDL.MODELS[ic]()))
     open(os.path.join(LV, 'areas', '1', 'mansion_model.inc.c'), 'w').write(''.join(out))
 
     # ---------------- collision --------------------------------------------------
@@ -259,7 +269,7 @@ def emit_all():
     geo = ['// Generated by mario_evil/gen_level.py -- do not edit by hand\n']
     for ic in ICONS:
         geo.append('const GeoLayout mansion_geo_%s[] = {\n   GEO_NODE_START(),\n   GEO_OPEN_NODE(),\n' % ic)
-        geo.append('      GEO_BILLBOARD(),\n      GEO_OPEN_NODE(),\n         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_%s),\n      GEO_CLOSE_NODE(),\n' % ic)
+        geo.append('      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_%s),\n' % ic)
         geo.append('   GEO_CLOSE_NODE(),\n   GEO_END(),\n};\n\n')
     geo.append('const GeoLayout mansion_geo_area[] = {\n')
     geo.append('   GEO_NODE_SCREEN_AREA(10, SCREEN_CENTER_X, SCREEN_CENTER_Y, SCREEN_CENTER_X, SCREEN_CENTER_Y),\n   GEO_OPEN_NODE(),\n')
@@ -282,7 +292,7 @@ def emit_all():
     blk = ['// MANSION-BEGIN (generated)\n', 'extern const GeoLayout mansion_geo_area[];\n', 'extern const Collision mansion_collision[];\n']
     for ic in ICONS:
         blk.append('extern const GeoLayout mansion_geo_%s[];\nextern const Gfx mansion_dl_%s[];\n' % (ic, ic))
-    blk.append('extern const Gfx mansion_door_begin_dl[];\nextern const Gfx mansion_door_end_dl[];\n')
+    blk.append('extern const Gfx *const mansion_door_begin_dls[];\nextern const Gfx mansion_door_end_dl[];\n')
     for r in ROOMS: blk.append('extern const Gfx mansion_dl_%s[];\n' % r['id'])
     blk.append('// MANSION-END\n')
     endif = hdr.rfind('#endif')
@@ -294,7 +304,7 @@ def emit_all():
     m = tx.find('// MANSION-BEGIN')
     if m != -1: tx = tx[:m]
     tx += '// MANSION-BEGIN (generated)\n'
-    for t in TEXTURES + ICONS:
+    for t in TEXTURES:
         tx += 'ALIGNED8 static const Texture %s_tex[] = {\n#include "levels/bbh/%s.rgba16.inc.c"\n};\n\n' % (t, t)
     open(os.path.join(LV, 'texture.inc.c'), 'w').write(tx)
 
@@ -326,7 +336,7 @@ def emit_all():
         yaw = int(round(math.atan2(n[0], n[2]) / (2*math.pi) * 65536)) & 0xFFFF
         dest = didx[d['to']]
         lc = geos[roomidx[d['room']]].shade((cx + n[0]*60, 170, cz + n[2]*60))
-        dt.append('    { %d, %d, %d, %d, %d, %d, %d, %d, %d, 0x%04X, %d, %d, %d },  // %s\n' % (roomidx[d['room']], s16(cx), s16(cz), s16(n[0]), s16(n[2]), dest, d.get('key', 0), s16(sx), s16(sz), yaw, lc[0], lc[1], lc[2], d['id']))
+        dt.append('    { %d, %d, %d, %d, %d, %d, %d, %d, %d, 0x%04X, %d, %d, %d, %d },  // %s\n' % (roomidx[d['room']], s16(cx), s16(cz), s16(n[0]), s16(n[2]), dest, d.get('key', 0), s16(sx), s16(sz), yaw, lc[0], lc[1], lc[2], door_emblem(d), d['id']))
     dt.append('};\n')
     open(os.path.join(ROOT, 'src', 'game', 'mansion_data.inc.c'), 'w').write(''.join(dt))
 
@@ -354,9 +364,9 @@ def emit_all():
                 par = (o['file'] << 24)
                 objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, 0, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionFile),\n' % (models['item_file'], x, y + 10, z, par))
             elif kind == 'typewriter':
-                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, 0, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionTypewriter),\n' % (models['item_typewriter'], x, y + 10, z))
+                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionTypewriter),\n' % (models['item_typewriter'], x, y + 10, z, yaw * 360 // 65536))
             elif kind == 'box':
-                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, 0, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionItemBox),\n' % (models['item_box'], x, y + 10, z))
+                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionItemBox),\n' % (models['item_box'], x, y + 10, z, yaw * 360 // 65536))
             elif kind == 'zombie':
                 objs.append('    OBJECT(/*model*/ MODEL_GOOMBA, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionZombie),\n' % (x, y, z, yaw * 360 // 65536, (o.get('hp', 3) << 24) | nuid()))
             else:

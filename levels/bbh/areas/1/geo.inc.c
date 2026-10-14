@@ -2,10 +2,7 @@
 const GeoLayout mansion_geo_item_herb_g[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
-      GEO_BILLBOARD(),
-      GEO_OPEN_NODE(),
-         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_herb_g),
-      GEO_CLOSE_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_herb_g),
    GEO_CLOSE_NODE(),
    GEO_END(),
 };
@@ -13,10 +10,7 @@ const GeoLayout mansion_geo_item_herb_g[] = {
 const GeoLayout mansion_geo_item_herb_r[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
-      GEO_BILLBOARD(),
-      GEO_OPEN_NODE(),
-         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_herb_r),
-      GEO_CLOSE_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_herb_r),
    GEO_CLOSE_NODE(),
    GEO_END(),
 };
@@ -24,10 +18,7 @@ const GeoLayout mansion_geo_item_herb_r[] = {
 const GeoLayout mansion_geo_item_herb_b[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
-      GEO_BILLBOARD(),
-      GEO_OPEN_NODE(),
-         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_herb_b),
-      GEO_CLOSE_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_herb_b),
    GEO_CLOSE_NODE(),
    GEO_END(),
 };
@@ -35,10 +26,7 @@ const GeoLayout mansion_geo_item_herb_b[] = {
 const GeoLayout mansion_geo_item_key[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
-      GEO_BILLBOARD(),
-      GEO_OPEN_NODE(),
-         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_key),
-      GEO_CLOSE_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_key),
    GEO_CLOSE_NODE(),
    GEO_END(),
 };
@@ -46,10 +34,7 @@ const GeoLayout mansion_geo_item_key[] = {
 const GeoLayout mansion_geo_item_ribbon[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
-      GEO_BILLBOARD(),
-      GEO_OPEN_NODE(),
-         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_ribbon),
-      GEO_CLOSE_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_ribbon),
    GEO_CLOSE_NODE(),
    GEO_END(),
 };
@@ -57,10 +42,7 @@ const GeoLayout mansion_geo_item_ribbon[] = {
 const GeoLayout mansion_geo_item_file[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
-      GEO_BILLBOARD(),
-      GEO_OPEN_NODE(),
-         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_file),
-      GEO_CLOSE_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_file),
    GEO_CLOSE_NODE(),
    GEO_END(),
 };
@@ -68,10 +50,7 @@ const GeoLayout mansion_geo_item_file[] = {
 const GeoLayout mansion_geo_item_box[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
-      GEO_BILLBOARD(),
-      GEO_OPEN_NODE(),
-         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_box),
-      GEO_CLOSE_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_box),
    GEO_CLOSE_NODE(),
    GEO_END(),
 };
@@ -79,10 +58,7 @@ const GeoLayout mansion_geo_item_box[] = {
 const GeoLayout mansion_geo_item_typewriter[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
-      GEO_BILLBOARD(),
-      GEO_OPEN_NODE(),
-         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_typewriter),
-      GEO_CLOSE_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_typewriter),
    GEO_CLOSE_NODE(),
    GEO_END(),
 };
@@ -90,10 +66,7 @@ const GeoLayout mansion_geo_item_typewriter[] = {
 const GeoLayout mansion_geo_item_gun[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
-      GEO_BILLBOARD(),
-      GEO_OPEN_NODE(),
-         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_gun),
-      GEO_CLOSE_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_gun),
    GEO_CLOSE_NODE(),
    GEO_END(),
 };
@@ -101,10 +74,7 @@ const GeoLayout mansion_geo_item_gun[] = {
 const GeoLayout mansion_geo_item_key2[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
-      GEO_BILLBOARD(),
-      GEO_OPEN_NODE(),
-         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_key2),
-      GEO_CLOSE_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_key2),
    GEO_CLOSE_NODE(),
    GEO_END(),
 };
@@ -112,10 +82,7 @@ const GeoLayout mansion_geo_item_key2[] = {
 const GeoLayout mansion_geo_item_key3[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
-      GEO_BILLBOARD(),
-      GEO_OPEN_NODE(),
-         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_key3),
-      GEO_CLOSE_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_key3),
    GEO_CLOSE_NODE(),
    GEO_END(),
 };
@@ -123,10 +90,7 @@ const GeoLayout mansion_geo_item_key3[] = {
 const GeoLayout mansion_geo_item_ammo[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
-      GEO_BILLBOARD(),
-      GEO_OPEN_NODE(),
-         GEO_DISPLAY_LIST(LAYER_ALPHA, mansion_dl_item_ammo),
-      GEO_CLOSE_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_item_ammo),
    GEO_CLOSE_NODE(),
    GEO_END(),
 };
