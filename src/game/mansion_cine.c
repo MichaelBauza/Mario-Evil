@@ -311,7 +311,7 @@ s32 mansion_cine_camera(struct Camera *c) {
 void mansion_cine_render(void) {
     const struct CineStep *st;
     s32 total, n0, k0, k1;
-    char b0[48], b1[48];
+    char b0[80], b1[80];
     if (!gMansion.cine) return;
     st = &cur_script()->steps[gMansion.cineStep];
     if (st->op != CINE_TEXT) return;

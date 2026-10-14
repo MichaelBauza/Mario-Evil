@@ -19,7 +19,7 @@ Build with `python3 mario_evil/gen_level.py` (writes src/game/mansion_cine_data.
 """
 import textwrap
 
-WRAP = 36   # characters per dialogue line
+WRAP = 46   # characters per dialogue line
 
 def cam(pos, focus, fov=50, frames=0):  return ('cam', tuple(pos), tuple(focus), fov, frames)
 def move(actor, pos, frames=60):        return ('move', actor, tuple(pos), frames)

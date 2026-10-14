@@ -1514,6 +1514,7 @@ void bhv_mansion_actor_loop(void) {
         if (o->oAnimations == NULL) {
             o->oAnimations = (struct Animation **) toad_seg6_anims_0600FB58;
             cur_obj_init_animation(TOAD_ANIM_WEST_STANDING);
+            o->oOpacity = 255;     // toad_geo's transparency ASM reads oOpacity: 0 would make him invisible
         }
         if (gMarioObject != NULL && !gMansion.cine && dist_between_objects(o, gMarioObject) < 700.0f) {
             cur_obj_rotate_yaw_toward(obj_angle_to_object(o, gMarioObject), 0x400);   // turn to face Mario
