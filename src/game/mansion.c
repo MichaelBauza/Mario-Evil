@@ -281,6 +281,7 @@ s32 lvl_mansion_init(UNUSED s16 arg, UNUSED s32 unused) {
     gMansion.fade = 0;
     if (gMansion.wantMenu != MENU_TITLE) gMansion.wantMenu = 0;
     gMansion.room = (u8) MAX(0, find_room(gMarioState->pos[0], gMarioState->pos[2]));
+    gMansion.visited |= 1u << gMansion.room;
     return 0;
 }
 
@@ -760,7 +761,7 @@ static void mansion_footsteps(struct MarioState *m);
 void mansion_post_update(void) {
     struct MarioState *m = gMarioState;
     s32 r = find_room(m->pos[0], m->pos[2]);
-    if (r >= 0 && gMansion.doorState == 0) gMansion.room = r;
+    if (r >= 0 && gMansion.doorState == 0) { gMansion.room = r; gMansion.visited |= 1u << r; }
     update_doors();
     mansion_footsteps(m);
     if (gMansion.escape == 1 && gMansion.endTimer == 0) {
@@ -866,6 +867,18 @@ static void close_menu(void) {
     set_play_mode(PLAY_MODE_NORMAL);
 }
 
+// Pause-menu tabs, left to right: MAP, FILES, ITEMS. L = previous tab, R = next tab.
+static const u8 sTabOrder[3] = { MENU_MAP, MENU_FILES, MENU_ITEMS };
+
+static void switch_tab(s32 dir) {
+    s32 i, cur = 2;
+    for (i = 0; i < 3; i++) if (sTabOrder[i] == gMansion.menu) cur = i;
+    gMansion.menu = sTabOrder[(cur + dir + 3) % 3];
+    gMansion.fileSel = 0;
+    gMansion.comboSrc = -1;
+    play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource);
+}
+
 static void use_item(s32 slot) {
     struct MansionSlot *s = &gMansion.inv[slot];
     s32 full = gMarioState->health >= HEALTH_MAX;
@@ -926,7 +939,7 @@ void mansion_paused_update(void) {
             play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource);
         }
         if (c->buttonPressed & B_BUTTON) { close_menu(); return; }
-        if (c->buttonPressed & R_TRIG) { gMansion.menu = MENU_FILES; gMansion.fileSel = 0; play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource); return; }
+        if (c->buttonPressed & (R_TRIG | L_TRIG)) { switch_tab((c->buttonPressed & R_TRIG) ? 1 : -1); return; }
         if (c->buttonPressed & Z_TRIG) {
             if (gMansion.comboSrc < 0) {
                 if (gMansion.inv[gMansion.sel].id != MI_NONE) gMansion.comboSrc = gMansion.sel;
@@ -956,7 +969,11 @@ void mansion_paused_update(void) {
             gMansion.fileSel = (gMansion.fileSel + (dx ? dx : dy) + cnt) % cnt;
             play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource);
         }
-        if (c->buttonPressed & (B_BUTTON | R_TRIG)) { gMansion.menu = MENU_ITEMS; play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource); }
+        if (c->buttonPressed & (R_TRIG | L_TRIG)) { switch_tab((c->buttonPressed & R_TRIG) ? 1 : -1); return; }
+        if (c->buttonPressed & B_BUTTON) { close_menu(); return; }
+    } else if (gMansion.menu == MENU_MAP) {
+        if (c->buttonPressed & (R_TRIG | L_TRIG)) { switch_tab((c->buttonPressed & R_TRIG) ? 1 : -1); return; }
+        if (c->buttonPressed & B_BUTTON) { close_menu(); return; }
     } else if (gMansion.menu == MENU_BOX) {
         if (dx) { gMansion.boxSide ^= 1; play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource); }
         if (dy) {
@@ -1065,10 +1082,83 @@ static void draw_footer(const char *text) {
     print_small_text(SCREEN_WIDTH / 2, 208, text, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
 }
 
+static void draw_tabs(void) {
+    static const char *const names[3] = { "MAP", "FILES", "ITEMS" };
+    s32 i;
+    for (i = 0; i < 3; i++) {
+        s32 x = SAFE_L + i * 58;
+        s32 sel = (sTabOrder[i] == gMansion.menu);
+        draw_box(x, 6, x + 54, 22, sel ? 110 : 40, sel ? 110 : 40, sel ? 40 : 50, 230);
+        print_small_text(x + 27, 9, names[i], PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+    }
+}
+
+// Top-down floor plan: rooms the player has entered, door markers (coloured by the key they need), Mario.
+static void draw_map(void) {
+    s32 i;
+    s32 minX = 32767, minZ = 32767, maxX = -32768, maxZ = -32768;
+    f32 sc, sx, sz;
+    s32 ox, oz;
+    const s32 L = SAFE_L + 4, T = 50, W = (SAFE_R - SAFE_L) - 8, H = 134;
+
+    draw_box(SAFE_L - 4, 44, SAFE_R + 4, 202, 18, 16, 14, 235);
+    for (i = 0; i < MANSION_NUM_ROOMS; i++) {
+        if (gMansionRooms[i].x0 < minX) minX = gMansionRooms[i].x0;
+        if (gMansionRooms[i].z0 < minZ) minZ = gMansionRooms[i].z0;
+        if (gMansionRooms[i].x1 > maxX) maxX = gMansionRooms[i].x1;
+        if (gMansionRooms[i].z1 > maxZ) maxZ = gMansionRooms[i].z1;
+    }
+    sx = (f32) W / (f32) (maxX - minX);
+    sz = (f32) H / (f32) (maxZ - minZ);
+    sc = (sx < sz) ? sx : sz;
+    ox = L + (W - (s32) ((maxX - minX) * sc)) / 2;
+    oz = T + (H - (s32) ((maxZ - minZ) * sc)) / 2;
+
+    for (i = 0; i < MANSION_NUM_ROOMS; i++) {
+        const struct MansionRoom *r = &gMansionRooms[i];
+        s32 x1, y1, x2, y2;
+        s32 cur = (i == gMansion.room);
+        if (!((gMansion.visited >> i) & 1)) continue;
+        x1 = ox + (s32) ((r->x0 - minX) * sc);
+        y1 = oz + (s32) ((r->z0 - minZ) * sc);
+        x2 = ox + (s32) ((r->x1 - minX) * sc);
+        y2 = oz + (s32) ((r->z1 - minZ) * sc);
+        if (x2 - x1 < 4) x2 = x1 + 4;
+        if (y2 - y1 < 4) y2 = y1 + 4;
+        draw_box(x1, y1, x2, y2, cur ? 240 : 120, cur ? 210 : 120, cur ? 80 : 140, 255);
+        draw_box(x1 + 1, y1 + 1, x2 - 1, y2 - 1, cur ? 100 : 46, cur ? 90 : 48, cur ? 30 : 60, 255);
+    }
+    for (i = 0; i < MANSION_NUM_DOORS; i++) {
+        const struct MansionDoor *d = &gMansionDoors[i];
+        s32 dx, dy;
+        u8 r = 200, g = 200, b = 210;
+        if (!((gMansion.visited >> d->room) & 1)) continue;
+        if (door_locked(i)) {
+            switch (d->key) {
+                case 1: r = 230; g = 190; b = 55; break;
+                case 2: r = 150; g = 175; b = 225; break;
+                case 3: r = 240; g = 130; b = 40; break;
+                default: r = 200; g = 50; b = 50; break;
+            }
+        }
+        dx = ox + (s32) ((d->x - minX) * sc);
+        dy = oz + (s32) ((d->z - minZ) * sc);
+        draw_box(dx - 1, dy - 1, dx + 2, dy + 2, r, g, b, 255);
+    }
+    {
+        s32 mx = ox + (s32) ((gMarioState->pos[0] - minX) * sc);
+        s32 my = oz + (s32) ((gMarioState->pos[2] - minZ) * sc);
+        if ((gGlobalTimer >> 3) & 1) draw_box(mx - 2, my - 2, mx + 3, my + 3, 60, 230, 90, 255);
+        else draw_box(mx - 1, my - 1, mx + 2, my + 2, 60, 230, 90, 255);
+    }
+    print_small_text(SAFE_L, 188, gMansionRooms[gMansion.room].name, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+}
+
 static void draw_menu(void) {
     s32 i;
     draw_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, 190);
-    print_small_text(SAFE_L, 16, "STATUS", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+    if (gMansion.menu == MENU_BOX) print_small_text(SAFE_L, 16, "STATUS", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+    else draw_tabs();
     if (has_gun()) {
         char ab[24];
         char nb[14];
@@ -1107,7 +1197,7 @@ static void draw_menu(void) {
         }
         draw_footer("D-Pad: select   A: move   B: close");
     } else if (gMansion.menu == MENU_ITEMS) {
-        draw_footer("A: use  Z: combine  R: files  B: close");
+        draw_footer("A: use  Z: combine  L/R: tab  B: close");
     } else if (gMansion.menu == MENU_FILES) {
         s32 cnt = file_count();
         if (cnt == 0) {
@@ -1134,7 +1224,10 @@ static void draw_menu(void) {
             draw_box(SAFE_L - 4, 60, SAFE_R + 4, 202, 30, 28, 24, 235);
             draw_wrapped(SAFE_L + 4, 64, sFileText[f], (SAFE_R - SAFE_L) - 8, 10);
         }
-        draw_footer(file_count() > 1 ? "Left/Right: change file   B: back" : "B: back");
+        draw_footer(file_count() > 1 ? "D-Pad: file   L/R: tab   B: close" : "L/R: tab   B: close");
+    } else if (gMansion.menu == MENU_MAP) {
+        draw_map();
+        draw_footer("L/R: tab   B: close");
     }
 }
 
