@@ -290,6 +290,40 @@ void mansion_camera(struct Camera *c) {
 }
 
 /* ------------------------------------------------------------------------ */
+/* tank controls (RE1-style)                                                */
+/* stick up = walk forward, stick down = walk back, left/right = turn in    */
+/* place. Walking is the default speed; hold R to run.                      */
+/* ------------------------------------------------------------------------ */
+
+#define TANK_WALK_SPEED 16.0f
+#define TANK_RUN_SPEED  32.0f
+#define TANK_TURN_RATE  0x0A00   // full stick: about 14 degrees per frame
+#define TANK_DEADZONE   12
+
+void mansion_tank_input(struct MarioState *m) {
+    struct Controller *ctl = m->controller;
+    f32 top = (ctl->buttonDown & R_TRIG) ? TANK_RUN_SPEED : TANK_WALK_SPEED;
+
+    // Turn: positive stickX is clockwise from above, which is an increasing faceAngle.
+    if (ctl->stickX > TANK_DEADZONE || ctl->stickX < -TANK_DEADZONE) {
+        m->faceAngle[1] += (s16) (ctl->stickX * TANK_TURN_RATE / 64);
+    }
+
+    if (ctl->stickY > TANK_DEADZONE) {
+        m->intendedMag = top * (ctl->stickY / 64.0f);
+        m->intendedYaw = m->faceAngle[1];
+    } else if (ctl->stickY < -TANK_DEADZONE) {
+        m->intendedMag = TANK_WALK_SPEED * 0.5f * (-ctl->stickY / 64.0f);
+        m->intendedYaw = (s16) (m->faceAngle[1] + 0x8000);
+    } else {
+        m->intendedMag = 0.0f;
+        m->intendedYaw = m->faceAngle[1];
+    }
+
+    if (m->intendedMag > 0.0f) m->input |= INPUT_NONZERO_ANALOG;
+}
+
+/* ------------------------------------------------------------------------ */
 /* per-frame update                                                         */
 /* ------------------------------------------------------------------------ */
 

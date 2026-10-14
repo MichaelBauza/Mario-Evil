@@ -23,6 +23,7 @@
 #include "mario_actions_stationary.h"
 #include "mario_actions_submerged.h"
 #include "mario_misc.h"
+#include "mansion.h"
 #include "mario_step.h"
 #include "memory.h"
 #include "object_fields.h"
@@ -1249,6 +1250,11 @@ void update_mario_button_inputs(struct MarioState *m) {
 void update_mario_joystick_inputs(struct MarioState *m) {
     struct Controller *controller = m->controller;
     f32 mag = ((controller->stickMag / 64.0f) * (controller->stickMag / 64.0f)) * 64.0f;
+
+    if (gCurrLevelNum == LEVEL_BBH) {
+        mansion_tank_input(m);
+        return;
+    }
 
     if (m->squishTimer == 0) {
         m->intendedMag = mag / 2.0f;

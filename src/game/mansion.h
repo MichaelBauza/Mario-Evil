@@ -89,6 +89,7 @@ void mansion_render_hud(void);
 s32  mansion_wants_pause(void);
 void mansion_enter_pause(void);
 void mansion_paused_update(void);
+void mansion_tank_input(struct MarioState *m);
 Gfx *geo_switch_mansion_room(s32 callContext, struct GraphNode *node, void *context);
 
 void mansion_message(const char *text);
