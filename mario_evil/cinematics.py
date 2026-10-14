@@ -8,6 +8,8 @@ Steps run in order; Mario's controls are locked while one plays.
                                       automatically into pages of two lines. speaker=None for narration.
   move(actor, pos, frames=60)         slide an actor (a prop placed with kind='actor') to (x, y, z)
   rot(actor, yaw, frames=0)           turn an actor (yaw 0x4000 = +x, 0x8000 = -z, 0xC000 = -x)
+  walk(pos, frames=120)               Mario walks (scripted; the physics stay on)
+  together(a, b, ...)                 run steps at the same time, e.g. a walk while the camera moves
   wait(frames)                        hold for a while
   sfx(name)                           play a sound macro, e.g. 'SOUND_GENERAL_OPEN_WOOD_DOOR'
 
@@ -22,6 +24,11 @@ WRAP = 36   # characters per dialogue line
 def cam(pos, focus, fov=50, frames=0):  return ('cam', tuple(pos), tuple(focus), fov, frames)
 def move(actor, pos, frames=60):        return ('move', actor, tuple(pos), frames)
 def rot(actor, yaw, frames=0):          return ('rot', actor, yaw, frames)
+def walk(pos, frames=120):              return ('walk', tuple(pos), frames)   # Mario walks to (x, y, z) at a steady pace
+def together(*steps):
+    """Run steps at the same time: the first starts now, the rest start with it. The group ends when all are done.
+    Only camera, move, rot, walk, wait and sfx may be grouped (no text)."""
+    return [steps[0]] + [('par', s) for s in steps[1:]]
 def wait(frames):                       return ('wait', frames)
 def sfx(name):                          return ('sfx', name)
 
@@ -33,12 +40,13 @@ def text(speaker, body):
 
 CINES = [
     # Intro: plays once, as soon as the title screen is dismissed and Mario is in the hall.
-    dict(name='intro_hall', zone=(-3000, -300, -2600, 300), steps=[
-        cam((-4000, 320, 500), (-2800, 80, 0), fov=50),
-        wait(30),
+    dict(name='intro_hall', zone=(-2700, -300, -2380, 300), steps=[
+        cam((-2100, 240, 0), (-2900, 90, 0), fov=50),              # cut: looking back through the doorway
+        together(
+            walk((-3300, 0, 0), frames=170),                       # Mario walks in from the doorway...
+            cam((-2700, 240, 100), (-3000, 90, 0), fov=50, frames=170)),   # ...as the camera follows him in
         text('MARIO', "Let's-a go!"),
-        cam((-3300, 220, 380), (-2800, 80, 0), fov=45, frames=120),
-        wait(30),
+        wait(20),
     ]),
     dict(name='dining_fire', zone=(-300, 560, 300, 720), steps=[
         cam((0, 330, -120), (0, 200, 740), fov=50),

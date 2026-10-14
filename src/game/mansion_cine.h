@@ -5,13 +5,14 @@
 
 /* Mario EVIL cinematics. Authored in mario_evil/cinematics.py, generated into mansion_cine_data.inc.h. */
 
-enum CineOp { CINE_CAM, CINE_TEXT, CINE_MOVE, CINE_ROT, CINE_WAIT, CINE_SFX };
+enum CineOp { CINE_CAM, CINE_TEXT, CINE_MOVE, CINE_ROT, CINE_WAIT, CINE_SFX, CINE_WALK };
 
 struct CineStep {
     u8  op;                  // enum CineOp
     u8  actor;               // MOVE / ROT: actor number
+    u8  par;                 // 1 = runs at the same time as the step before it (a group)
     u16 frames;              // duration of MOVE / ROT / CAM / WAIT (0 = instant)
-    s16 v[7];                // CAM: pos xyz, focus xyz, fov.  MOVE: xyz.  ROT: yaw in v[0]
+    s16 v[7];                // CAM: pos xyz, focus xyz, fov.  MOVE / WALK: xyz.  ROT: yaw in v[0]
     const char *speaker;     // TEXT: speaker name, or NULL
     const char *line0;       // TEXT: dialogue lines (one page)
     const char *line1;

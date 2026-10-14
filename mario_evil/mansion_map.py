@@ -352,4 +352,4 @@ MAPRECTS = {
     'tunnel': (50, 33, 66, 38), 'dock': (38, 34, 50, 45),
 }
 
-START = (-2800, 0, 0xC000)   # (x, z, yaw): inside the hall facing west
+START = (-2440, 0, 0xC000)   # (x, z, yaw): just inside the hall doorway, facing west (intro walks in)

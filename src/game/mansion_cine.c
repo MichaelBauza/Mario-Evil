@@ -5,8 +5,8 @@
 #include "audio/external.h"
 #include "camera.h"
 #include "game_init.h"
-#include "mario.h"
 #include "level_update.h"
+#include "mario.h"
 #include "object_list_processor.h"
 #include "engine/math_util.h"
 #include "print.h"
@@ -17,16 +17,24 @@
 
 #include "mansion_cine_data.inc.h"
 
-/* Runtime camera and actor interpolation. The camera is rebuilt every frame from these. */
-static Vec3f sCamPos, sCamFocus;
+/* A group is a run of steps that play at the same time (a step with par=1 joins the step before it).
+   Each member keeps its own start snapshot, indexed by its position in the group. */
+#define CINE_MAX_GROUP 6
+
+static Vec3f sCamPos, sCamFocus;          // the camera the cinematic is showing now
 static f32   sCamFov;
-static Vec3f sFromPos, sFromFocus;
-static f32   sFromFov;
-static Vec3f sActorFrom;
-static s16   sActorYawFrom;
+static Vec3f sSnapPos[CINE_MAX_GROUP], sSnapFocus[CINE_MAX_GROUP];
+static f32   sSnapFov[CINE_MAX_GROUP];
+static s16   sSnapYaw[CINE_MAX_GROUP];
 
 static const struct CineScript *cur_script(void) { return &gCines[gMansion.cine - 1]; }
-static const struct CineStep *cur_step(void) { return &cur_script()->steps[gMansion.cineStep]; }
+
+static s32 group_len(s32 first) {
+    const struct CineScript *cs = cur_script();
+    s32 n = 1;
+    while (first + n < cs->nSteps && n < CINE_MAX_GROUP && cs->steps[first + n].par) n++;
+    return n;
+}
 
 /* Find a live actor by number. Looked up every frame so no pointer outlives a level reload. */
 static struct Object *find_actor(u8 id) {
@@ -42,7 +50,7 @@ static struct Object *find_actor(u8 id) {
     return NULL;
 }
 
-/* 0 at the start of a step, 1 at the end; smoothstep so moves ease in and out. */
+/* 0 at the start of a step, 1 at the end; smoothstep so camera and prop moves ease in and out. */
 static f32 ease(s32 t, u16 frames) {
     f32 p;
     if (frames == 0) return 1.0f;
@@ -51,21 +59,41 @@ static f32 ease(s32 t, u16 frames) {
     return p * p * (3.0f - 2.0f * p);
 }
 
-static void step_begin(void) {
-    const struct CineStep *st = cur_step();
+static f32 linear(s32 t, u16 frames) {
+    f32 p;
+    if (frames == 0) return 1.0f;
+    p = (f32) t / (f32) frames;
+    return p > 1.0f ? 1.0f : p;
+}
+
+static void group_begin(void) {
+    const struct CineScript *cs = cur_script();
+    s32 first = gMansion.cineStep, n = group_len(first), k;
     gMansion.cineT = 0;
     gMansion.cineChars = 0;
-    if (st->op == CINE_CAM) {
-        vec3f_copy(sFromPos, sCamPos);
-        vec3f_copy(sFromFocus, sCamFocus);
-        sFromFov = sCamFov;
-    } else if (st->op == CINE_MOVE || st->op == CINE_ROT) {
-        struct Object *a = find_actor(st->actor);
-        if (a != NULL) {
-            sActorFrom[0] = a->oPosX; sActorFrom[1] = a->oPosY; sActorFrom[2] = a->oPosZ;
-            sActorYawFrom = a->oFaceAngleYaw;
+    for (k = 0; k < n; k++) {
+        const struct CineStep *st = &cs->steps[first + k];
+        if (st->op == CINE_CAM) {
+            vec3f_copy(sSnapPos[k], sCamPos);
+            vec3f_copy(sSnapFocus[k], sCamFocus);
+            sSnapFov[k] = sCamFov;
+        } else if (st->op == CINE_MOVE || st->op == CINE_ROT) {
+            struct Object *a = find_actor(st->actor);
+            if (a != NULL) {
+                sSnapPos[k][0] = a->oPosX; sSnapPos[k][1] = a->oPosY; sSnapPos[k][2] = a->oPosZ;
+                sSnapYaw[k] = a->oFaceAngleYaw;
+            }
+        } else if (st->op == CINE_WALK) {
+            vec3f_copy(sSnapPos[k], gMarioState->pos);
+            set_mario_action(gMarioState, ACT_WALKING, 0);
         }
     }
+}
+
+/* Mario is put back on his feet when a walk ends. */
+static void walk_stop(void) {
+    gMarioState->forwardVel = 0.0f;
+    set_mario_action(gMarioState, ACT_IDLE, 0);
 }
 
 static void cine_end(void) {
@@ -74,14 +102,16 @@ static void cine_end(void) {
     gMansion.camIdx = -1;      // next frame the gameplay camera re-picks its angle
     gMansion.camLatch = 0;
     gMansion.camCooldown = 0;
+    walk_stop();
 }
 
-static void cine_next(void) {
-    gMansion.cineStep++;
+/* Advance past the group that just finished. */
+static void group_next(s32 n) {
+    gMansion.cineStep += n;
     if (gMansion.cineStep >= cur_script()->nSteps) {
         cine_end();
     } else {
-        step_begin();
+        group_begin();
     }
 }
 
@@ -92,7 +122,7 @@ static void cine_start(s32 i) {
     vec3f_copy(sCamPos, gLakituState.pos);
     vec3f_copy(sCamFocus, gLakituState.focus);
     sCamFov = gMansionFov;
-    step_begin();
+    group_begin();
 }
 
 void mansion_cine_check(void) {
@@ -110,73 +140,101 @@ void mansion_cine_check(void) {
     }
 }
 
-void mansion_cine_pre(void) {
-    const struct CineStep *st;
-    struct Controller *ctl = gPlayer1Controller;
-    s32 t, finished = 0;
-    if (!gMansion.cine) return;
-    st = cur_step();
-    t = gMansion.cineT;
-
+/* One member of the running group. Returns TRUE when it is finished. */
+static s32 member_step(const struct CineStep *st, s32 k, s32 t) {
     switch (st->op) {
         case CINE_CAM: {
             f32 e = ease(t, st->frames);
-            s32 k;
-            for (k = 0; k < 3; k++) {
-                sCamPos[k]   = sFromPos[k]   + ((f32) st->v[k]     - sFromPos[k])   * e;
-                sCamFocus[k] = sFromFocus[k] + ((f32) st->v[k + 3] - sFromFocus[k]) * e;
+            s32 j;
+            for (j = 0; j < 3; j++) {
+                sCamPos[j]   = sSnapPos[k][j]   + ((f32) st->v[j]     - sSnapPos[k][j])   * e;
+                sCamFocus[j] = sSnapFocus[k][j] + ((f32) st->v[j + 3] - sSnapFocus[k][j]) * e;
             }
-            sCamFov = sFromFov + ((f32) st->v[6] - sFromFov) * e;
-            finished = (t >= st->frames);
-            break;
+            sCamFov = sSnapFov[k] + ((f32) st->v[6] - sSnapFov[k]) * e;
+            return t >= st->frames;
         }
         case CINE_MOVE: {
             struct Object *a = find_actor(st->actor);
             f32 e = ease(t, st->frames);
             if (a != NULL) {
-                a->oPosX = sActorFrom[0] + ((f32) st->v[0] - sActorFrom[0]) * e;
-                a->oPosY = sActorFrom[1] + ((f32) st->v[1] - sActorFrom[1]) * e;
-                a->oPosZ = sActorFrom[2] + ((f32) st->v[2] - sActorFrom[2]) * e;
+                a->oPosX = sSnapPos[k][0] + ((f32) st->v[0] - sSnapPos[k][0]) * e;
+                a->oPosY = sSnapPos[k][1] + ((f32) st->v[1] - sSnapPos[k][1]) * e;
+                a->oPosZ = sSnapPos[k][2] + ((f32) st->v[2] - sSnapPos[k][2]) * e;
             }
-            finished = (t >= st->frames);
-            break;
+            return t >= st->frames;
         }
         case CINE_ROT: {
             struct Object *a = find_actor(st->actor);
             f32 e = ease(t, st->frames);
             if (a != NULL) {
-                a->oFaceAngleYaw = (s16) (sActorYawFrom + (s16) (st->v[0] - sActorYawFrom) * e);
+                a->oFaceAngleYaw = (s16) (sSnapYaw[k] + (s16) (st->v[0] - sSnapYaw[k]) * e);
             }
-            finished = (t >= st->frames);
-            break;
+            return t >= st->frames;
+        }
+        case CINE_WALK: {
+            struct MarioState *m = gMarioState;
+            f32 e = linear(t, st->frames);
+            f32 dx = (f32) st->v[0] - sSnapPos[k][0], dz = (f32) st->v[2] - sSnapPos[k][2];
+            f32 dist = sqrtf(dx * dx + dz * dz);
+            s16 yaw = atan2s(dz, dx);
+            s32 j;
+            /* Position is set here, before Mario's own physics runs; the walk speed keeps the walk animation going. */
+            m->pos[0] = sSnapPos[k][0] + dx * e;
+            m->pos[1] = sSnapPos[k][1] + ((f32) st->v[1] - sSnapPos[k][1]) * e;
+            m->pos[2] = sSnapPos[k][2] + dz * e;
+            if (st->frames > 0) m->forwardVel = dist / (f32) st->frames;
+            m->faceAngle[1] = yaw;
+            m->intendedYaw = yaw;
+            m->intendedMag = 0.0f;
+            for (j = 0; j < 3; j++) m->vel[j] = 0.0f;
+            return t >= st->frames;
         }
         case CINE_WAIT:
-            finished = (t >= st->frames);
-            break;
+            return t >= st->frames;
         case CINE_SFX:
             play_sound(st->sfx, gGlobalSoundSource);
-            finished = 1;
-            break;
-        case CINE_TEXT: {
-            s32 total = (s32) strlen(st->line0) + (s32) strlen(st->line1);
-            if (ctl->buttonPressed & (A_BUTTON | B_BUTTON)) {
-                if (gMansion.cineChars < total) {
-                    gMansion.cineChars = total;       // first press reveals the whole page
-                } else {
-                    finished = 1;
-                }
-            }
-            if (!finished && gMansion.cineChars < total && (t % 2) == 0) gMansion.cineChars++;
-            break;
-        }
+            return TRUE;
         default:
-            finished = 1;
-            break;
+            return TRUE;
+    }
+}
+
+void mansion_cine_pre(void) {
+    const struct CineScript *cs;
+    const struct CineStep *first;
+    struct Controller *ctl = gPlayer1Controller;
+    s32 n, k, t, allDone = 1;
+    if (!gMansion.cine) return;
+    cs = cur_script();
+    first = &cs->steps[gMansion.cineStep];
+    t = gMansion.cineT;
+
+    if (first->op == CINE_TEXT) {
+        /* dialogue: one page at a time; A reveals the page, then A moves on */
+        s32 total = (s32) strlen(first->line0) + (s32) strlen(first->line1);
+        if (ctl->buttonPressed & (A_BUTTON | B_BUTTON)) {
+            if (gMansion.cineChars < total) {
+                gMansion.cineChars = total;
+            } else {
+                group_next(1);
+                return;
+            }
+        }
+        if (gMansion.cine && gMansion.cineChars < total && (t % 2) == 0) gMansion.cineChars++;
+        if (gMansion.cine) gMansion.cineT++;
+        return;
     }
 
-    if (finished) {
-        cine_next();
-    } else if (gMansion.cine) {
+    n = group_len(gMansion.cineStep);
+    for (k = 0; k < n; k++) {
+        if (!member_step(&cs->steps[gMansion.cineStep + k], k, t)) allDone = 0;
+    }
+    if (allDone) {
+        for (k = 0; k < n; k++) {
+            if (cs->steps[gMansion.cineStep + k].op == CINE_WALK) { walk_stop(); break; }
+        }
+        group_next(n);
+    } else {
         gMansion.cineT++;
     }
 }
@@ -207,13 +265,13 @@ s32 mansion_cine_camera(struct Camera *c) {
     return TRUE;
 }
 
-/* Dialogue box: speaker name, two lines revealed a character at a time, A to skip / advance. */
+/* Dialogue box: speaker name, two lines revealed a character at a time, A to reveal / advance. */
 void mansion_cine_render(void) {
     const struct CineStep *st;
     s32 total, n0, k0, k1;
     char b0[48], b1[48];
     if (!gMansion.cine) return;
-    st = cur_step();
+    st = &cur_script()->steps[gMansion.cineStep];
     if (st->op != CINE_TEXT) return;
 
     total = (s32) strlen(st->line0) + (s32) strlen(st->line1);
