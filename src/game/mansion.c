@@ -686,11 +686,14 @@ static void update_doors(void) {
     gMansion.doorPush = 0;
 }
 
+static void mansion_footsteps(struct MarioState *m);
+
 void mansion_post_update(void) {
     struct MarioState *m = gMarioState;
     s32 r = find_room(m->pos[0], m->pos[2]);
     if (r >= 0 && gMansion.doorState == 0) gMansion.room = r;
     update_doors();
+    mansion_footsteps(m);
     if (gMansion.aiming && gMansion.doorState == 0) {
         // arm out, holding the pistol: freeze the punch animation on its extended frame
         set_mario_animation(m, MARIO_ANIM_FIRST_PUNCH);
@@ -1171,11 +1174,24 @@ static void zombie_moan(struct Object *z) {
     if (++sMoanRot >= 3) sMoanRot = 0;
 }
 
-// Mario footsteps (called from play_step_sound in mario.c while in the mansion): alternate two RE1 steps.
-void mansion_footstep(struct MarioState *m) {
+// Mario footsteps: distance based (independent of the walk animation), alternating two RE1 steps.
+static void mansion_footsteps(struct MarioState *m) {
+    static f32 sStride = 0.0f;
     static u8 sFoot = 0;
-    play_sound(sFoot ? SOUND_MEVIL_STEP2 : SOUND_MEVIL_STEP1, gGlobalSoundSource);
-    sFoot ^= 1;
+    f32 speed = (m->forwardVel < 0.0f) ? -m->forwardVel : m->forwardVel;
+    f32 need = (speed > 22.0f) ? 190.0f : 135.0f;
+
+    if (m->action == ACT_WALKING && speed > 3.0f && !gMansion.aiming && gMansion.doorState == 0 && gMansion.menu == MENU_NONE) {
+        if (sStride == 0.0f) sStride = need * 0.7f;   // first step lands quickly after starting to walk
+        sStride += speed;
+        if (sStride >= need) {
+            sStride -= need;
+            play_sound(sFoot ? SOUND_MEVIL_STEP2 : SOUND_MEVIL_STEP1, gGlobalSoundSource);
+            sFoot ^= 1;
+        }
+    } else {
+        sStride = 0.0f;
+    }
 }
 
 void bhv_mansion_zombie_init(void) {

@@ -7976,6 +7976,16 @@ layer_delay 0x2a
 layer_jump .layer_32B7
 
 
+.sound_mevil_gunshot:
+chan_setbank 11
+chan_setinstr 5
+chan_setlayer 0, .layer_mevil_gunshot
+chan_end
+
+.layer_mevil_gunshot:
+layer_note1 39, 60, 127
+layer_end
+
 .sound_mevil_step1:
 chan_setbank 11
 chan_setinstr 6
@@ -7983,7 +7993,7 @@ chan_setlayer 0, .layer_mevil_step1
 chan_end
 
 .layer_mevil_step1:
-layer_note1 39, 46, 100
+layer_note1 39, 42, 100
 layer_end
 
 .sound_mevil_step2:
@@ -7993,17 +8003,7 @@ chan_setlayer 0, .layer_mevil_step2
 chan_end
 
 .layer_mevil_step2:
-layer_note1 39, 36, 100
-layer_end
-
-.sound_mevil_gunshot:
-chan_setbank 11
-chan_setinstr 5
-chan_setlayer 0, .layer_mevil_gunshot
-chan_end
-
-.layer_mevil_gunshot:
-layer_note1 39, 83, 127
+layer_note1 39, 34, 100
 layer_end
 
 .sound_mevil_zmoan1:
@@ -8013,7 +8013,7 @@ chan_setlayer 0, .layer_mevil_zmoan1
 chan_end
 
 .layer_mevil_zmoan1:
-layer_note1 39, 152, 115
+layer_note1 39, 159, 115
 layer_end
 
 .sound_mevil_zmoan2:
@@ -8023,7 +8023,7 @@ chan_setlayer 0, .layer_mevil_zmoan2
 chan_end
 
 .layer_mevil_zmoan2:
-layer_note1 39, 175, 115
+layer_note1 39, 300, 115
 layer_end
 
 .sound_mevil_zmoan3:
@@ -8033,7 +8033,7 @@ chan_setlayer 0, .layer_mevil_zmoan3
 chan_end
 
 .layer_mevil_zmoan3:
-layer_note1 39, 152, 115
+layer_note1 39, 170, 115
 layer_end
 
 .sound_mevil_zhurt:
@@ -8043,7 +8043,7 @@ chan_setlayer 0, .layer_mevil_zhurt
 chan_end
 
 .layer_mevil_zhurt:
-layer_note1 39, 93, 120
+layer_note1 39, 110, 120
 layer_end
 
 .sound_mevil_zdeath:
@@ -8053,16 +8053,17 @@ chan_setlayer 0, .layer_mevil_zdeath
 chan_end
 
 .layer_mevil_zdeath:
-layer_note1 39, 106, 120
+layer_note1 39, 204, 120
 layer_end
 
 .channelA_table:
-sound_ref .sound_mevil_step1
-sound_ref .sound_mevil_step2
+// Add custom sounds for Channel A here!
 
 
 .channelB_table:
 sound_ref .sound_mevil_gunshot
+sound_ref .sound_mevil_step1
+sound_ref .sound_mevil_step2
 
 
 .channelC_table:
