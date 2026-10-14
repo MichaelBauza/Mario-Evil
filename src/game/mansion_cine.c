@@ -254,7 +254,8 @@ void mansion_cine_pre(void) {
     if (first->op == CINE_TEXT) {
         /* dialogue: one page at a time; A reveals the page, then A moves on */
         s32 total = (s32) strlen(first->line0) + (s32) strlen(first->line1);
-        if (ctl->buttonPressed & (A_BUTTON | B_BUTTON)) {
+        /* ignore presses for the first 10 frames of a page so the press that opened it can't skip it */
+        if (t >= 10 && (ctl->buttonPressed & (A_BUTTON | B_BUTTON))) {
             if (gMansion.cineChars < total) {
                 gMansion.cineChars = total;
             } else {
@@ -262,7 +263,7 @@ void mansion_cine_pre(void) {
                 return;
             }
         }
-        if (gMansion.cine && gMansion.cineChars < total && (t % 2) == 0) gMansion.cineChars++;
+        if (gMansion.cine && gMansion.cineChars < total && (t % 3) == 0) gMansion.cineChars++;   /* ~20 characters a second */
         if (gMansion.cine) gMansion.cineT++;
         return;
     }
