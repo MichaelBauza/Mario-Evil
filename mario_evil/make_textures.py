@@ -51,13 +51,22 @@ for k in range(5): d.line([random.Random(k).randint(0, 31), 0, random.Random(k+9
 noise(im, 8, 9); save(im, 'mans_marble')
 # --- v17 look: textures matching the concept art ------------------------------------------------------
 HERE = os.path.dirname(os.path.abspath(__file__))
-def user_floor(src, name, periods=2):
-    """Crop `periods` repeats of the user's seamless 1024px floor texture (6 repeats per side) down to 32x32."""
+def user_floor(src, name, periods=2, tone=None, keep=1.0):
+    """Crop `periods` repeats of the user's seamless 1024px floor texture (6 repeats per side) down to 32x32.
+    tone: optional RGB multiplier; keep: 1.0 = original colour, lower = pulled toward grey."""
     im = Image.open(os.path.join(HERE, src)).convert('RGBA')
     n = int(round(1024.0 / 6 * periods))
     out = im.crop((0, 0, n, n)).resize((32, 32), Image.LANCZOS)
+    if tone:
+        px = out.load()
+        for y in range(32):
+            for x in range(32):
+                r, g, b, a = px[x, y]; l = 0.3 * r + 0.59 * g + 0.11 * b
+                c = [l + (v - l) * keep for v in (r, g, b)]
+                px[x, y] = tuple(max(0, min(255, int(c[i] * tone[i]))) for i in range(3)) + (a,)
     save(out, name)
-user_floor('tex_floor_marble.jpg', 'mans_floor')
+# indoor marble: the user's marble pulled toward grey and warmed, so rooms read as the mansion, not a green hall
+user_floor('tex_floor_marble.jpg', 'mans_floor', tone=(1.0, 0.94, 0.84), keep=0.35)
 user_floor('tex_floor_carpet.jpg', 'mans_carpet')
 
 def seamless(img):
@@ -70,15 +79,13 @@ def seamless(img):
             out[x, y] = tuple(int(pa[x, y][k] * w + pb[x, y][k] * (1 - w)) for k in range(4))
     return po
 
-# green damask wallpaper (peeling)
-im = new((38, 54, 42, 255)); d = ImageDraw.Draw(im)
-for x in range(0, 32, 16):
-    for y in range(0, 32, 16):
-        d.ellipse([x+3, y+2, x+12, y+13], outline=(58, 82, 62, 255)); d.line([x+8, y+1, x+8, y+14], fill=(52, 74, 56, 255))
-        d.line([x+3, y+8, x+12, y+8], fill=(52, 74, 56, 255)); d.point([x+8, y+8], fill=(86, 112, 84, 255))
-for (sx, sy, ln) in ((5, 20, 9), (22, 4, 7), (13, 25, 6)):                      # damp stains running down
-    d.line([sx, sy, sx, sy + ln], fill=(26, 38, 30, 255)); d.line([sx + 1, sy, sx + 1, sy + ln - 3], fill=(30, 44, 34, 255))
-noise(im, 4, 13); save(seamless(im), 'mans_wall')
+# aged cream wallpaper with faded vertical stripes and grime (indoor walls, RE mansion style)
+im = new((168, 150, 112, 255)); d = ImageDraw.Draw(im)
+for x in range(0, 32, 8):
+    d.line([x, 0, x, 31], fill=(146, 128, 92, 255)); d.line([x + 1, 0, x + 1, 31], fill=(186, 170, 130, 255))
+for (sx, sy, ln) in ((6, 10, 12), (20, 2, 9), (13, 22, 8)):                       # grime streaks
+    d.line([sx, sy, sx, sy + ln], fill=(112, 94, 66, 255)); d.line([sx + 1, sy + 1, sx + 1, sy + ln - 2], fill=(124, 106, 76, 255))
+noise(im, 5, 13); save(seamless(im), 'mans_wall')
 # dark wood wainscot
 im = new((56, 36, 24, 255)); d = ImageDraw.Draw(im)
 for i in range(0, 32, 16):
@@ -115,6 +122,14 @@ for i in range(0, 32, 16):
     for j in range(0, 32, 16): d.rectangle([i, j, i+15, j+15], outline=(28, 32, 30, 255))
 for (px, py) in ((3, 4), (20, 18), (9, 24)): d.rectangle([px, py, px + 6, py + 2], fill=(46, 84, 48, 255))
 noise(im, 6, 17); save(im, 'mans_stone')
+# dark grey-brown tile, no moss (indoor floors)
+im = new((82, 76, 70, 255)); d = ImageDraw.Draw(im)
+for i in range(0, 32, 16):
+    for j in range(0, 32, 16):
+        sh = random.Random(i * 3 + j).randint(-7, 7)
+        d.rectangle([i, j, i + 15, j + 15], fill=(82 + sh, 76 + sh, 70 + sh, 255), outline=(40, 36, 34, 255))
+d.line([5, 20, 9, 26, 7, 31], fill=(40, 36, 34, 255))
+noise(im, 4, 19); save(im, 'mans_tile')
 # iron railing band (courtyard balcony)
 im = new((22, 24, 22, 255)); d = ImageDraw.Draw(im)
 d.rectangle([0, 0, 31, 3], fill=(80, 84, 76, 255)); d.rectangle([0, 28, 31, 31], fill=(80, 84, 76, 255))

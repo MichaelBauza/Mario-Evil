@@ -46,7 +46,7 @@ dining['cams'] = cams_along_x(dining, front='N')
 ROOMS.append(dining)
 
 # ---- North Corridor --------------------------------------------------------
-cn = room('corr_n', 'North Corridor', -1200, -3250, 1200, -2750, 700, floor='mans_stone', wainscot=300,
+cn = room('corr_n', 'North Corridor', -1200, -3250, 1200, -2750, 700, floor='mans_tile', wainscot=300,
           lights=[(-700, 520, -3000, 0.45, 700), (700, 520, -3000, 0.45, 700)],
           objs=[dict(kind='zombie', pos=(500, -3000), yaw=0xC000), dict(kind='file', file=2, pos=(-1000, -3000))])
 cn['cams'] = cams_along_x(cn, ya=0.9, inset=120, fov=60, front='S')
@@ -64,7 +64,7 @@ save['cams'] = [dict(pos=(3150, 600, -2650), look=(3550, 60, -3050), zone=(3000,
 ROOMS.append(save)
 
 # ---- West Corridor ---------------------------------------------------------
-cw = room('corr_w', 'West Corridor', -7500, -250, -5800, 250, 700, floor='mans_stone', wainscot=300,
+cw = room('corr_w', 'West Corridor', -7500, -250, -5800, 250, 700, floor='mans_tile', wainscot=300,
           lights=[(-6200, 520, 0, 0.45, 600), (-7100, 520, 0, 0.45, 600)],
           objs=[dict(kind='zombie', pos=(-6600, 0), yaw=0x4000), dict(kind='file', file=3, pos=(-6900, -150)),
                 dict(kind='herb_b', pos=(-6900, 150))])
@@ -72,7 +72,7 @@ cw['cams'] = cams_along_x(cw, ya=0.9, inset=120, fov=60, front='N')
 ROOMS.append(cw)
 
 # ---- Kitchen (east wing) ----------------------------------------------------
-kitchen = room('kitchen', 'Kitchen', 1600, -800, 3400, 800, 700, floor='mans_stone', wainscot=300,
+kitchen = room('kitchen', 'Kitchen', 1600, -800, 3400, 800, 700, floor='mans_tile', wainscot=300,
                boxes=[dict(x0=2300, z0=-150, x1=2700, z1=150, y1=110, side='mans_wood', top='mans_wood')],
                lights=[(2500, 520, 0, 0.55, 800), (3000, 450, 500, 0.25, 500)],
                objs=[dict(kind='zombie', pos=(2900, 450), yaw=0x8000), dict(kind='zombie', pos=(2000, -450), yaw=0x4000),
@@ -156,14 +156,14 @@ ROOMS.append(bed)
 
 # ======================= TIER 3: below the courtyard fountain =======================
 # ---- Fountain stairwell -------------------------------------------------------
-stair = room('stair', 'Fountain Stairwell', 4400, 100, 6000, 600, 600, floor='mans_stone', wainscot=300,
+stair = room('stair', 'Fountain Stairwell', 4400, 100, 6000, 600, 600, floor='mans_tile', wainscot=300,
              lights=[(4900, 450, 350, 0.40, 600), (5500, 450, 350, 0.40, 600)],
              objs=[dict(kind='zombie', pos=(5300, 330), yaw=0xC000), dict(kind='herb_b', pos=(5000, 180))])
 stair['cams'] = cams_along_x(stair, ya=0.9, inset=120, fov=60, front='N')
 ROOMS.append(stair)
 
 # ---- Cellar (third save point) ----------------------------------------------------
-cellar = room('cellar', 'Cellar', 6300, 0, 7700, 1000, 700, floor='mans_stone', wainscot=300,
+cellar = room('cellar', 'Cellar', 6300, 0, 7700, 1000, 700, floor='mans_tile', wainscot=300,
               boxes=[dict(x0=7380, z0=40, x1=7660, z1=260, y1=100, side='mans_wood', top='mans_wood'),
                      dict(x0=6392, z0=892, x1=6508, z1=958, y1=60, hidden=True)],
               lights=[(7000, 520, 450, 0.80, 800)],
@@ -175,7 +175,7 @@ cellar['cams'] = [dict(pos=(7650, 600, 950), look=(6900, 60, 350), zone=(6300, 0
 ROOMS.append(cellar)
 
 # ---- Kamek's Laboratory (boss) ----------------------------------------------------
-lab = room('lab', "Kamek's Laboratory", 5800, 1400, 7800, 3200, 900, floor='mans_stone', wall='mans_stone', panel='mans_marble',
+lab = room('lab', "Kamek's Laboratory", 5800, 1400, 7800, 3200, 900, floor='mans_tile', wall='mans_tile', panel='mans_marble',
            wainscot=350, ambient=0.30,
            boxes=[dict(x0=6000, z0=1800, x1=6400, z1=2000, y1=110, side='mans_marble', top='mans_marble'),
                   dict(x0=7350, z0=2100, x1=7650, z1=2300, y1=110, side='mans_marble', top='mans_marble'),
@@ -194,7 +194,7 @@ lab['cams'] = cams_along_x(lab, ya=0.8, inset=150, fov=55, front='N')
 ROOMS.append(lab)
 
 # ---- Escape tunnel ------------------------------------------------------------------
-tunnel = room('tunnel', 'Service Tunnel', 5400, 3600, 7000, 4100, 600, floor='mans_stone', wainscot=300, ambient=0.30,
+tunnel = room('tunnel', 'Service Tunnel', 5400, 3600, 7000, 4100, 600, floor='mans_tile', wainscot=300, ambient=0.30,
               lights=[(5800, 450, 3850, 0.45, 700), (6600, 450, 3850, 0.45, 700)],
               objs=[dict(kind='zombie', pos=(6000, 3800), yaw=0x4000), dict(kind='zombie', pos=(6500, 3900), yaw=0xC000)])
 tunnel['cams'] = cams_along_x(tunnel, ya=0.9, inset=120, fov=60, front='S')
@@ -212,7 +212,8 @@ ROOMS.append(dock)
 # ======================= v17 look: set dressing (concept art: green rot, thorn vines, slime) =======================
 import math
 RM = {r['id']: r for r in ROOMS}
-GREEN_GLOW = (0.55, 1.0, 0.65)
+GREEN_GLOW = (0.55, 1.0, 0.65)     # outdoor lamps (courtyard)
+AMBER_GLOW = (1.00, 0.70, 0.36)    # indoor lamps: warm candle/gas light
 
 def on_wall(rid, wall, at, model, y=0, inset=24):
     """Prop standing against a wall facing into the room."""
@@ -227,7 +228,8 @@ def lamp_on(rid, wall, at, y=400):
     d = on_wall(rid, wall, at, 'lamp', y=y, inset=4)
     r = RM[rid]
     off = {'N': (0, 70), 'S': (0, -70), 'W': (70, 0), 'E': (-70, 0)}[wall]
-    r.setdefault('lights', []).append((d['pos'][0] + off[0], y + 30, d['pos'][1] + off[1], 0.55, 650, GREEN_GLOW))
+    glow = GREEN_GLOW if r.get('sky') else AMBER_GLOW
+    r.setdefault('lights', []).append((d['pos'][0] + off[0], y + 30, d['pos'][1] + off[1], 0.55, 650, glow))
     return d
 
 def portrait(rid, wall, at, n, y=330):

@@ -23,7 +23,7 @@ TILE = 256.0          # world units per texture repeat
 DOOR_W, DOOR_H = 300, 340
 CELL = 520            # max vertex-lighting cell size
 
-TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil', 'mans_stone',
+TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil', 'mans_stone', 'mans_tile',
             'mans_door', 'mans_wood', 'mans_marble', 'mans_grass',
             'mans_door_k1', 'mans_door_k2', 'mans_door_k3',
             'mans_brick', 'mans_cobble', 'mans_rail', 'mans_gate', 'mans_portrait1', 'mans_portrait2', 'mans_portrait3']
@@ -63,7 +63,8 @@ class RoomGeo:
     def shade(self, p):
         r = self.room
         # Spooky grade: dim ambient, weaker candle pools, cold tint, deeper falloff toward the ceiling.
-        base = (0.76, 0.96, 0.82)          # sickly green cast over everything
+        # outdoor (open sky) rooms keep the sickly green cast; indoor rooms are warm, RE-mansion lamplight
+        base = (0.76, 0.96, 0.82) if r.get('sky') else (1.0, 0.88, 0.70)
         amb = r.get('ambient', 0.40)
         v = [amb * base[0], amb * base[1], amb * base[2]]
         for lt in r.get('lights', []):
