@@ -297,7 +297,7 @@ void mansion_camera(struct Camera *c) {
 
 #define TANK_WALK_SPEED 16.0f
 #define TANK_RUN_SPEED  32.0f
-#define TANK_TURN_RATE  0x0A00   // full stick: about 14 degrees per frame
+#define TANK_TURN_RATE  0x0500   // full stick: about 7 degrees per frame
 #define TANK_DEADZONE   12
 
 void mansion_tank_input(struct MarioState *m) {

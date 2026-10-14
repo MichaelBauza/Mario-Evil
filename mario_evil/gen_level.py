@@ -46,13 +46,14 @@ class RoomGeo:
     # light --------------------------------------------------------------
     def shade(self, p):
         r = self.room
-        v = r.get('ambient', 0.62)
+        # Spooky grade: dim ambient, weaker candle pools, cold tint, deeper falloff toward the ceiling.
+        v = r.get('ambient', 0.40)
         for (lx, ly, lz, inten, rad) in r.get('lights', []):
             d2 = (p[0]-lx)**2 + (p[1]-ly)**2 + (p[2]-lz)**2
-            v += inten / (1.0 + d2 / (rad * rad))
-        v *= 1.0 - 0.22 * max(0.0, min(1.0, p[1] / max(1, r['h'])))
-        v = max(0.12, min(1.0, v))
-        return (int(255 * v), int(238 * v), int(205 * v))
+            v += 0.75 * inten / (1.0 + d2 / (rad * rad))
+        v *= 1.0 - 0.35 * max(0.0, min(1.0, p[1] / max(1, r['h'])))
+        v = max(0.06, min(1.0, v))
+        return (int(255 * v * 0.80), int(255 * v * 0.92), int(255 * v * 1.00))
 
     # faces --------------------------------------------------------------
     def face(self, tex, O, U, V, normal, collide=False, uvflip_v=False, cell=CELL, lit=True):
