@@ -542,6 +542,39 @@ def fireplace():
         m.sphere((sx * 120, 356, 176), 6, (255, 170, 70), nlat=2, nlon=4)
     return m
 
+def toad():
+    """Toad, hurt: pale skin smeared with blood, a ragged dark-red cap, blood running from the mouth. ~240 tall."""
+    import random
+    rnd = random.Random(7)
+    m = Mesh()
+    SKIN = (168, 150, 128); SKIN_D = (120, 100, 88); BLOOD = (120, 10, 12); BLOOD_D = (62, 6, 8)
+    CAP = (150, 22, 24); CAP_D = (88, 12, 14); EYE = (18, 10, 10); SHOE = (60, 30, 26)
+    for sx in (-1, 1):                                              # legs and shoes
+        m.cyl((sx * 26, 30, 0), 24, 60, SKIN_D, n=8)
+        m.box((sx * 26, 6, 6), (46, 12, 60), SHOE)
+    m.cyl((0, 118, 0), 50, 116, SKIN, n=9)                          # torso
+    m.cyl((0, 62, 0), 52, 20, (60, 34, 30), n=9)                    # waistband
+    for sx in (-1, 1):                                              # arms and hands
+        m.cyl((sx * 70, 128, 0), 15, 90, SKIN, n=6, R=rot(roll=-sx * 18))
+        m.sphere((sx * 84, 78, 0), 17, SKIN_D, nlat=3, nlon=5)
+    for (x, y, z, s) in [(30, 150, 46, 20), (-38, 110, 42, 14), (8, 90, 50, 16), (-70, 80, 4, 12), (62, 140, 8, 12)]:
+        m.sphere((x, y, z), s, BLOOD, nlat=3, nlon=5, squash=(1, 1.4, 0.3))   # blood smears
+    m.sphere((0, 190, 0), 58, SKIN, nlat=5, nlon=8)                 # head
+    m.sphere((0, 232, 0), 84, CAP, nlat=5, nlon=8, squash=(1, 0.5, 1))   # cap
+    for k in range(14):                                             # ragged, torn rim of the cap
+        a = k * 2 * math.pi / 14 + rnd.uniform(-0.1, 0.1)
+        r = 78 + rnd.uniform(-6, 10)
+        m.box((r * math.cos(a), 204 + rnd.uniform(-6, 6), r * math.sin(a)),
+              (rnd.uniform(14, 26), rnd.uniform(14, 30), rnd.uniform(10, 18)), CAP_D if k % 3 else BLOOD_D)
+    for (x, y, z, s) in [(-40, 250, 30, 12), (30, 262, 46, 9), (-10, 220, 74, 10)]:
+        m.sphere((x, y, z), s, BLOOD_D, nlat=3, nlon=5)              # dark blood spots on the cap
+    for sx in (-1, 1):                                              # eyes and cheeks
+        m.sphere((sx * 22, 200, 54), 9, EYE, nlat=3, nlon=5)
+        m.sphere((sx * 34, 180, 50), 10, BLOOD, nlat=3, nlon=5)
+    m.box((0, 176, 56), (34, 8, 4), EYE)                            # mouth
+    m.box((0, 158, 58), (6, 34, 3), BLOOD)                          # blood from the mouth
+    return m
+
 def vine():
     """Hanging thorn vine for walls: ~420 tall, origin at the bottom centre, wanders in x with a little z."""
     m = Mesh()
@@ -577,6 +610,7 @@ MODELS = {
     'prop_pot': pot,
     'prop_clock': clock,
     'prop_stairs': stairs,
+    'prop_toad': toad,
     'prop_vine': vine,
     'prop_table': table,
     'prop_chair': chair,

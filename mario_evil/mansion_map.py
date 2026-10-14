@@ -57,10 +57,10 @@ save = room('save', 'Save Room', 3000, -3500, 4000, -2500, 700, floor='mans_floo
             boxes=[dict(x0=3550, z0=-2850, x1=3850, z1=-2650, y1=110, side='mans_wood', top='mans_wood'),
                    dict(x0=3192, z0=-3383, x1=3308, z1=-3317, y1=60, hidden=True)],
             lights=[(3500, 520, -3000, 0.85, 800)],
-            objs=[dict(kind='typewriter', pos=(3700, -2750), y=110, yaw=0x8000), dict(kind='box', pos=(3250, -3350), yaw=0),
+            objs=[dict(kind='typewriter', pos=(3700, -2668), y=110, yaw=0), dict(kind='box', pos=(3250, -3350), yaw=0),
                   dict(kind='ribbon', pos=(3800, -3300)), dict(kind='key', pos=(3750, -3050), keyid=1),
                   dict(kind='gun', pos=(3350, -3250)), dict(kind='ammo', pos=(3500, -3350), amount=15)])
-save['cams'] = [dict(pos=(3150, 600, -2650), look=(3550, 60, -3050), zone=(3000, -3500, 4000, -2500), fov=58)]
+save['cams'] = [dict(pos=(3850, 600, -3350), look=(3550, 60, -3050), zone=(3000, -3500, 4000, -2500), fov=58)]
 ROOMS.append(save)
 
 # ---- West Corridor ---------------------------------------------------------
@@ -258,6 +258,8 @@ add('court', dict(kind='prop', model='fountain', pos=(4000, -1650), y=0, yaw=0),
 
 # -- Main hall: grand staircase with vine railings, chandelier, grandfather clock, portraits
 RM['hall']['boxes'][0]['hidden'] = True
+RM['hall']['boxes'].append(dict(x0=-3030, z0=300, x1=-2970, z1=360, y1=180, side='mans_wood', top='mans_wood', hidden=True))   # toad
+add('hall', dict(kind='actor', actor=1, model='toad', pos=(-3000, 330), y=0, yaw=0x8000))   # Toad: talk with B (see cinematics.py)
 add('hall', dict(kind='prop', model='stairs', pos=(-3500, -730), y=0, yaw=0), on_wall('hall', 'N', -4250, 'clock'),
     lamp_on('hall', 'N', -3000, 430), lamp_on('hall', 'S', -4200, 430),
     on_wall('hall', 'N', -4450, 'vine'), on_wall('hall', 'N', -2650, 'vine'), on_wall('hall', 'S', -2900, 'vine'),

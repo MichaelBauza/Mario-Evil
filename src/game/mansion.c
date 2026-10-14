@@ -1298,6 +1298,22 @@ static void draw_ending(void) {
     }
 }
 
+/* Input context icon: a button badge with what it does, shown when Mario is near something he can use. */
+static void draw_prompt(s32 prompt) {
+    static const char *const sLabel[6] = { "", "Open item box", "Save (1 Ink Ribbon)", "Use console", "Talk to Luigi", "Talk" };
+    const char *label = sLabel[prompt < 6 ? prompt : 0];
+    s32 w = 26 + (s32) strlen(label) * 5;
+    s32 x0 = SCREEN_WIDTH / 2 - w / 2, y0 = SCREEN_HEIGHT - 62;
+    prepare_blank_box();
+    render_blank_box_rounded(x0 - 6, y0 - 4, x0 + w + 4, y0 + 22, 0, 0, 0, 170);
+    finish_blank_box();
+    prepare_blank_box();
+    render_blank_box_rounded(x0, y0, x0 + 18, y0 + 18, 60, 170, 70, 255);     // B button: green
+    finish_blank_box();
+    print_small_text(x0 + 9, y0 + 4, "B", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+    print_small_text(x0 + 24, y0 + 4, label, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+}
+
 void mansion_render_hud(void) {
     s32 prompt = gMansion.nearPrompt;
     if (gMansion.endTimer > 0) {
@@ -1319,14 +1335,8 @@ void mansion_render_hud(void) {
     print_small_text(SAFE_L, 10, gMansionRooms[gMansion.room].name, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
     if (gMansion.msgTimer > 0) {
         print_small_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 56, gMansion.msg, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
-    } else if (prompt == 1) {
-        print_small_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 56, "B: Open item box", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
-    } else if (prompt == 2) {
-        print_small_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 56, "B: Save (uses 1 Ink Ribbon)", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
-    } else if (prompt == 3) {
-        print_small_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 56, "B: Use console", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
-    } else if (prompt == 4) {
-        print_small_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 56, "B: Talk to Luigi", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+    } else if (prompt != 0) {
+        draw_prompt(prompt);
     }
     if (gMansion.escape == 1) {
         char tb[24];

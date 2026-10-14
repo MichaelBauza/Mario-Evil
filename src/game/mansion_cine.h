@@ -20,7 +20,10 @@ struct CineStep {
 };
 
 struct CineScript {
-    s16 zx0, zz0, zx1, zz1;  // trigger zone (world units)
+    s16 zx0, zz0, zx1, zz1;  // trigger zone (world units), used when talkActor == 255
+    s16 talkRadius;          // talk trigger: Mario within this distance of the actor, and B pressed
+    u8  talkActor;           // actor number, or 255 for a zone trigger
+    u8  once;                // 1 = plays once per session
     u16 nSteps;
     const struct CineStep *steps;
 };

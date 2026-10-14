@@ -39,6 +39,13 @@ def text(speaker, body):
     return [('text', speaker, p[0], p[1] if len(p) > 1 else '') for p in pages]
 
 CINES = [
+    # Talk: press B next to the Toad in the hall. Repeats every time.
+    dict(name='toad_talk', talk=(1, 260), once=False, steps=[
+        cam((-2750, 220, 480), (-3050, 110, 300), fov=50),
+        text('TOAD', "Whaaa! Mario your here! I was starting to think we were doomed...."),
+        text('TOAD', "I came here with my friends as a dare, but then we heard a Scary sound and everyone ran in to different directions!"),
+        text('TOAD', "Now we have all split up! Help me rescue my friends Mario Whaaaa!!!"),
+    ]),
     # Intro: plays once, as soon as the title screen is dismissed and Mario is in the hall.
     dict(name='intro_hall', zone=(-2700, -300, -2380, 300), steps=[
         cam((-2100, 240, 0), (-2900, 90, 0), fov=50),              # cut: looking back through the doorway

@@ -89,6 +89,7 @@ struct MansionState {
     s16 cineT;          // frames into the current step
     u16 cineChars;      // dialogue characters revealed so far
     u32 cineSeen;       // bit per cinematic that has already played this session
+    u8  cineCool;      // frames before another cinematic may start (stops a B press ending one from starting the next)
 };
 
 extern struct MansionState gMansion;

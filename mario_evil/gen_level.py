@@ -30,7 +30,7 @@ TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil',
             'mans_brick', 'mans_cobble', 'mans_rail', 'mans_gate', 'mans_portrait1', 'mans_portrait2', 'mans_portrait3']
 ICONS = ['item_herb_g', 'item_herb_r', 'item_herb_b', 'item_key', 'item_ribbon', 'item_file',
          'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo', 'held_gun', 'item_console', 'item_luigi', 'boss_tyrant',
-         'prop_fountain', 'prop_chandelier', 'prop_lamp', 'prop_pot', 'prop_clock', 'prop_stairs', 'prop_vine', 'prop_table', 'prop_chair', 'prop_fireplace']   # 3D models (models.py)
+         'prop_fountain', 'prop_chandelier', 'prop_lamp', 'prop_pot', 'prop_clock', 'prop_stairs', 'prop_vine', 'prop_table', 'prop_chair', 'prop_fireplace', 'prop_toad']   # 3D models (models.py)
 
 def door_emblem(d):
     """Key id whose emblem is painted on this door: its own key, or the key of the door it connects to."""
@@ -459,9 +459,12 @@ def write_cinematics():
     out.extend(tables)
     out.append('const struct CineScript gCines[] = {\n')
     for i, c in enumerate(CIN.CINES):
-        x0, z0, x1, z1 = c['zone']
+        x0, z0, x1, z1 = c.get('zone', (0, 0, 0, 0))
+        talk = c.get('talk')
+        ta, tr = (talk[0], talk[1]) if talk else (255, 0)
+        once = 0 if talk else 1
         n = sum(1 for _ in flat(c['steps']))
-        out.append('    { .zx0 = %d, .zz0 = %d, .zx1 = %d, .zz1 = %d, .nSteps = %d, .steps = gCineSteps%d },   /* %s */\n' % (x0, z0, x1, z1, n, i, c['name']))
+        out.append('    { .zx0 = %d, .zz0 = %d, .zx1 = %d, .zz1 = %d, .talkRadius = %d, .talkActor = %d, .once = %d, .nSteps = %d, .steps = gCineSteps%d },   /* %s */\n' % (x0, z0, x1, z1, tr, ta, once, n, i, c['name']))
     out.append('};\n')
     out.append('const s32 gMansionCineCount = %d;\n' % len(CIN.CINES))
     assert len(CIN.CINES) <= 32, 'at most 32 cinematics'

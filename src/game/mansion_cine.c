@@ -49,7 +49,7 @@ static struct Object *find_actor(u8 id) {
         struct ObjectNode *n;
         for (n = head->next; n != head; n = n->next) {
             struct Object *o = (struct Object *) n;
-            if (o->behavior == bhvMansionActor && (o->oBehParams & 0xFF) == id) return o;
+            if (obj_has_behavior(o, bhvMansionActor) && (o->oBehParams & 0xFF) == id) return o;
         }
     }
     return NULL;
@@ -103,7 +103,8 @@ static void walk_stop(void) {
 
 static void cine_end(void) {
     sWalkFeed = 0;
-    gMansion.cineSeen |= 1u << (gMansion.cine - 1);
+    if (cur_script()->once) gMansion.cineSeen |= 1u << (gMansion.cine - 1);
+    gMansion.cineCool = 20;
     gMansion.cine = 0;
     gMansion.camIdx = -1;      // next frame the gameplay camera re-picks its angle
     gMansion.camLatch = 0;
@@ -135,10 +136,27 @@ static void cine_start(s32 i) {
 void mansion_cine_check(void) {
     s32 i;
     struct MarioState *m = gMarioState;
+    if (gMansion.cineCool > 0) gMansion.cineCool--;
     if (gMansion.cine || gMansion.doorState || gMansion.endTimer > 0 || gMansion.escape == 3) return;
-    if (gMansion.menu != MENU_NONE || gMansion.wantMenu) return;   // not while the title or pause menu is up or pending
+    if (gMansion.menu != MENU_NONE || gMansion.wantMenu || gMansion.cineCool > 0) return;   // not while the title or pause menu is up or pending
     for (i = 0; i < gMansionCineCount; i++) {
         const struct CineScript *cs = &gCines[i];
+        if (cs->once && (gMansion.cineSeen & (1u << i))) continue;
+        if (cs->talkActor != 255) {
+            /* talk: near the actor, the prompt shows; B starts it */
+            struct Object *a = find_actor(cs->talkActor);
+            f32 dx, dz;
+            if (a == NULL) continue;
+            dx = a->oPosX - m->pos[0];
+            dz = a->oPosZ - m->pos[2];
+            if (dx * dx + dz * dz > (f32) cs->talkRadius * (f32) cs->talkRadius) continue;
+            gMansion.nearPrompt = 5;
+            if (gPlayer1Controller->buttonPressed & B_BUTTON) {
+                cine_start(i);
+                return;
+            }
+            continue;
+        }
         if (gMansion.cineSeen & (1u << i)) continue;
         if (m->pos[0] >= cs->zx0 && m->pos[0] <= cs->zx1 && m->pos[2] >= cs->zz0 && m->pos[2] <= cs->zz1) {
             cine_start(i);

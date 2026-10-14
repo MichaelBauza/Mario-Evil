@@ -21,6 +21,7 @@
 static const LevelScript script_func_local_objects[] = {
     OBJECT(/*model*/ MODEL_LEVEL_GEOMETRY_03, /*pos*/ -2750, 10, -650, /*angle*/ 0, 0, 0, /*behParam*/ 0x01010001, /*beh*/ bhvMansionPickup),
     OBJECT(/*model*/ MODEL_LEVEL_GEOMETRY_08, /*pos*/ -4300, 10, 650, /*angle*/ 0, 0, 0, /*behParam*/ 0x01000000, /*beh*/ bhvMansionFile),
+    OBJECT(/*model*/ 0xEE, /*pos*/ -3000, 0, 330, /*angle*/ 0, 180, 0, /*behParam*/ 0x00000001, /*beh*/ bhvMansionActor),
     OBJECT(/*model*/ 0xE9, /*pos*/ -3500, 0, -730, /*angle*/ 0, 0, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionProp),
     OBJECT(/*model*/ 0xE8, /*pos*/ -4250, 0, -876, /*angle*/ 0, 0, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionProp),
     OBJECT(/*model*/ MODEL_LEVEL_GEOMETRY_15, /*pos*/ -3000, 430, -896, /*angle*/ 0, 0, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionProp),
@@ -48,7 +49,7 @@ static const LevelScript script_func_local_objects[] = {
     OBJECT(/*model*/ MODEL_LEVEL_GEOMETRY_08, /*pos*/ -1000, 10, -3000, /*angle*/ 0, 0, 0, /*behParam*/ 0x02000000, /*beh*/ bhvMansionFile),
     OBJECT(/*model*/ MODEL_LEVEL_GEOMETRY_15, /*pos*/ -400, 380, -2754, /*angle*/ 0, 180, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionProp),
     OBJECT(/*model*/ 0xEA, /*pos*/ 300, 0, -3226, /*angle*/ 0, 0, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionProp),
-    OBJECT(/*model*/ MODEL_LEVEL_GEOMETRY_0A, /*pos*/ 3700, 120, -2750, /*angle*/ 0, 180, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionTypewriter),
+    OBJECT(/*model*/ MODEL_LEVEL_GEOMETRY_0A, /*pos*/ 3700, 120, -2668, /*angle*/ 0, 0, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionTypewriter),
     OBJECT(/*model*/ MODEL_LEVEL_GEOMETRY_09, /*pos*/ 3250, 10, -3350, /*angle*/ 0, 0, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionItemBox),
     OBJECT(/*model*/ MODEL_LEVEL_GEOMETRY_07, /*pos*/ 3800, 10, -3300, /*angle*/ 0, 0, 0, /*behParam*/ 0x04010005, /*beh*/ bhvMansionPickup),
     OBJECT(/*model*/ MODEL_LEVEL_GEOMETRY_06, /*pos*/ 3750, 10, -3050, /*angle*/ 0, 0, 0, /*behParam*/ 0x05010106, /*beh*/ bhvMansionPickup),
@@ -206,6 +207,7 @@ const LevelScript level_bbh_entry[] = {
     LOAD_MODEL_FROM_GEO(0xEB, mansion_geo_prop_table),
     LOAD_MODEL_FROM_GEO(0xEC, mansion_geo_prop_chair),
     LOAD_MODEL_FROM_GEO(0xED, mansion_geo_prop_fireplace),
+    LOAD_MODEL_FROM_GEO(0xEE, mansion_geo_prop_toad),
 
     AREA(/*index*/ 1, mansion_geo_area),
         OBJECT(/*model*/ MODEL_NONE, /*pos*/ -2440, 20, 0, /*angle*/ 0, 270, 0, /*behParam*/ 0x000A0000, /*beh*/ bhvInstantActiveWarp),
