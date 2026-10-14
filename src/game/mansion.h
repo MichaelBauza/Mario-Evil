@@ -27,6 +27,11 @@ struct MansionState {
     // runtime
     u8  room;
     s8  camIdx;
+    u8  camRoom;        // room the current camera belongs to
+    u8  camCooldown;    // frames until another cut is allowed
+    u8  camLatch;       // 1 = movement still uses the previous camera's orientation
+    s16 camLatchYaw;    // yaw used for the stick while latched
+    s16 camLatchStick;  // stick angle when the cut happened
     u8  started;
     u8  doorState;      // 0 idle, 1 fading out, 2 fading in
     u8  doorTarget;

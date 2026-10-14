@@ -215,7 +215,11 @@ void mansion_camera(struct Camera *c) {
     const struct MansionRoom *r = &gMansionRooms[gMansion.room];
     f32 mx = gMarioState->pos[0], mz = gMarioState->pos[2];
     s32 i, pick = 0;
+    s32 fresh = (gMansion.camIdx < 0 || gMansion.camRoom != gMansion.room || gMansion.camIdx >= r->camCount);
 
+    if (gMansion.camCooldown > 0) gMansion.camCooldown--;
+
+    // Which zone is Mario in?
     for (i = 0; i < r->camCount; i++) {
         const struct MansionCam *cam = &gMansionCams[r->camFirst + i];
         if (mx >= cam->zx0 && mx <= cam->zx1 && mz >= cam->zz0 && mz <= cam->zz1) {
@@ -223,6 +227,31 @@ void mansion_camera(struct Camera *c) {
             break;
         }
     }
+
+    if (fresh) {
+        gMansion.camLatch = 0;
+        gMansion.camCooldown = 0;
+    } else if (pick != gMansion.camIdx) {
+        // Hysteresis: keep the current camera until Mario is well past its zone edge,
+        // and never cut twice in quick succession.
+        const struct MansionCam *cur = &gMansionCams[r->camFirst + gMansion.camIdx];
+        const f32 margin = 130.0f;
+        s32 inside = (mx >= cur->zx0 - margin && mx <= cur->zx1 + margin
+                   && mz >= cur->zz0 - margin && mz <= cur->zz1 + margin);
+        if (inside || gMansion.camCooldown > 0) {
+            pick = gMansion.camIdx;
+        } else {
+            // Cut: keep steering relative to the old camera until the stick is released or turned.
+            struct Controller *ctl = gPlayer1Controller;
+            if (ctl->stickMag > 10.0f) {
+                gMansion.camLatch = 1;
+                gMansion.camLatchYaw = c->yaw;
+                gMansion.camLatchStick = atan2s(-ctl->stickY, ctl->stickX);
+            }
+            gMansion.camCooldown = 40;
+        }
+    }
+    gMansion.camRoom = gMansion.room;
     {
         const struct MansionCam *cam = &gMansionCams[r->camFirst + pick];
         Vec3f pos = { cam->px, cam->py, cam->pz };
@@ -241,8 +270,16 @@ void mansion_camera(struct Camera *c) {
         vec3f_copy(gLakituState.pos, pos);
         vec3f_copy(gLakituState.focus, focus);
         yaw = atan2s(pos[2] - focus[2], pos[0] - focus[0]);
-        c->yaw = yaw;
-        c->nextYaw = yaw;
+        if (gMansion.camLatch) {
+            struct Controller *ctl = gPlayer1Controller;
+            s16 stickAng = atan2s(-ctl->stickY, ctl->stickX);
+            if (ctl->stickMag < 10.0f || abs_angle_diff(stickAng, gMansion.camLatchStick) > 0x2800) {
+                gMansion.camLatch = 0;
+            }
+        }
+        // Mario reads c->yaw for stick direction; while latched it keeps the pre-cut orientation.
+        c->yaw = gMansion.camLatch ? gMansion.camLatchYaw : yaw;
+        c->nextYaw = c->yaw;
         gLakituState.yaw = yaw;
         gLakituState.nextYaw = yaw;
         gLakituState.roll = 0;
@@ -475,8 +512,8 @@ void mansion_paused_update(void) {
             }
         }
     } else if (gMansion.menu == MENU_FILES) {
-        if (dy) {
-            gMansion.fileSel = (gMansion.fileSel + dy + NUM_FILES) % NUM_FILES;
+        if (dy || dx) {
+            gMansion.fileSel = (gMansion.fileSel + (dx ? dx : dy) + NUM_FILES) % NUM_FILES;
             play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource);
         }
         if (c->buttonPressed & (B_BUTTON | R_TRIG)) { gMansion.menu = MENU_ITEMS; play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource); }
@@ -521,16 +558,18 @@ static void num_to_str(char *dst, s32 n) {
     dst[j] = '\0';
 }
 
+#define SAFE_L 26
+#define SAFE_R (SCREEN_WIDTH - 26)
+
 static void draw_debug(void) {
     char buf[64];
     char n[14];
     buf[0] = '\0';
     str_append(buf, "x", sizeof(buf)); num_to_str(n, (s32) gMarioState->pos[0]); str_append(buf, n, sizeof(buf));
     str_append(buf, " z", sizeof(buf)); num_to_str(n, (s32) gMarioState->pos[2]); str_append(buf, n, sizeof(buf));
-    str_append(buf, " y", sizeof(buf)); num_to_str(n, (s32) gMarioState->pos[1]); str_append(buf, n, sizeof(buf));
     str_append(buf, " cam", sizeof(buf)); num_to_str(n, gMansion.camIdx); str_append(buf, n, sizeof(buf));
-    str_append(buf, " act", sizeof(buf)); num_to_str(n, (s32) (gMarioState->action & 0x1FF)); str_append(buf, n, sizeof(buf));
-    print_small_text(SCREEN_WIDTH - 12, 8, buf, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL, 1);
+    str_append(buf, " hp", sizeof(buf)); num_to_str(n, (s32) gMarioState->health >> 8); str_append(buf, n, sizeof(buf));
+    print_small_text(SAFE_L, 22, buf, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
 }
 
 static void draw_box(s32 x1, s32 y1, s32 x2, s32 y2, u8 r, u8 g, u8 b, u8 a) {
@@ -539,74 +578,123 @@ static void draw_box(s32 x1, s32 y1, s32 x2, s32 y2, u8 r, u8 g, u8 b, u8 a) {
     finish_blank_box();
 }
 
+// Draws text word-wrapped to maxW pixels. Returns the y after the last line.
+static s32 draw_wrapped(s32 x, s32 y, const char *text, s32 maxW, s32 lineH) {
+    char line[96];
+    s32 len = 0;
+    const char *p = text;
+
+    line[0] = '\0';
+    while (TRUE) {
+        // grab the next word (leading spaces stay attached so indents survive)
+        char word[48];
+        s32 wl = 0;
+        s32 brk = FALSE;
+        while (*p == ' ' && wl < 40) word[wl++] = *p++;
+        while (*p != '\0' && *p != ' ' && *p != '\n' && wl < 46) word[wl++] = *p++;
+        word[wl] = '\0';
+        if (len > 0 && wl > 0) {
+            char test[144];
+            str_copy(test, line, sizeof(test));
+            str_append(test, " ", sizeof(test));
+            str_append(test, word, sizeof(test));
+            if (get_text_width(test, 1) > maxW) {
+                print_small_text(x, y, line, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+                y += lineH;
+                line[0] = '\0'; len = 0;
+            }
+        }
+        if (wl > 0) {
+            if (len > 0) { str_append(line, " ", sizeof(line)); len++; }
+            str_append(line, word, sizeof(line));
+            len += wl;
+        }
+        if (*p == ' ') { p++; }            // single separating space (extra ones are in the next word)
+        if (*p == '\n') { p++; brk = TRUE; }
+        if (brk || *p == '\0') {
+            print_small_text(x, y, line, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+            y += lineH;
+            line[0] = '\0'; len = 0;
+            if (*p == '\0') break;
+        }
+    }
+    return y;
+}
+
+static void draw_footer(const char *text) {
+    print_small_text(SCREEN_WIDTH / 2, 208, text, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+}
+
 static void draw_menu(void) {
     s32 i;
-    char buf[64];
     draw_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, 190);
-    print_small_text(20, 12, "STATUS", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
-    print_small_text(SCREEN_WIDTH - 20, 12, sCondText[condition()], PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL, 1);
+    print_small_text(SAFE_L, 16, "STATUS", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+    print_small_text(SAFE_R, 16, sCondText[condition()], PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL, 1);
     {
         s32 w = (gMarioState->health * 120) / HEALTH_MAX;
         u8 cr = condition() == 0 ? 60 : (condition() == 1 ? 230 : 230);
         u8 cg = condition() == 0 ? 220 : (condition() == 1 ? 200 : 40);
-        draw_box(SCREEN_WIDTH - 140, 30, SCREEN_WIDTH - 20, 38, 40, 40, 40, 255);
-        draw_box(SCREEN_WIDTH - 140, 30, SCREEN_WIDTH - 140 + w, 38, cr, cg, 40, 255);
+        draw_box(SAFE_R - 120, 32, SAFE_R, 40, 40, 40, 40, 255);
+        draw_box(SAFE_R - 120, 32, SAFE_R - 120 + w, 40, cr, cg, 40, 255);
     }
 
     if (gMansion.menu == MENU_ITEMS || gMansion.menu == MENU_BOX) {
         for (i = 0; i < MANSION_INV_SLOTS; i++) {
-            s32 x, y, sel;
+            s32 x, y, sel, bw, bh;
             const struct MansionSlot *s = &gMansion.inv[i];
-            if (gMansion.menu == MENU_ITEMS) { x = 20 + (i & 1) * 145; y = 60 + (i >> 1) * 40; }
-            else { x = 20; y = 55 + i * 26; }
+            if (gMansion.menu == MENU_ITEMS) { x = SAFE_L + (i & 1) * 138; y = 58 + (i >> 1) * 40; bw = 130; bh = 32; }
+            else { x = SAFE_L; y = 52 + i * 18; bw = 128; bh = 16; }
             sel = (i == gMansion.sel) && (gMansion.menu == MENU_ITEMS || gMansion.boxSide == 0);
-            draw_box(x, y, x + (gMansion.menu == MENU_ITEMS ? 135 : 140), y + (gMansion.menu == MENU_ITEMS ? 32 : 22),
-                     sel ? 110 : 40, sel ? 110 : 40, sel ? 40 : 50, 230);
-            if (gMansion.comboSrc == i) draw_box(x, y + (gMansion.menu == MENU_ITEMS ? 30 : 20), x + 135, y + (gMansion.menu == MENU_ITEMS ? 32 : 22), 240, 160, 40, 255);
-            if (s->id != MI_NONE) print_small_text(x + 6, y + 6, sItemNames[s->id], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+            draw_box(x, y, x + bw, y + bh, sel ? 110 : 40, sel ? 110 : 40, sel ? 40 : 50, 230);
+            if (gMansion.comboSrc == i) draw_box(x, y + bh - 2, x + bw, y + bh, 240, 160, 40, 255);
+            if (s->id != MI_NONE) print_small_text(x + 6, y + (bh > 20 ? 10 : 3), sItemNames[s->id], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
         }
     }
     if (gMansion.menu == MENU_BOX) {
-        print_small_text(190, 38, "ITEM BOX", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+        print_small_text(SAFE_L + 150, 44, "ITEM BOX", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
         for (i = 0; i < MANSION_BOX_SLOTS; i++) {
-            s32 x = 180, y = 55 + i * 13;
+            s32 x = SAFE_L + 150, y = 58 + i * 15;
             s32 sel = (i == gMansion.boxSel) && gMansion.boxSide == 1;
-            if (sel) draw_box(x - 2, y - 1, x + 130, y + 12, 110, 110, 40, 230);
+            if (sel) draw_box(x - 2, y - 1, SAFE_R, y + 13, 110, 110, 40, 230);
             if (gMansion.box[i].id != MI_NONE) print_small_text(x + 4, y, sItemNames[gMansion.box[i].id], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
         }
-        print_small_text(20, 214, "D-Pad: select   A: move item   B: close", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+        draw_footer("D-Pad: select   A: move   B: close");
     } else if (gMansion.menu == MENU_ITEMS) {
-        print_small_text(20, 214, "A: use   Z: mark combine   R: files   B: close", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+        draw_footer("A: use  Z: combine  R: files  B: close");
     } else if (gMansion.menu == MENU_FILES) {
-        s32 n = 0;
-        print_small_text(20, 40, "FILES", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
-        for (i = 1; i <= NUM_FILES; i++) {
-            s32 sel = (i - 1) == gMansion.fileSel;
-            s32 have = (gMansion.files >> i) & 1;
-            if (sel) draw_box(16, 52 + n * 16, 150, 66 + n * 16, 110, 110, 40, 230);
-            print_small_text(20, 54 + n * 16, have ? sFileTitles[i] : "- - -", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
-            n++;
+        s32 f = gMansion.fileSel + 1;
+        s32 have = (gMansion.files >> f) & 1;
+        char head[48];
+        char nbuf[14];
+        head[0] = '\0';
+        str_append(head, "FILE ", sizeof(head));
+        num_to_str(nbuf, f); str_append(head, nbuf, sizeof(head));
+        str_append(head, "/3   ", sizeof(head));
+        str_append(head, have ? sFileTitles[f] : "- - -", sizeof(head));
+        print_small_text(SAFE_L, 46, "<", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+        print_small_text(SAFE_L + 14, 46, head, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+        print_small_text(SAFE_R, 46, ">", PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL, 1);
+        draw_box(SAFE_L - 4, 60, SAFE_R + 4, 202, 30, 28, 24, 235);
+        if (have) {
+            draw_wrapped(SAFE_L + 4, 64, sFileText[f], (SAFE_R - SAFE_L) - 8, 10);
+        } else {
+            print_small_text(SAFE_L + 4, 64, "You have not found this file yet.", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
         }
-        draw_box(158, 40, SCREEN_WIDTH - 12, 204, 30, 28, 24, 235);
-        if ((gMansion.files >> (gMansion.fileSel + 1)) & 1) {
-            print_small_text(164, 44, sFileText[gMansion.fileSel + 1], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
-        }
-        print_small_text(20, 214, "Up/Down: choose file   B: back", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+        draw_footer("Left/Right: change file   B: back");
     }
-    (void) buf;
 }
 
 void mansion_render_hud(void) {
     s32 prompt = gMansion.nearPrompt;
     if (gMansion.menu != MENU_NONE) {
         draw_menu();
-        if (gMansion.msgTimer > 0) print_small_text(SCREEN_WIDTH / 2, 190, gMansion.msg, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+        if (gMansion.msgTimer > 0) print_small_text(SCREEN_WIDTH / 2, 186, gMansion.msg, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
         return;
     }
     draw_debug();
     // condition (bottom left)
-    print_small_text(18, SCREEN_HEIGHT - 28, sCondText[condition()], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
-    print_small_text(18, 8, gMansionRooms[gMansion.room].name, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+    print_small_text(SAFE_L, SCREEN_HEIGHT - 32, sCondText[condition()], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+    print_small_text(SAFE_L, 10, gMansionRooms[gMansion.room].name, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
     if (gMansion.msgTimer > 0) {
         print_small_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 56, gMansion.msg, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
     } else if (prompt == 1) {
@@ -735,7 +823,7 @@ void bhv_mansion_zombie_loop(void) {
             o->oForwardVel = 4.5f;
             if (dist < 115.0f && o->oSubAction == 0 && !(m->action & ACT_FLAG_INVULNERABLE) && m->invincTimer == 0) {
                 m->interactObj = o;
-                m->hurtCounter += 12;   // three wedges of health
+                m->hurtCounter += 8;    // two wedges of health
                 m->faceAngle[1] = obj_angle_to_object(m->marioObj, o);
                 m->forwardVel = -14.0f;
                 set_mario_action(m, ACT_BACKWARD_GROUND_KB, 0);

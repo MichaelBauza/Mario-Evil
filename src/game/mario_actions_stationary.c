@@ -112,7 +112,8 @@ s32 act_idle(struct MarioState *m) {
         return set_mario_action(m, ACT_COUGHING, 0);
     }
 
-    if (!(m->actionArg & 1) && m->health < 0x300) {
+    // Mario EVIL: no tired/panting pose in the mansion; low health only shows on the HUD.
+    if (!(m->actionArg & 1) && m->health < 0x300 && gCurrLevelNum != LEVEL_BBH) {
         return set_mario_action(m, ACT_PANTING, 0);
     }
 
@@ -544,7 +545,7 @@ s32 act_panting(struct MarioState *m) {
         return set_mario_action(m, ACT_SHOCKWAVE_BOUNCE, 0);
     }
 
-    if (m->health >= 0x500) {
+    if (m->health >= 0x500 || gCurrLevelNum == LEVEL_BBH) {
         return set_mario_action(m, ACT_IDLE, 0);
     }
 
