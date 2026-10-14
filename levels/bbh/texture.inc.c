@@ -81,6 +81,14 @@ ALIGNED8 static const Texture mans_cement_tex[] = {
 #include "levels/bbh/mans_cement.rgba16.inc.c"
 };
 
+ALIGNED8 static const Texture mans_metal_plate_tex[] = {
+#include "levels/bbh/mans_metal_plate.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_metal_diamond_tex[] = {
+#include "levels/bbh/mans_metal_diamond.rgba16.inc.c"
+};
+
 ALIGNED8 static const Texture mans_door_k1_tex[] = {
 #include "levels/bbh/mans_door_k1.rgba16.inc.c"
 };

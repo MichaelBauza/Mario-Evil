@@ -175,7 +175,7 @@ cellar['cams'] = [dict(pos=(7650, 600, 950), look=(6900, 60, 350), zone=(6300, 0
 ROOMS.append(cellar)
 
 # ---- Kamek's Laboratory (boss) ----------------------------------------------------
-lab = room('lab', "Kamek's Laboratory", 5800, 1400, 7800, 3200, 900, floor='mans_tile', wall='mans_tile', panel='mans_marble',
+lab = room('lab', "Kamek's Laboratory", 5800, 1400, 7800, 3200, 900, floor='mans_tile', wall='mans_metal_plate', panel='mans_metal_plate',
            wainscot=350, ambient=0.30,
            boxes=[dict(x0=6000, z0=1800, x1=6400, z1=2000, y1=110, side='mans_marble', top='mans_marble'),
                   dict(x0=7350, z0=2100, x1=7650, z1=2300, y1=110, side='mans_marble', top='mans_marble'),
@@ -194,14 +194,14 @@ lab['cams'] = cams_along_x(lab, ya=0.8, inset=150, fov=55, front='N')
 ROOMS.append(lab)
 
 # ---- Escape tunnel ------------------------------------------------------------------
-tunnel = room('tunnel', 'Service Tunnel', 5400, 3600, 7000, 4100, 600, floor='mans_tile', wainscot=300, ambient=0.30,
+tunnel = room('tunnel', 'Service Tunnel', 5400, 3600, 7000, 4100, 600, floor='mans_metal_diamond', wall='mans_metal_plate', wainscot=300, ambient=0.30,
               lights=[(5800, 450, 3850, 0.45, 700), (6600, 450, 3850, 0.45, 700)],
               objs=[dict(kind='zombie', pos=(6000, 3800), yaw=0x4000), dict(kind='zombie', pos=(6500, 3900), yaw=0xC000)])
 tunnel['cams'] = cams_along_x(tunnel, ya=0.9, inset=120, fov=60, front='S')
 ROOMS.append(tunnel)
 
 # ---- Escape dock (open sky) ---------------------------------------------------------
-dock = room('dock', 'Escape Dock', 3800, 3300, 5000, 4400, 900, floor='mans_stone', wall='mans_stone', panel='mans_stone',
+dock = room('dock', 'Escape Dock', 3800, 3300, 5000, 4400, 900, floor='mans_metal_diamond', wall='mans_stone', panel='mans_stone',
             wainscot=0, sky=True, ambient=0.55,
             boxes=[dict(x0=3900, z0=3650, x1=4300, z1=4050, y1=60, side='mans_wood', top='mans_wood')],
             lights=[(4300, 400, 3850, 0.35, 900)],

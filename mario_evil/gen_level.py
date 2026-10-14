@@ -25,7 +25,7 @@ DOOR_W, DOOR_H = 300, 340
 CELL = 520            # max vertex-lighting cell size
 
 TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil', 'mans_stone', 'mans_tile',
-            'mans_door', 'mans_wood', 'mans_marble', 'mans_grass', 'mans_cement',
+            'mans_door', 'mans_wood', 'mans_marble', 'mans_grass', 'mans_cement', 'mans_metal_plate', 'mans_metal_diamond',
             'mans_door_k1', 'mans_door_k2', 'mans_door_k3',
             'mans_brick', 'mans_cobble', 'mans_rail', 'mans_gate', 'mans_portrait1', 'mans_portrait2', 'mans_portrait3']
 ICONS = ['item_herb_g', 'item_herb_r', 'item_herb_b', 'item_key', 'item_ribbon', 'item_file',

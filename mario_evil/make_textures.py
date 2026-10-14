@@ -286,5 +286,7 @@ user_floor('tex_floor_carpet_rug.jpg', 'mans_carpet', periods=6)    # whole rug 
 user_floor('tex_wood_table.jpg', 'mans_wood', periods=2)            # tables, desks, crates, shelves
 user_floor('tex_courtyard_grass.jpg', 'mans_grass', periods=2)      # courtyard floor
 user_floor('tex_courtyard_cement.jpg', 'mans_cement', periods=4)    # courtyard walls/panels
+user_floor('tex_metal_plate.jpg', 'mans_metal_plate', periods=2)    # riveted rusted plates: lab walls, tunnel walls
+user_floor('tex_metal_diamond.jpg', 'mans_metal_diamond', periods=2) # diamond plate + vents: tunnel and dock floors
 
 print('textures written')
