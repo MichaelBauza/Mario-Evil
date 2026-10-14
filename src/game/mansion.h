@@ -21,6 +21,11 @@ struct MansionRoom { s16 x0, z0, x1, z1; u8 camFirst, camCount; const char *name
 struct MansionCam  { s16 zx0, zz0, zx1, zz1; s16 px, py, pz; s16 fx, fy, fz; u8 fov; };
 struct MansionDoor { u8 room; s16 x, z; s8 nx, nz; u8 dest; u8 key; s16 sx, sz; u16 yaw; u8 lr, lg, lb; u8 emblem; };
 
+// One entry per room-bound object (items, zombies, props, cinematic actors, the typewriter,
+// the console, Luigi). These are NOT spawned by the level script: mansion_load_room() spawns
+// them for a room, mansion_unload_room() deletes them again, both called at a door transition.
+struct MansionRoomObj { u8 room; ModelID32 model; const BehaviorScript *beh; s16 x, y, z; s16 yaw; u32 behParam; };
+
 struct MansionSlot { u8 id; u8 extra; };
 
 struct MansionState {
@@ -97,6 +102,8 @@ extern f32 gMansionFov;
 extern const struct MansionRoom gMansionRooms[];
 extern const struct MansionCam gMansionCams[];
 extern const struct MansionDoor gMansionDoors[];
+extern const struct MansionRoomObj gMansionRoomObjs[];
+extern const u16 gMansionRoomObjCount;
 
 struct Camera;
 struct GraphNode;
@@ -110,6 +117,8 @@ s32  mansion_wants_pause(void);
 void mansion_enter_pause(void);
 void mansion_paused_update(void);
 void mansion_tank_input(struct MarioState *m);
+void mansion_load_room(s32 room);     // spawn every object belonging to a room
+void mansion_unload_room(s32 room);   // delete every currently-spawned object belonging to a room
 Gfx *geo_switch_mansion_room(s32 callContext, struct GraphNode *node, void *context);
 Gfx *geo_mansion_door_anim(s32 callContext, struct GraphNode *node, void *context);
 

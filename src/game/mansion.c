@@ -203,6 +203,64 @@ static s32 find_room(f32 x, f32 z) {
     return -1;
 }
 
+/* ------------------------------------------------------------------------ */
+/* per-room object loading / unloading (triggered at the door transition)   */
+/* ------------------------------------------------------------------------ */
+
+// Every behavior a room-bound object can use. mansion_unload_room() only ever deletes an
+// object that matches one of these, so Mario, held items, and other non-room objects are
+// never touched.
+static const BehaviorScript *const sMansionRoomBehaviors[] = {
+    bhvMansionPickup, bhvMansionFile, bhvMansionTypewriter, bhvMansionConsole,
+    bhvMansionProp, bhvMansionLuigi, bhvMansionItemBox, bhvMansionActor, bhvMansionZombie,
+};
+
+static s32 is_room_object(struct Object *obj) {
+    s32 i;
+    for (i = 0; i < (s32) (sizeof(sMansionRoomBehaviors) / sizeof(sMansionRoomBehaviors[0])); i++) {
+        if (obj_has_behavior(obj, sMansionRoomBehaviors[i])) return TRUE;
+    }
+    return FALSE;
+}
+
+// Spawns every object belonging to 'room' from the generated table. Safe to call on a room
+// that is already loaded as long as mansion_unload_room() was called for it first -- calling
+// it twice without an unload in between would spawn duplicates.
+void mansion_load_room(s32 room) {
+    s32 i;
+    for (i = 0; i < gMansionRoomObjCount; i++) {
+        const struct MansionRoomObj *ro = &gMansionRoomObjs[i];
+        struct Object *obj;
+        if (ro->room != room) continue;
+        obj = spawn_object(gMarioState->marioObj, ro->model, ro->beh);
+        obj_set_pos(obj, ro->x, ro->y, ro->z);
+        obj_set_angle(obj, 0, ro->yaw, 0);
+        obj->oBehParams = ro->behParam;
+        obj->oBehParams2ndByte = GET_BPARAM2(ro->behParam);
+    }
+}
+
+// Deletes every currently-spawned object belonging to 'room'. Items already collected and
+// zombies already killed are gone by then anyway, so nothing here touches save state --
+// that's tracked separately in gMansion.collected / gMansion.killed and is re-checked by
+// each object's own init function the next time mansion_load_room() spawns it.
+void mansion_unload_room(s32 room) {
+    static const u8 sLists[] = { OBJ_LIST_LEVEL, OBJ_LIST_GENACTOR };
+    s32 li;
+    for (li = 0; li < (s32) (sizeof(sLists) / sizeof(sLists[0])); li++) {
+        struct ObjectNode *head = &gObjectLists[sLists[li]];
+        struct Object *obj = (struct Object *) head->next;
+        while (obj != (struct Object *) head) {
+            struct Object *next = (struct Object *) obj->header.next;
+            if (obj->activeFlags != ACTIVE_FLAG_DEACTIVATED && is_room_object(obj)
+             && find_room(obj->oPosX, obj->oPosZ) == room) {
+                obj_mark_for_deletion(obj);
+            }
+            obj = next;
+        }
+    }
+}
+
 static s32 condition(void) {
     if (gMarioState->health >= HEALTH_FINE) return 0;     // Fine
     if (gMarioState->health >= HEALTH_CAUTION) return 1;  // Caution
@@ -286,6 +344,7 @@ s32 lvl_mansion_init(UNUSED s16 arg, UNUSED s32 unused) {
     if (gMansion.wantMenu != MENU_TITLE) gMansion.wantMenu = 0;
     gMansion.room = (u8) MAX(0, find_room(gMarioState->pos[0], gMarioState->pos[2]));
     gMansion.visited |= 1u << gMansion.room;
+    mansion_load_room(gMansion.room);   // only the starting room's objects exist until a door is used
     return 0;
 }
 
@@ -673,6 +732,7 @@ static s32 inv_find_key(u8 keyid) {
 static void door_teleport(void) {
     const struct MansionDoor *dst = &gMansionDoors[gMansionDoors[gMansion.doorTarget].dest];
     struct MarioState *m = gMarioState;
+    u8 oldRoom = gMansion.room;
     f32 h;
 
     m->pos[0] = dst->sx;
@@ -688,6 +748,13 @@ static void door_teleport(void) {
     set_mario_action(m, ACT_IDLE, 0);
     gMansion.room = dst->room;
     gMansion.camIdx = -1;
+    // The screen is fully faded to black at this point (door_teleport only runs once the
+    // door-opening fade finishes), so the swap is invisible: unload the room Mario is
+    // leaving and load the one he is arriving in.
+    if (dst->room != oldRoom) {
+        mansion_unload_room(oldRoom);
+        mansion_load_room(dst->room);
+    }
 }
 
 static void update_doors(void) {

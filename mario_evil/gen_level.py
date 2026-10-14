@@ -370,18 +370,19 @@ def emit_all():
         lc = geos[roomidx[d['room']]].shade((cx + n[0]*60, 170, cz + n[2]*60))
         dt.append('    { %d, %d, %d, %d, %d, %d, %d, %d, %d, 0x%04X, %d, %d, %d, %d },  // %s\n' % (roomidx[d['room']], s16(cx), s16(cz), s16(n[0]), s16(n[2]), dest, d.get('key', 0), s16(sx), s16(sz), yaw, lc[0], lc[1], lc[2], door_emblem(d), d['id']))
     dt.append('};\n')
-    open(os.path.join(ROOT, 'src', 'game', 'mansion_data.inc.c'), 'w').write(''.join(dt))
-
-    # ---------------- script.c -----------------------------------------------------
+    # ---------------- room objects: loaded/unloaded at runtime, not by the level script -----
+    # Every pickup, zombie, prop, cinematic actor, typewriter, console and Luigi is a row in
+    # gMansionRoomObjs[] (src/game/mansion.c reads it). mansion_load_room()/mansion_unload_room()
+    # spawn or delete a room's rows at the door transition, instead of the level script spawning
+    # everything once at level load. See mario_evil-engine-hooks.md for the load/unload system.
     models = {k: ('MODEL_LEVEL_GEOMETRY_%02X' % (3 + i) if i < 20 else '0x%02X' % (0xE8 + i - 20)) for i, k in enumerate(ICONS)}
-    sc = open(os.path.join(os.path.dirname(__file__), 'script_template.c')).read()
-    loads = ''.join('    LOAD_MODEL_FROM_GEO(%s, mansion_geo_%s),\n' % (models[k], k) for k in ICONS)
-    objs = []
+    room_objs = []
     uid = [0]
     def nuid():
         uid[0] += 1
         return uid[0]
     for r in ROOMS:
+        ridx = roomidx[r['id']]
         for o in r.get('objs', []):
             kind = o['kind']; x, z = o['pos']; y = o.get('y', 0)
             yaw = o.get('yaw', 0)
@@ -391,27 +392,38 @@ def emit_all():
                         'key': {1: 'item_key', 2: 'item_key2', 3: 'item_key3'}.get(o.get('keyid', 1), 'item_key'),
                         'gun': 'item_gun', 'ammo': 'item_ammo'}[kind.split(':')[0]]
                 par = (iid << 24) | (o.get('amount', 1) << 16) | (o.get('keyid', 0) << 8) | nuid()
-                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionPickup),\n' % (models[icon], x, y + 10, z, yaw * 360 // 65536, par))
+                room_objs.append((ridx, models[icon], 'bhvMansionPickup', x, y + 10, z, yaw, par))
             elif kind == 'file':
                 par = (o['file'] << 24)
-                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, 0, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionFile),\n' % (models['item_file'], x, y + 10, z, par))
+                room_objs.append((ridx, models['item_file'], 'bhvMansionFile', x, y + 10, z, 0, par))
             elif kind == 'typewriter':
-                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionTypewriter),\n' % (models['item_typewriter'], x, y + 10, z, yaw * 360 // 65536))
+                room_objs.append((ridx, models['item_typewriter'], 'bhvMansionTypewriter', x, y + 10, z, yaw, 0))
             elif kind == 'box':
-                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionItemBox),\n' % (models['item_box'], x, y + 10, z, yaw * 360 // 65536))
+                room_objs.append((ridx, models['item_box'], 'bhvMansionItemBox', x, y + 10, z, yaw, 0))
             elif kind == 'zombie':
                 mdl = 'MODEL_BOWSER' if o.get('boss') else 'MODEL_GOOMBA'
-                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionZombie),\n' % (mdl, x, y, z, yaw * 360 // 65536, (o.get('hp', 3) << 24) | (o.get('boss', 0) << 8) | nuid()))
+                room_objs.append((ridx, mdl, 'bhvMansionZombie', x, y, z, yaw, (o.get('hp', 3) << 24) | (o.get('boss', 0) << 8) | nuid()))
             elif kind == 'prop':
-                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ bhvMansionProp),\n' % (models['prop_' + o['model']], x, y, z, yaw * 360 // 65536))
+                room_objs.append((ridx, models['prop_' + o['model']], 'bhvMansionProp', x, y, z, yaw, 0))
             elif kind == 'actor':     # movable cinematic prop, addressed by its actor number
-                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x%08X, /*beh*/ bhvMansionActor),\n' % ('MODEL_TOAD' if o['model'] == 'toad_rom' else models['prop_' + o['model']], x, y, z, yaw * 360 // 65536, o['actor']))
+                mdl = 'MODEL_TOAD' if o['model'] == 'toad_rom' else models['prop_' + o['model']]
+                room_objs.append((ridx, mdl, 'bhvMansionActor', x, y, z, yaw, o['actor']))
             elif kind in ('console', 'luigi'):
-                objs.append('    OBJECT(/*model*/ %s, /*pos*/ %d, %d, %d, /*angle*/ 0, %d, 0, /*behParam*/ 0x00000000, /*beh*/ %s),\n' % (models['item_' + kind], x, y + 10, z, yaw * 360 // 65536, 'bhvMansionConsole' if kind == 'console' else 'bhvMansionLuigi'))
+                beh = 'bhvMansionConsole' if kind == 'console' else 'bhvMansionLuigi'
+                room_objs.append((ridx, models['item_' + kind], beh, x, y + 10, z, yaw, 0))
             else:
                 raise SystemExit('unknown object kind ' + kind)
+    dt.append('\nconst struct MansionRoomObj gMansionRoomObjs[] = {\n')
+    for (ridx, mdl, beh, x, y, z, yaw, par) in room_objs:
+        dt.append('    { %d, %s, %s, %d, %d, %d, %d, 0x%08X },\n' % (ridx, mdl, beh, x, y, z, yaw & 0xFFFF, par))
+    dt.append('};\nconst u16 gMansionRoomObjCount = %d;\n' % len(room_objs))
+    open(os.path.join(ROOT, 'src', 'game', 'mansion_data.inc.c'), 'w').write(''.join(dt))
+
+    # ---------------- script.c -----------------------------------------------------
+    sc = open(os.path.join(os.path.dirname(__file__), 'script_template.c')).read()
+    loads = ''.join('    LOAD_MODEL_FROM_GEO(%s, mansion_geo_%s),\n' % (models[k], k) for k in ICONS)
     sx, sz, syaw = START
-    sc = (sc.replace('/*@@LOADS@@*/', loads).replace('/*@@OBJECTS@@*/', ''.join(objs))
+    sc = (sc.replace('/*@@LOADS@@*/', loads).replace('/*@@OBJECTS@@*/', '')
             .replace('@@START_X@@', str(sx)).replace('@@START_Z@@', str(sz)).replace('@@START_YAW@@', str(syaw * 360 // 65536)))
     open(os.path.join(LV, 'script.c'), 'w').write(sc)
 
