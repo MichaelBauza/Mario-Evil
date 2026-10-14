@@ -99,6 +99,7 @@ void mansion_cine_check(void) {
     s32 i;
     struct MarioState *m = gMarioState;
     if (gMansion.cine || gMansion.doorState || gMansion.endTimer > 0 || gMansion.escape == 3) return;
+    if (gMansion.menu != MENU_NONE || gMansion.wantMenu) return;   // not while the title or pause menu is up or pending
     for (i = 0; i < gMansionCineCount; i++) {
         const struct CineScript *cs = &gCines[i];
         if (gMansion.cineSeen & (1u << i)) continue;

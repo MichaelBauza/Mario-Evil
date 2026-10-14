@@ -32,6 +32,14 @@ def text(speaker, body):
     return [('text', speaker, p[0], p[1] if len(p) > 1 else '') for p in pages]
 
 CINES = [
+    # Intro: plays once, as soon as the title screen is dismissed and Mario is in the hall.
+    dict(name='intro_hall', zone=(-3000, -300, -2600, 300), steps=[
+        cam((-4000, 320, 500), (-2800, 80, 0), fov=50),
+        wait(30),
+        text('MARIO', "Let's-a go!"),
+        cam((-3300, 220, 380), (-2800, 80, 0), fov=45, frames=120),
+        wait(30),
+    ]),
     dict(name='dining_fire', zone=(-300, 560, 300, 720), steps=[
         cam((0, 330, -120), (0, 200, 740), fov=50),
         text('MARIO', 'The fire is still warm. Someone was dining here not long ago.'),
