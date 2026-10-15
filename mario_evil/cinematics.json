@@ -8,6 +8,15 @@
   },
   "steps": [
    {
+    "op": "cam",
+    "pos": [-2880,200,650],
+    "focus": [-3020,100,270],
+    "fov": 50,
+    "frames": 0,
+    "follow": false,
+    "height": 100
+   },
+   {
     "op": "text",
     "speaker": "TOAD",
     "body": "Whaaa! Mario your here! I was starting to think we were doomed...."
@@ -15,12 +24,17 @@
    {
     "op": "text",
     "speaker": "TOAD",
-    "body": "I came here with my friends as a dare, but then we heard a Scary sound and everyone ran in to different directions!"
+    "body": "I came here with my friends as a dare, but then we heard a Scary sound!"
    },
    {
     "op": "text",
     "speaker": "TOAD",
-    "body": "Now we have all split up! Help me rescue my friends Mario Whaaaa!!!"
+    "body": "Everyone ran into different directions!"
+   },
+   {
+    "op": "text",
+    "speaker": "TOAD",
+    "body": "Now they are all lost! Help me rescue my friends Mario Whaaaa!!!"
    }
   ]
  },
@@ -28,12 +42,7 @@
   "name": "intro_hall",
   "trigger": {
    "type": "zone",
-   "rect": [
-    -4100,
-    1500,
-    -3700,
-    1750
-   ]
+   "rect": [-4100,1500,-3700,1750]
   },
   "steps": [
    {
@@ -41,16 +50,8 @@
     "steps": [
      {
       "op": "cam",
-      "pos": [
-       -3800,
-       200,
-       980
-      ],
-      "focus": [
-       0,
-       100,
-       0
-      ],
+      "pos": [-3800,200,980],
+      "focus": [0,100,0],
       "fov": 55,
       "frames": 0,
       "follow": true,
@@ -58,11 +59,7 @@
      },
      {
       "op": "walk",
-      "pos": [
-       -3900,
-       0,
-       1250
-      ],
+      "pos": [-3900,0,1250],
       "frames": 62
      }
     ]
@@ -82,28 +79,17 @@
   "name": "dining_fire",
   "trigger": {
    "type": "zone",
-   "rect": [
-    -300,
-    560,
-    300,
-    720
-   ]
+   "rect": [-300,560,300,720]
   },
   "steps": [
    {
     "op": "cam",
-    "pos": [
-     0,
-     330,
-     -120
-    ],
-    "focus": [
-     0,
-     200,
-     740
-    ],
+    "pos": [0,330,-120],
+    "focus": [0,200,740],
     "fov": 50,
-    "frames": 0
+    "frames": 0,
+    "follow": false,
+    "height": 100
    },
    {
     "op": "text",
@@ -117,11 +103,7 @@
    {
     "op": "move",
     "actor": 0,
-    "pos": [
-     -600,
-     0,
-     -420
-    ],
+    "pos": [-600,0,-420],
     "frames": 120
    },
    {
@@ -137,18 +119,12 @@
    },
    {
     "op": "cam",
-    "pos": [
-     -500,
-     300,
-     -700
-    ],
-    "focus": [
-     0,
-     150,
-     640
-    ],
+    "pos": [-500,300,-700],
+    "focus": [0,150,640],
     "fov": 50,
-    "frames": 150
+    "frames": 150,
+    "follow": false,
+    "height": 100
    },
    {
     "op": "text",
