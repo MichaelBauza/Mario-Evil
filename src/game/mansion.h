@@ -15,7 +15,8 @@ enum MansionItem {
     MI_HERB_GG, MI_HERB_GR, MI_HERB_GB, MI_AMMO, MI_COUNT
 };
 
-enum MansionMenu { MENU_NONE, MENU_ITEMS, MENU_FILES, MENU_BOX, MENU_TITLE, MENU_MAP };
+enum MansionMenu { MENU_NONE, MENU_ITEMS, MENU_FILES, MENU_BOX, MENU_TITLE, MENU_MAP, MENU_COMIC };
+#define MANSION_COMIC_PAGES 5   /* intro comic, shown after the main menu */
 
 struct MansionRoom { s16 x0, z0, x1, z1; u8 camFirst, camCount; const char *name; s16 mx0, mz0, mx1, mz1; };  // m* = map rectangle (tenths of 100 units)
 struct MansionCam  { s16 zx0, zz0, zx1, zz1; s16 px, py, pz; s16 fx, fy, fz; u8 fov; u8 follow; };   // follow: px/py/pz = offset from Mario, who is always the focus
@@ -58,6 +59,9 @@ struct MansionState {
     u8  wantFile;
     s16 titleTimer;     // main menu: frames since it opened
     s16 titleOut;       // main menu: >0 while fading out after START
+    s16 comicPage;      // intro comic: which panel is showing
+    s16 comicTimer;     // intro comic: frames since it opened
+    s16 comicOut;       // intro comic: >0 while fading out after the last panel
     s8  stickLatchX, stickLatchY;
     // persistent
     struct MansionSlot inv[MANSION_INV_SLOTS];

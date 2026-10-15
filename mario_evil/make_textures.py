@@ -259,16 +259,9 @@ noise(im, 6, 11); save(im, 'mans_brass')
 save(new((10, 8, 8, 255)), 'mans_keyhole')
 
 # --- main-menu title image (320x240, RGBA16, Floyd-Steinberg dithered to 5 bits/channel) --------------
-def title_image():
+def dither_save(a, name):
+    """Floyd-Steinberg dither a float RGB array (0..255) to 5-bit channels (RGBA16 look) and save as a PNG texture."""
     import numpy as np
-    src = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'title_logo.jpg')).convert('RGB')
-    h = 240; w = round(src.width * h / src.height)
-    src = src.resize((w, h), Image.LANCZOS)
-    x0 = (w - 320) // 2
-    a = np.asarray(src.crop((x0, 0, x0 + 320, 240)), dtype=np.float64)
-    # darken the bottom strip so the PRESS START prompt reads cleanly
-    ramp = np.clip((np.arange(240) - 196) / 44.0, 0, 1)[:, None, None]
-    a = a * (1.0 - 0.72 * ramp)
     out = np.zeros_like(a)
     H, W, _ = a.shape
     for y in range(H):
@@ -286,8 +279,35 @@ def title_image():
     q = out.astype(np.uint8)
     rgb = ((q << 3) | (q >> 2)).astype(np.uint8)
     im = Image.fromarray(rgb, 'RGB').convert('RGBA')
-    save(im, 'mans_title')
+    save(im, name)
+
+def title_image():
+    import numpy as np
+    src = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'title_logo.jpg')).convert('RGB')
+    h = 240; w = round(src.width * h / src.height)
+    src = src.resize((w, h), Image.LANCZOS)
+    x0 = (w - 320) // 2
+    a = np.asarray(src.crop((x0, 0, x0 + 320, 240)), dtype=np.float64)
+    # darken the bottom strip so the PRESS START prompt reads cleanly
+    ramp = np.clip((np.arange(240) - 196) / 44.0, 0, 1)[:, None, None]
+    a = a * (1.0 - 0.72 * ramp)
+    dither_save(a, 'mans_title')
+
+def comic_panels():
+    """Intro comic: five panels, each letterboxed into a full 320x240 screen (black bars) and dithered like the title."""
+    import numpy as np
+    src = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'comic_intro.jpg')).convert('RGB')
+    boxes = [(21, 17, 827, 494), (21, 514, 414, 865), (435, 514, 827, 865), (21, 885, 414, 1247), (434, 885, 827, 1247)]
+    for i, b in enumerate(boxes, 1):
+        p = src.crop(b)
+        sc = min(320 / p.width, 240 / p.height)
+        w, h = max(1, round(p.width * sc)), max(1, round(p.height * sc))
+        p = p.resize((w, h), Image.LANCZOS)
+        canvas = Image.new('RGB', (320, 240), (0, 0, 0))
+        canvas.paste(p, ((320 - w) // 2, (240 - h) // 2))
+        dither_save(np.asarray(canvas, dtype=np.float64), 'mans_comic%d' % i)
 title_image()
+comic_panels()
 
 # --- user-supplied photo textures: carpet, table/box wood, courtyard cement + grass ---------------
 user_floor('tex_floor_carpet_rug.jpg', 'mans_carpet', periods=6)    # whole rug (border + medallion), not a sub-tile crop

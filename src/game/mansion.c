@@ -693,6 +693,11 @@ extern const Gfx mansion_door_begin_dl4[];   /* brass */
 extern const Gfx mansion_door_begin_dl5[];   /* keyhole black */
 extern const Gfx mansion_door_end_dl[];
 extern const Gfx mansion_title_dl[];
+extern const Gfx mansion_comic_dl0[];
+extern const Gfx mansion_comic_dl1[];
+extern const Gfx mansion_comic_dl2[];
+extern const Gfx mansion_comic_dl3[];
+extern const Gfx mansion_comic_dl4[];
 
 static f32 door_open_amount(void) {
     f32 t = ((f32) gMansion.doorTimer - DOOR_OPEN_START) / (DOOR_OPEN_END - DOOR_OPEN_START);
@@ -1130,14 +1135,35 @@ void mansion_paused_update(void) {
     s32 dx, dy;
     s32 moved;
 
+    if (gMansion.menu == MENU_COMIC) {
+        // intro comic: A turns the page; after the last panel it fades out, then the mansion's own music starts
+        gMansion.comicTimer++;
+        if (gMansion.comicOut > 0) {
+            if (--gMansion.comicOut == 0) {
+                gMusicVolumeTrim = 0.35f;
+                play_music(SEQ_PLAYER_LEVEL, SEQUENCE_ARGS(4, SEQ_LEVEL_SPOOKY), 0);
+                close_menu();
+            }
+        } else if (gMansion.comicTimer > 10 && (c->buttonPressed & A_BUTTON)) {
+            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource);
+            if (gMansion.comicPage + 1 >= MANSION_COMIC_PAGES) {
+                gMansion.comicOut = 40;
+                play_sound(SOUND_MENU_STAR_SOUND, gGlobalSoundSource);
+            } else {
+                gMansion.comicPage++;
+            }
+        }
+        return;
+    }
     if (gMansion.menu == MENU_TITLE) {
         gMansion.titleTimer++;
         if (gMansion.titleOut > 0) {
             if (--gMansion.titleOut == 0) {
-                // hand over from the menu music to the mansion's own
-                gMusicVolumeTrim = 0.35f;
-                play_music(SEQ_PLAYER_LEVEL, SEQUENCE_ARGS(4, SEQ_LEVEL_SPOOKY), 0);
-                close_menu();
+                // the title has faded to black: the intro comic comes up next (the mansion music starts after it)
+                gMansion.menu = MENU_COMIC;
+                gMansion.comicPage = 0;
+                gMansion.comicTimer = 0;
+                gMansion.comicOut = 0;
             }
         } else if (gMansion.titleTimer > 24 && (c->buttonPressed & (START_BUTTON | A_BUTTON))) {
             gMansion.titleOut = 40;
@@ -1472,6 +1498,29 @@ static void draw_title(void) {
     }
 }
 
+static void draw_comic(void) {
+    s32 page = gMansion.comicPage;
+    if (page > MANSION_COMIC_PAGES - 1) page = MANSION_COMIC_PAGES - 1;
+    switch (page) {
+        case 0:  gSPDisplayList(gDisplayListHead++, mansion_comic_dl0); break;
+        case 1:  gSPDisplayList(gDisplayListHead++, mansion_comic_dl1); break;
+        case 2:  gSPDisplayList(gDisplayListHead++, mansion_comic_dl2); break;
+        case 3:  gSPDisplayList(gDisplayListHead++, mansion_comic_dl3); break;
+        default: gSPDisplayList(gDisplayListHead++, mansion_comic_dl4); break;
+    }
+    if (gMansion.comicOut > 0) {
+        s32 a = (40 - gMansion.comicOut) * 255 / 38;
+        draw_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, a > 255 ? 255 : a);
+        return;
+    }
+    if (gMansion.comicTimer < 20) {
+        draw_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, (20 - gMansion.comicTimer) * 255 / 20);   // fade in from black
+    }
+    if (gMansion.comicTimer > 30 && ((gMansion.comicTimer / 22) & 1) == 0) {
+        print_small_text(SCREEN_WIDTH / 2, 226, "PRESS A", PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);
+    }
+}
+
 static void draw_ending(void) {
     s32 t = gMansion.endTimer;
     s32 page = (t - 70) / 150;
@@ -1532,6 +1581,10 @@ void mansion_render_hud(void) {
     }
     if (gMansion.menu == MENU_TITLE) {
         draw_title();
+        return;
+    }
+    if (gMansion.menu == MENU_COMIC) {
+        draw_comic();
         return;
     }
     if (gMansion.menu != MENU_NONE) {

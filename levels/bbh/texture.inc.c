@@ -109,6 +109,26 @@ ALIGNED8 static const Texture mans_keyhole_tex[] = {
 #include "levels/bbh/mans_keyhole.rgba16.inc.c"
 };
 
+ALIGNED8 static const Texture mans_comic1_tex[] = {
+#include "levels/bbh/mans_comic1.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_comic2_tex[] = {
+#include "levels/bbh/mans_comic2.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_comic3_tex[] = {
+#include "levels/bbh/mans_comic3.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_comic4_tex[] = {
+#include "levels/bbh/mans_comic4.rgba16.inc.c"
+};
+
+ALIGNED8 static const Texture mans_comic5_tex[] = {
+#include "levels/bbh/mans_comic5.rgba16.inc.c"
+};
+
 ALIGNED8 static const Texture mans_brick_tex[] = {
 #include "levels/bbh/mans_brick.rgba16.inc.c"
 };

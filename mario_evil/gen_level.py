@@ -27,6 +27,7 @@ CELL = 520            # max vertex-lighting cell size
 TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil', 'mans_stone', 'mans_tile',
             'mans_door', 'mans_wood', 'mans_marble', 'mans_grass', 'mans_cement', 'mans_metal_plate', 'mans_metal_diamond',
             'mans_door_k1', 'mans_door_k2', 'mans_door_k3', 'mans_brass', 'mans_keyhole',
+            'mans_comic1', 'mans_comic2', 'mans_comic3', 'mans_comic4', 'mans_comic5',
             'mans_brick', 'mans_cobble', 'mans_rail', 'mans_gate', 'mans_portrait1', 'mans_portrait2', 'mans_portrait3',
             'mans_paint_bowser', 'mans_paint_drybones', 'mans_paint_mushroom', 'mans_paint_goomba', 'mans_paint_peach',
             'mans_caution', 'mans_stairs_down']
@@ -313,6 +314,16 @@ def emit_all():
         out.append('    gsDPLoadTextureBlock(mans_title_tex + %d, G_IM_FMT_RGBA, G_IM_SIZ_16b, 320, 6, 0, G_TX_CLAMP | G_TX_NOMIRROR, G_TX_CLAMP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD),\n' % (i * 320 * 6 * 2))
         out.append('    gsSPTextureRectangle(0 << 2, %d << 2, 320 << 2, %d << 2, G_TX_RENDERTILE, 0, 0, 1 << 10, 1 << 10),\n' % (i * 6, i * 6 + 6))
     out.append('    gsDPPipeSync(),\n    gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),\n    gsDPSetTexturePersp(G_TP_PERSP),\n    gsDPSetTextureFilter(G_TF_BILERP),\n    gsDPSetCombineMode(G_CC_SHADEFADEA, G_CC_SHADEFADEA),\n    gsSPEndDisplayList(),\n};\n\n')
+    # intro comic: five full-screen panels, the same 40-strip method as the title
+    for ci in range(5):
+        out.append('const Gfx mansion_comic_dl%d[] = {\n' % ci)
+        out.append('    gsDPPipeSync(),\n    gsDPSetCycleType(G_CYC_1CYCLE),\n    gsDPSetRenderMode(G_RM_OPA_SURF, G_RM_OPA_SURF2),\n')
+        out.append('    gsDPSetCombineMode(G_CC_DECALRGB, G_CC_DECALRGB),\n    gsDPSetTexturePersp(G_TP_NONE),\n    gsDPSetTextureFilter(G_TF_POINT),\n    gsDPSetTextureLUT(G_TT_NONE),\n')
+        out.append('    gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),\n')
+        for i in range(40):
+            out.append('    gsDPLoadTextureBlock(mans_comic%d_tex + %d, G_IM_FMT_RGBA, G_IM_SIZ_16b, 320, 6, 0, G_TX_CLAMP | G_TX_NOMIRROR, G_TX_CLAMP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD),\n' % (ci + 1, i * 320 * 6 * 2))
+            out.append('    gsSPTextureRectangle(0 << 2, %d << 2, 320 << 2, %d << 2, G_TX_RENDERTILE, 0, 0, 1 << 10, 1 << 10),\n' % (i * 6, i * 6 + 6))
+        out.append('    gsDPPipeSync(),\n    gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),\n    gsDPSetTexturePersp(G_TP_PERSP),\n    gsDPSetTextureFilter(G_TF_BILERP),\n    gsDPSetCombineMode(G_CC_SHADEFADEA, G_CC_SHADEFADEA),\n    gsSPEndDisplayList(),\n};\n\n')
     out.append('const Gfx mansion_door_end_dl[] = {\n    gsSPSetGeometryMode(G_ZBUFFER | G_CULL_BACK),\n')
     out.append(tileend)
     # 3D item / prop models (models.py)
@@ -371,7 +382,7 @@ def emit_all():
     blk = ['// MANSION-BEGIN (generated)\n', 'extern const GeoLayout mansion_geo_area[];\n', 'extern const Collision mansion_collision[];\n']
     for ic in ICONS:
         blk.append('extern const GeoLayout mansion_geo_%s[];\nextern const Gfx mansion_dl_%s[];\n' % (ic, ic))
-    blk.append(''.join('extern const Gfx mansion_door_begin_dl%d[];\n' % i for i in range(6)) + 'extern const Gfx mansion_door_end_dl[];\nextern const Gfx mansion_title_dl[];\n')
+    blk.append(''.join('extern const Gfx mansion_door_begin_dl%d[];\n' % i for i in range(6)) + 'extern const Gfx mansion_door_end_dl[];\nextern const Gfx mansion_title_dl[];\n' + ''.join('extern const Gfx mansion_comic_dl%d[];\n' % i for i in range(5)))
     for r in ROOMS: blk.append('extern const Gfx mansion_dl_%s[];\n' % r['id'])
     blk.append('// MANSION-END\n')
     endif = hdr.rfind('#endif')
