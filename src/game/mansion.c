@@ -1931,7 +1931,8 @@ void bhv_mansion_zombie_init(void) {
 // Tyrant breath: one red fireball from the mouth, aimed at Mario's chest (SM64's own red flame model)
 static void tyrant_spit_fire(struct Object *t) {
     struct MarioState *m = gMarioState;
-    struct Object *f = spawn_object_relative_with_scale(0, 0, 260, 230, 1.6f, t, MODEL_RED_FLAME, bhvMansionFireball);
+    struct Object *f = spawn_object_relative_with_scale(0, 0, 260, 230, 3.2f, t, MODEL_RED_FLAME, bhvMansionFireball);
+    // (scale 3.2f: big enough to read from across the hall)
     f32 dx, dy, dz, len;
     if (f == NULL) return;
     dx = m->pos[0] - f->oPosX;
