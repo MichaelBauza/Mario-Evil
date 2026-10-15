@@ -1011,7 +1011,7 @@ void mansion_post_update(void) {
         m->action = ACT_UNINITIALIZED;
         set_mario_anim_with_accel(m, MARIO_ANIM_WALKING, 0x28000);
         if (gMansion.doorTimer >= 4 && gMansion.doorTimer < 64 && (gMansion.doorTimer % 9) == 0) {
-            play_sound(((gMansion.doorTimer / 9) & 1) ? SOUND_OBJ_BOWSER_WALK : SOUND_MEVIL_STEP1, gGlobalSoundSource);
+            play_sound(((gMansion.doorTimer / 9) & 1) ? SOUND_MEVIL_STEP2 : SOUND_MEVIL_STEP1, gGlobalSoundSource);
         }
     } else if (gMansion.doorState == 1) m->marioObj->header.gfx.node.flags |= GRAPH_RENDER_INVISIBLE;
     else m->marioObj->header.gfx.node.flags &= ~GRAPH_RENDER_INVISIBLE;
@@ -1775,7 +1775,7 @@ static void mansion_footsteps(struct MarioState *m) {
         sStride += speed;
         if (sStride >= need) {
             sStride -= need;
-            play_sound(sFoot ? SOUND_OBJ_BOWSER_WALK : SOUND_MEVIL_STEP1, gGlobalSoundSource);   // one normal step, then one Tyrant step, alternating
+            play_sound(sFoot ? SOUND_MEVIL_STEP2 : SOUND_MEVIL_STEP1, gGlobalSoundSource);   // two normal steps, alternating
             sFoot ^= 1;
         }
     } else {
