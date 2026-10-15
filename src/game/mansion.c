@@ -1849,8 +1849,8 @@ void bhv_mansion_zombie_init(void) {
     cur_obj_init_animation(0);
     if (BOSS_FLAG(o)) {
         // Tyrant Bowser: the real SM64 Bowser model, sleeps in its capsule until the console is used
-        cur_obj_scale(1.3f);
-        o->oWallHitboxRadius = 110.0f;
+        cur_obj_scale(1.1f);
+        o->oWallHitboxRadius = 92.0f;
         o->oAction = 4;
         o->oOpacity = 255;      // bowser_geo's coloring ASM reads oOpacity: 0 would make him invisible
         o->oAnimations = (struct Animation **) bowser_seg6_anims_06057690;
@@ -1860,11 +1860,51 @@ void bhv_mansion_zombie_init(void) {
     }
 }
 
+// Tyrant breath: one red fireball from the mouth, aimed at Mario's chest (SM64's own red flame model)
+static void tyrant_spit_fire(struct Object *t) {
+    struct MarioState *m = gMarioState;
+    struct Object *f = spawn_object_relative_with_scale(0, 0, 260, 230, 1.6f, t, MODEL_RED_FLAME, bhvMansionFireball);
+    f32 dx, dy, dz, len;
+    if (f == NULL) return;
+    dx = m->pos[0] - f->oPosX;
+    dy = (m->pos[1] + 80.0f) - f->oPosY;
+    dz = m->pos[2] - f->oPosZ;
+    len = sqrtf(dx * dx + dy * dy + dz * dz);
+    if (len < 1.0f) len = 1.0f;
+    f->oVelX = dx / len * 24.0f;
+    f->oVelY = dy / len * 24.0f;
+    f->oVelZ = dz / len * 24.0f;
+    play_sound(SOUND_AIR_BOWSER_SPIT_FIRE, t->header.gfx.cameraToObject);
+}
+
+void bhv_mansion_fireball_loop(void) {
+    struct MarioState *m = gMarioState;
+    f32 dx = m->pos[0] - o->oPosX, dy = (m->pos[1] + 60.0f) - o->oPosY, dz = m->pos[2] - o->oPosZ;
+
+    o->oPosX += o->oVelX;
+    o->oPosY += o->oVelY;
+    o->oPosZ += o->oVelZ;
+    o->oFaceAngleYaw += 0x1000;
+    if (o->oTimer > 110 || o->oPosY < -50.0f) {
+        obj_mark_for_deletion(o);
+        return;
+    }
+    if (dx * dx + dy * dy + dz * dz < 130.0f * 130.0f && !(m->action & ACT_FLAG_INVULNERABLE) && m->invincTimer == 0) {
+        m->interactObj = o;
+        m->hurtCounter += 10;
+        m->faceAngle[1] = obj_angle_to_object(m->marioObj, o);
+        m->forwardVel = -18.0f;
+        set_mario_action(m, ACT_BACKWARD_GROUND_KB, 0);
+        play_sound(SOUND_MARIO_ATTACKED, m->marioObj->header.gfx.cameraToObject);
+        obj_mark_for_deletion(o);
+    }
+}
+
 void bhv_mansion_zombie_loop(void) {
     struct MarioState *m = gMarioState;
     f32 dist = o->oDistanceToMario;
     s32 boss = BOSS_FLAG(o);
-    f32 biteDist = boss ? 210.0f : 115.0f;
+    f32 biteDist = boss ? 180.0f : 115.0f;
 
     if (!obj_in_current_room()) return;
     if (gMansion.menu != MENU_NONE) return;
@@ -1882,8 +1922,14 @@ void bhv_mansion_zombie_loop(void) {
             }
             break;
         case 1: // shamble toward Mario
+            if (boss && o->oSubAction == 0 && dist > 400.0f && dist < 1500.0f && (o->oTimer % 210) == 150) {
+                o->oAction = 5;     // breathe a fireball
+                o->oTimer = 0;
+                o->oForwardVel = 0.0f;
+                break;
+            }
             cur_obj_rotate_yaw_toward(o->oAngleToMario, boss ? 0x0B0 : 0x120);
-            o->oForwardVel = boss ? 8.0f : 4.5f;
+            o->oForwardVel = 4.5f;
             if ((o->oTimer % (boss ? 80 : 105)) == 40) zombie_moan(o);
             if (dist < biteDist && o->oSubAction == 0 && !(m->action & ACT_FLAG_INVULNERABLE) && m->invincTimer == 0) {
                 m->interactObj = o;
@@ -1906,6 +1952,17 @@ void bhv_mansion_zombie_loop(void) {
                 mansion_message("Tyrant Bowser breaks free!");
                 play_sound(SOUND_MEVIL_ZDEATH, o->header.gfx.cameraToObject);
                 if (boss) cur_obj_init_animation(BOWSER_ANIM_SLOW_GAIT);
+            }
+            break;
+        case 5: // breathe: plant, turn to Mario, spit one fireball from the mouth, then walk on
+            o->oForwardVel = 0.0f;
+            cur_obj_rotate_yaw_toward(o->oAngleToMario, 0x0C0);
+            if (o->oTimer == 0) cur_obj_init_animation(BOWSER_ANIM_BREATH_QUICK);
+            if (o->oTimer == 20) tyrant_spit_fire(o);
+            if (o->oTimer > 50) {
+                cur_obj_init_animation(BOWSER_ANIM_SLOW_GAIT);
+                o->oAction = 1;
+                o->oTimer = 0;
             }
             break;
         case 2: // staggered

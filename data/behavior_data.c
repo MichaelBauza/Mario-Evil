@@ -6163,3 +6163,12 @@ const BehaviorScript bhvMansionZombie[] = {
         CALL_NATIVE(bhv_mansion_zombie_loop),
     END_LOOP(),
 };
+
+// the Tyrant's red fireball: flies straight at Mario (velocity set by the Tyrant when it spits), hurts on contact
+const BehaviorScript bhvMansionFireball[] = {
+    BEGIN(OBJ_LIST_LEVEL),
+    OR_INT(oFlags, (OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE)),
+    BEGIN_LOOP(),
+        CALL_NATIVE(bhv_mansion_fireball_loop),
+    END_LOOP(),
+};

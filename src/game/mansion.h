@@ -142,5 +142,6 @@ void bhv_mansion_actor_loop(void);
 void bhv_mansion_heldgun_loop(void);
 void bhv_mansion_zombie_init(void);
 void bhv_mansion_zombie_loop(void);
+void bhv_mansion_fireball_loop(void);
 
 #endif // MANSION_H
