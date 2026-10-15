@@ -24,14 +24,24 @@ def room(id, name, x0, z0, x1, z1, h, **kw):
 ROOMS = []
 
 # ---- Main Hall -------------------------------------------------------------
-hall = room('hall', 'Main Hall', -4600, -900, -2400, 900, 850, floor='mans_floor',
-            carpets=[(-4500, -190, -2500, 190)],
-            boxes=[dict(x0=-3800, z0=-900, x1=-3200, z1=-560, y1=260, side='mans_marble', top='mans_carpet'),
-                   dict(x0=-4000, z0=-850, x1=-3880, z1=-730, y1=800, side='mans_marble', top='mans_marble'),
-                   dict(x0=-3000, z0=730, x1=-2880, z1=850, y1=800, side='mans_marble', top='mans_marble')],
-            lights=[(-3500, 650, 0, 0.55, 1000), (-4350, 500, -650, 0.30, 600), (-2650, 500, 650, 0.30, 600)],
+hall = room('hall', 'Main Hall', -5200, -1400, -2400, 1400, 1100, floor='mans_floor', wall='mans_brick', panel='mans_brick', wainscot=0,
+            carpets=[(-5100, -190, -2450, 190), (-4050, -1050, -3750, 1400)],
+            boxes=[dict(x0=-5200, z0=-1400, x1=-2400, z1=-1050, y0=450, y1=500, side='mans_marble', top='mans_carpet', collide=False),   # the gallery (upper floor), seen from below and above
+                   dict(x0=-4900, z0=-1050, x1=-4400, z1=-300, y1=500, hidden=True),      # west flight (collision only; the model is drawn)
+                   dict(x0=-3400, z0=-1050, x1=-2900, z1=-300, y1=500, hidden=True),      # east flight
+                   dict(x0=-4160, z0=-260, x1=-3640, z1=260, y1=300, hidden=True),        # fountain
+                   dict(x0=-5170, z0=-770, x1=-5030, z1=-630, y1=1100, side='mans_marble', top='mans_marble'),
+                   dict(x0=-5170, z0=630, x1=-5030, z1=770, y1=1100, side='mans_marble', top='mans_marble'),
+                   dict(x0=-2570, z0=-770, x1=-2430, z1=-630, y1=1100, side='mans_marble', top='mans_marble'),
+                   dict(x0=-2570, z0=630, x1=-2430, z1=770, y1=1100, side='mans_marble', top='mans_marble')],
+            lights=[(-3900, 330, 0, 0.55, 1500), (-4400, 650, 350, 0.40, 900), (-3400, 650, 350, 0.40, 900), (-3900, 320, -1200, 0.35, 800),
+                    (-4650, 700, -700, 0.30, 700), (-3150, 700, -700, 0.30, 700)],
             objs=[dict(kind='herb_g', pos=(-2750, -650)), dict(kind='file', file=1, pos=(-4300, 650))])
-hall['cams'] = cams_along_x(hall, front='N')
+hall['cams'] = [
+    dict(pos=(-2550, 760, 1250), look=(-4100, 330, -700), zone=(-3500, -1400, -2400, 1400), fov=52),
+    dict(pos=(-3900, 800, 1300), look=(-3900, 330, -900), zone=(-4300, -1400, -3500, 1400), fov=52),
+    dict(pos=(-5050, 760, 1250), look=(-3500, 330, -700), zone=(-5200, -1400, -4300, 1400), fov=52),
+]
 ROOMS.append(hall)
 
 # ---- Dining Room -----------------------------------------------------------
@@ -119,13 +129,14 @@ lib['cams'] = cams_along_x(lib, front='N')
 ROOMS.append(lib)
 
 # ---- Second floor landing -----------------------------------------------------
-land = room('land', 'Second Floor Landing', -4600, 2000, -2400, 3200, 850, floor='mans_floor',
-            carpets=[(-4500, 2500, -2500, 2700)],
-            boxes=[dict(x0=-4200, z0=2800, x1=-4080, z1=2920, y1=800, side='mans_marble', top='mans_marble')],
-            lights=[(-3500, 650, 2600, 0.55, 1000), (-4350, 500, 2300, 0.25, 600)],
-            objs=[dict(kind='zombie', pos=(-3300, 2800), yaw=0x8000), dict(kind='herb_g', pos=(-4300, 2300)),
-                  dict(kind='ammo', pos=(-2800, 2250), amount=10)])
-land['cams'] = cams_along_x(land, front='S')
+land = room('land', 'Second Floor Balcony', -5200, 2000, -2400, 2900, 800, floor='mans_floor', wall='mans_brick', panel='mans_brick', wainscot=0,
+            carpets=[(-5100, 2150, -2450, 2450)],
+            pads=[(-5050, 2560, -4550, 2890, 'mans_stairs_down', True), (-3050, 2560, -2550, 2890, 'mans_stairs_down', True)],   # the two stairwells down to the hall
+            boxes=[],
+            lights=[(-4300, 600, 2450, 0.50, 1200), (-3200, 600, 2450, 0.50, 1200), (-4800, 450, 2700, 0.30, 600), (-2800, 450, 2700, 0.30, 600)],
+            objs=[dict(kind='zombie', pos=(-3300, 2350), yaw=0x8000), dict(kind='herb_g', pos=(-4300, 2300)),
+                  dict(kind='ammo', pos=(-2900, 2250), amount=10)])
+land['cams'] = cams_along_x(land, inset=150, fov=55, front='S')
 ROOMS.append(land)
 
 # ---- Second floor corridor ----------------------------------------------------
@@ -259,16 +270,24 @@ add('court', dict(kind='prop', model='fountain', pos=(4000, -1650), y=0, yaw=0),
     on_wall('court', 'S', 3000, 'vine'), on_wall('court', 'S', 5900, 'vine'), on_wall('court', 'E', -2100, 'vine'),
     pot(2600, -1380, 0x2000), pot(3400, -2080, 0x9000), pot(5200, -1260, 0x5000), pot(4650, -2200, 0xC000), pot(6200, -1330, 0x3000))
 
-# -- Main hall: grand staircase with vine railings, chandelier, grandfather clock, portraits
-RM['hall']['boxes'][0]['hidden'] = True
-RM['hall']['boxes'].append(dict(x0=-3030, z0=300, x1=-2970, z1=360, y1=180, side='mans_wood', top='mans_wood', hidden=True))   # toad
+# -- Main hall (v0.2.6): two-storey atrium -- brick walls, gallery with locked doors, two staircases, blood fountain
 add('hall', dict(kind='actor', actor=1, model='toad_rom', pos=(-3000, 330), y=0, yaw=0x8000))   # Toad: talk with B (see cinematics.py)
-add('hall', dict(kind='prop', model='stairs', pos=(-3500, -730), y=0, yaw=0), on_wall('hall', 'N', -4250, 'clock'),
-    lamp_on('hall', 'N', -3000, 430), lamp_on('hall', 'S', -4200, 430),
-    on_wall('hall', 'N', -4450, 'vine'), on_wall('hall', 'N', -2650, 'vine'), on_wall('hall', 'S', -2900, 'vine'),
-    pot(-4300, 600), pot(-2900, 700, 0x4000))
-chand('hall', -3500, 0)
-portrait('hall', 'S', -4350, 1); portrait('hall', 'S', -2750, 3); portrait('hall', 'E', -500, 2); portrait('hall', 'E', 500, 1)
+RM['hall']['boxes'].append(dict(x0=-3030, z0=300, x1=-2970, z1=360, y1=180, side='mans_wood', top='mans_wood', hidden=True))   # toad
+add('hall', dict(kind='prop', model='stair_flight', pos=(-4650, -300), y=0, yaw=0), dict(kind='prop', model='stair_flight', pos=(-3150, -300), y=0, yaw=0),
+    dict(kind='prop', model='hall_fountain', pos=(-3900, 0), y=0, yaw=0))
+for bx in (-5050, -4275, -4025, -3775, -3525, -2775, -2525):      # gallery balustrade, gaps at the two stair heads
+    add('hall', dict(kind='prop', model='balustrade', pos=(bx, -1062), y=500, yaw=0))
+RM['hall']['decor'] = [dict(tex='mans_door_k%d' % k, wall='N', at=at, w=300, h=340, y0=500)
+                       for (at, k) in ((-4950, 2), (-4350, 3), (-3450, 3), (-2850, 1))]
+RM['hall']['decor'].append(dict(tex='mans_door', wall='N', at=-3900, w=340, h=360, y0=0))      # the great double door under the gallery (set dressing)
+add('hall', on_wall('hall', 'N', -3350, 'clock'),
+    lamp_on('hall', 'S', -4900, 430), lamp_on('hall', 'S', -2900, 430), lamp_on('hall', 'W', -700, 430), lamp_on('hall', 'W', 700, 430),
+    on_wall('hall', 'S', -3900, 'vine'), on_wall('hall', 'S', -4600, 'vine'), on_wall('hall', 'S', -3200, 'vine'),
+    pot(-4300, 1250), pot(-3500, 1250, 0x4000))
+for (mx, mz, myaw) in ((-5000, 600, 0x1000), (-5120, 790, 0x5000), (-2560, 620, 0x9000), (-2630, 800, 0xD000), (-4500, -240, 0x2000), (-3000, -250, 0x6000)):
+    add('hall', dict(kind='prop', model='mushroom', pos=(mx, mz), y=0, yaw=myaw))
+chand('hall', -4400, 350); chand('hall', -3400, 350); chand('hall', -3900, -500)
+portrait('hall', 'S', -4400, 1); portrait('hall', 'S', -3400, 3); portrait('hall', 'E', -500, 2); portrait('hall', 'E', 500, 1)
 
 # -- other rooms
 chand('dining', 0, 0); portrait('dining', 'S', -500, 2); portrait('dining', 'S', 500, 3); portrait('dining', 'N', -600, 1)
@@ -334,8 +353,12 @@ desk_at('guard', 0)                                   # typewriter desk
 chand('lib', -7000, 1700); portrait('lib', 'N', -6600, 1, y=360); portrait('lib', 'S', -7300, 2, y=360)
 add('lib', lamp_on('lib', 'E', 1700, 420), on_wall('lib', 'N', -7600, 'vine'), pot(-6300, 2250))
 desk_at('lib', 2)                                     # reading table (boxes 0/1 are the bookshelves)
-chand('land', -3500, 2600); portrait('land', 'N', -2900, 3); portrait('land', 'S', -4000, 1)
-add('land', lamp_on('land', 'E', 2300, 430), on_wall('land', 'S', -3000, 'vine'), pot(-4350, 3050))
+chand('land', -3800, 2400); portrait('land', 'N', -4200, 1); portrait('land', 'N', -3400, 3)
+for (k, at) in ((2, -4950), (3, -3800), (1, -2850)):          # locked doors along the balcony (set dressing)
+    RM['land'].setdefault('decor', []).append(dict(tex='mans_door_k%d' % k, wall='N', at=at, w=300, h=340, y0=0))
+for bx in (-4425, -4175, -3925, -3675, -3425, -3175):          # balcony rail between the two stairwells
+    add('land', dict(kind='prop', model='balustrade', pos=(bx, 2888), y=0, yaw=0x8000))
+add('land', lamp_on('land', 'E', 2150, 430), on_wall('land', 'S', -3800, 'vine'), pot(-5100, 2800))
 add('corr2', lamp_on('corr2', 'N', -800, 380), on_wall('corr2', 'S', 200, 'vine'))
 chand('gal', 2200, 2700); portrait('gal', 'N', 1800, 2); portrait('gal', 'N', 2700, 3); portrait('gal', 'S', 1900, 1); portrait('gal', 'S', 2600, 2)
 add('gal', lamp_on('gal', 'E', 2200, 400), on_wall('gal', 'N', 1400, 'vine'), pot(3000, 3250))
@@ -351,7 +374,7 @@ add('dock', lamp_on('dock', 'S', 4400, 400), on_wall('dock', 'E', 3600, 'vine'))
 # -- framed paintings (square canvases, 120 units, hung at eye level); each placed clear of doors and lamps
 def painting(rid, wall, at, tex, y=300, size=120):
     RM[rid].setdefault('decor', []).append(dict(tex=tex, wall=wall, at=at, w=size, h=size, y0=y))
-painting('hall', 'N', -3600, 'mans_paint_peach')          # Peach: the castle hall
+painting('hall', 'N', -3900, 'mans_paint_peach', y=640, size=230)   # Peach: the castle hall, above the great door
 painting('lab', 'N', 6500, 'mans_paint_bowser')          # Bowser: Kamek's lab
 painting('corr_w', 'S', -6000, 'mans_paint_goomba')      # Goomba: west corridor
 painting('kitchen', 'N', 3000, 'mans_paint_mushroom')    # Super Mushroom: kitchen
@@ -377,9 +400,11 @@ DOORS = [
     dict(id='guard_w', room='guard', wall='W', at=-1550,   to='court_e'),
     dict(id='corrw_w', room='corr_w', wall='W', at=0,      to='lib_n'),
     dict(id='lib_n',   room='lib',   wall='N', at=-7000,   to='corrw_w'),
-    dict(id='hall_s',  room='hall',  wall='S', at=-3500,   to='land_n'),
-    dict(id='land_n',  room='land',  wall='N', at=-3500,   to='hall_s'),
-    dict(id='land_e',  room='land',  wall='E', at=2600,    to='corr2_w'),
+    dict(id='hall_stair_w', room='hall', virtual=(-4650, -100), n=(0, 1),  to='land_stair_w', stair=1),
+    dict(id='hall_stair_e', room='hall', virtual=(-3150, -100), n=(0, 1),  to='land_stair_e', stair=1),
+    dict(id='land_stair_w', room='land', virtual=(-4800, 2650), n=(0, -1), to='hall_stair_w', stair=2),
+    dict(id='land_stair_e', room='land', virtual=(-2800, 2650), n=(0, -1), to='hall_stair_e', stair=2),
+    dict(id='land_e',  room='land',  wall='E', at=2500,    to='corr2_w'),
     dict(id='corr2_w', room='corr2', wall='W', at=2700,    to='land_e'),
     dict(id='corr2_e', room='corr2', wall='E', at=2700,    to='gal_w', key=2),
     dict(id='gal_w',   room='gal',   wall='W', at=2700,    to='corr2_e'),

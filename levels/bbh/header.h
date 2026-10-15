@@ -165,6 +165,11 @@ extern const LevelScript level_bbh_entry[];
 
 
 
+
+
+
+
+
 // MANSION-BEGIN (generated)
 extern const GeoLayout mansion_geo_area[];
 extern const Collision mansion_collision[];
@@ -236,6 +241,12 @@ extern const GeoLayout mansion_geo_prop_mushroom[];
 extern const Gfx mansion_dl_prop_mushroom[];
 extern const GeoLayout mansion_geo_prop_mushroom_big[];
 extern const Gfx mansion_dl_prop_mushroom_big[];
+extern const GeoLayout mansion_geo_prop_stair_flight[];
+extern const Gfx mansion_dl_prop_stair_flight[];
+extern const GeoLayout mansion_geo_prop_balustrade[];
+extern const Gfx mansion_dl_prop_balustrade[];
+extern const GeoLayout mansion_geo_prop_hall_fountain[];
+extern const Gfx mansion_dl_prop_hall_fountain[];
 extern const Gfx mansion_door_begin_dl0[];
 extern const Gfx mansion_door_begin_dl1[];
 extern const Gfx mansion_door_begin_dl2[];

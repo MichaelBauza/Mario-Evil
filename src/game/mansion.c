@@ -360,6 +360,10 @@ Gfx *geo_switch_mansion_room(s32 callContext, struct GraphNode *node, UNUSED voi
     return NULL;
 }
 
+// RE1-style stair transition state (see update_doors): start / end of Mario's visible walk, fixed camera.
+static Vec3f sStairStart, sStairEnd, sStairCam, sStairVis;
+static f32 sStairSink;
+
 void mansion_camera(struct Camera *c) {
     const struct MansionRoom *r = &gMansionRooms[gMansion.room];
     f32 mx = gMarioState->pos[0], mz = gMarioState->pos[2];
@@ -410,7 +414,13 @@ void mansion_camera(struct Camera *c) {
                         cam->fz + (mz - cam->fz) * 0.18f };
         s16 yaw;
 
-        if (gMansion.doorState == 1) {
+        if (gMansion.doorState == 1 && gMansionDoors[gMansion.doorTarget].stair) {
+            // stair cinematic: fixed camera behind the stairs, looking after Mario as he climbs / descends
+            pos[0] = sStairCam[0]; pos[1] = sStairCam[1]; pos[2] = sStairCam[2];
+            focus[0] = sStairVis[0]; focus[1] = sStairVis[1] + 130.0f; focus[2] = sStairVis[2];
+            gMansion.camLatch = 0;
+            gMansionFov = 55;
+        } else if (gMansion.doorState == 1) {
             // door cinematic: close-up on the door from inside the room, creeping forward
             const struct MansionDoor *dd = &gMansionDoors[gMansion.doorTarget];
             f32 k = (f32) gMansion.doorTimer / 66.0f;
@@ -642,6 +652,8 @@ void mansion_pre_update(void) {
 #define DOOR_OPEN_START  10
 #define DOOR_OPEN_END    50
 #define DOOR_FADE_START  52
+#define STAIR_LEN        72
+#define STAIR_FADE_START 48
 #define DOOR_W 300
 #define DOOR_H 340
 
@@ -667,7 +679,7 @@ static void set_vtx(Vtx *v, s32 x, s32 y, s32 z, s32 u, s32 w, u8 r, u8 g, u8 b)
 }
 
 Gfx *geo_mansion_door_anim(s32 callContext, struct GraphNode *node, UNUSED void *context) {
-    if (callContext == GEO_CONTEXT_RENDER && gMansion.doorState == 1) {
+    if (callContext == GEO_CONTEXT_RENDER && gMansion.doorState == 1 && !gMansionDoors[gMansion.doorTarget].stair) {
         const struct MansionDoor *d = &gMansionDoors[gMansion.doorTarget];
         struct GraphNodeGenerated *gen = (struct GraphNodeGenerated *) node;
         Vtx *v = alloc_display_list(8 * sizeof(Vtx));
@@ -761,6 +773,17 @@ static void update_doors(void) {
     struct MarioState *m = gMarioState;
     s32 i;
 
+    if (gMansion.doorState == 1 && gMansionDoors[gMansion.doorTarget].stair) {
+        gMansion.doorTimer++;
+        gMansion.fade = (gMansion.doorTimer > STAIR_FADE_START)
+            ? MIN(255, (gMansion.doorTimer - STAIR_FADE_START) * 255 / (STAIR_LEN - STAIR_FADE_START)) : 0;
+        if (gMansion.doorTimer >= STAIR_LEN) {
+            door_teleport();
+            gMansion.doorState = 2;
+            gMansion.doorTimer = 0;
+        }
+        return;
+    }
     if (gMansion.doorState == 1) {
         gMansion.doorTimer++;
         if (gMansion.doorTimer == 6) play_sound(SOUND_GENERAL_OPEN_WOOD_DOOR, gGlobalSoundSource);
@@ -826,6 +849,20 @@ static void update_doors(void) {
         gMansion.doorTimer = 0;
         gMansion.doorTarget = i;
         gMansion.doorPush = 0;
+        if (d->stair) {
+            f32 wx = -d->nx, wz = -d->nz;    // walking direction (into the stairs)
+            vec3f_copy(sStairStart, m->pos);
+            vec3f_copy(sStairVis, m->pos);
+            if (d->stair == 1) {    // up: keep walking straight until the top of the flight
+                sStairEnd[0] = d->x + wx * 800.0f; sStairEnd[2] = d->z + wz * 800.0f; sStairEnd[1] = m->pos[1] + 500.0f;
+                sStairSink = 0.0f;
+            } else {                // down: a few steps forward while sinking into the stairwell
+                sStairEnd[0] = m->pos[0] + wx * 230.0f; sStairEnd[2] = m->pos[2] + wz * 230.0f; sStairEnd[1] = m->pos[1];
+                sStairSink = 250.0f;
+            }
+            sStairCam[0] = m->pos[0] + d->nx * 450.0f; sStairCam[2] = m->pos[2] + d->nz * 450.0f;
+            sStairCam[1] = m->pos[1] + 280.0f;
+        }
         m->forwardVel = 0.f;
         m->vel[0] = m->vel[1] = m->vel[2] = 0.f;
         set_mario_action(m, ACT_IDLE, 0);
@@ -872,7 +909,26 @@ void mansion_post_update(void) {
         m->marioObj->header.gfx.animInfo.animFrame = 3;
         held_gun_attach(m);
     }
-    if (gMansion.doorState == 1) m->marioObj->header.gfx.node.flags |= GRAPH_RENDER_INVISIBLE;
+    if (gMansion.doorState == 1 && gMansionDoors[gMansion.doorTarget].stair) {
+        // Mario stays visible and walks (visual only; his real position stays at the foot of the stairs)
+        const struct MansionDoor *sd = &gMansionDoors[gMansion.doorTarget];
+        f32 t = ((f32) gMansion.doorTimer - 4.0f) / 62.0f;
+        s16 yaw = atan2s(-sd->nz, -sd->nx);
+        if (t < 0.0f) t = 0.0f;
+        if (t > 1.0f) t = 1.0f;
+        sStairVis[0] = sStairStart[0] + (sStairEnd[0] - sStairStart[0]) * t;
+        sStairVis[2] = sStairStart[2] + (sStairEnd[2] - sStairStart[2]) * t;
+        sStairVis[1] = sStairStart[1] + (sStairEnd[1] - sStairStart[1]) * t - sStairSink * t;
+        m->marioObj->header.gfx.node.flags &= ~GRAPH_RENDER_INVISIBLE;
+        vec3f_copy(m->marioObj->header.gfx.pos, sStairVis);
+        m->marioObj->header.gfx.angle[0] = 0;
+        m->marioObj->header.gfx.angle[1] = yaw;
+        m->marioObj->header.gfx.angle[2] = 0;
+        set_mario_anim_with_accel(m, MARIO_ANIM_WALKING, 0x28000);
+        if (gMansion.doorTimer >= 4 && gMansion.doorTimer < 64 && (gMansion.doorTimer % 9) == 0) {
+            play_sound(((gMansion.doorTimer / 9) & 1) ? SOUND_OBJ_BOWSER_WALK : SOUND_MEVIL_STEP1, gGlobalSoundSource);
+        }
+    } else if (gMansion.doorState == 1) m->marioObj->header.gfx.node.flags |= GRAPH_RENDER_INVISIBLE;
     else m->marioObj->header.gfx.node.flags &= ~GRAPH_RENDER_INVISIBLE;
 }
 

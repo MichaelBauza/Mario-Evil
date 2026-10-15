@@ -69,6 +69,9 @@ const LevelScript level_bbh_entry[] = {
     LOAD_MODEL_FROM_GEO(0xF3, mansion_geo_prop_cup),
     LOAD_MODEL_FROM_GEO(0xF4, mansion_geo_prop_mushroom),
     LOAD_MODEL_FROM_GEO(0xF5, mansion_geo_prop_mushroom_big),
+    LOAD_MODEL_FROM_GEO(0xF6, mansion_geo_prop_stair_flight),
+    LOAD_MODEL_FROM_GEO(0xF7, mansion_geo_prop_balustrade),
+    LOAD_MODEL_FROM_GEO(0xF8, mansion_geo_prop_hall_fountain),
 
     LOAD_MODEL_FROM_GEO(MODEL_TOAD, mvtoad_geo),
     LOAD_MODEL_FROM_GEO(MODEL_BOWSER, bowser_geo),

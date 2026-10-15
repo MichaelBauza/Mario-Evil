@@ -29,11 +29,12 @@ TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil',
             'mans_door_k1', 'mans_door_k2', 'mans_door_k3',
             'mans_brick', 'mans_cobble', 'mans_rail', 'mans_gate', 'mans_portrait1', 'mans_portrait2', 'mans_portrait3',
             'mans_paint_bowser', 'mans_paint_drybones', 'mans_paint_mushroom', 'mans_paint_goomba', 'mans_paint_peach',
-            'mans_caution']
+            'mans_caution', 'mans_stairs_down']
 ICONS = ['item_herb_g', 'item_herb_r', 'item_herb_b', 'item_key', 'item_ribbon', 'item_file',
          'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo', 'held_gun', 'item_console', 'item_luigi',
          'prop_fountain', 'prop_chandelier', 'prop_lamp', 'prop_pot', 'prop_clock', 'prop_stairs', 'prop_vine', 'prop_table', 'prop_desk', 'prop_chair', 'prop_fireplace',
-         'prop_fridge', 'prop_stove', 'prop_counter', 'prop_sink', 'prop_kpot', 'prop_cup', 'prop_mushroom', 'prop_mushroom_big']   # 3D models (models.py)
+         'prop_fridge', 'prop_stove', 'prop_counter', 'prop_sink', 'prop_kpot', 'prop_cup', 'prop_mushroom', 'prop_mushroom_big',
+         'prop_stair_flight', 'prop_balustrade', 'prop_hall_fountain']   # 3D models (models.py)
 
 def door_emblem(d):
     """Key id whose emblem is painted on this door: its own key, or the key of the door it connects to."""
@@ -118,6 +119,7 @@ class RoomGeo:
         self.face(side, (x0, y0, z1), (x1-x0, 0, 0), (0, y1-y0, 0), (0, 0, 1), collide, uvflip_v=True)
         self.face(side, (x0, y0, z0), (0, 0, z1-z0), (0, y1-y0, 0), (-1, 0, 0), collide, uvflip_v=True)
         self.face(side, (x1, y0, z0), (0, 0, z1-z0), (0, y1-y0, 0), (1, 0, 0), collide, uvflip_v=True)
+        if y0 > 0: self.face(side, (x0, y0, z0), (x1-x0, 0, 0), (0, 0, z1-z0), (0, -1, 0), False)   # underside of a raised slab
 
 def wall_of(room, side):
     """returns (origin, along-vector, inward-normal, coordinate along) for a wall."""
@@ -139,8 +141,9 @@ def build_room(room):
     for (cx0, cz0, cx1, cz1) in room.get('carpets', []):
         g.face('mans_carpet', (cx0, 3, cz0), (cx1-cx0, 0, 0), (0, 0, cz1-cz0), (0, 1, 0), False)
     # texture pads over the floor (same overlay method as carpets): (x0, z0, x1, z1, texture)
-    for (px0, pz0, px1, pz1, ptex) in room.get('pads', []):
-        g.face(ptex, (px0, 3, pz0), (px1-px0, 0, 0), (0, 0, pz1-pz0), (0, 1, 0), False)
+    for pad in room.get('pads', []):
+        (px0, pz0, px1, pz1, ptex) = pad[:5]
+        g.face(ptex, (px0, 3, pz0), (px1-px0, 0, 0), (0, 0, pz1-pz0), (0, 1, 0), False, uv_once=(len(pad) > 5 and pad[5]))
     if not room.get('sky'):
         g.face(room.get('ceil', 'mans_ceil'), (x0, h, z0), (W, 0, 0), (0, 0, D), (0, -1, 0), True)
     wall = room.get('wall', 'mans_wall'); panel = room.get('panel', 'mans_panel')
@@ -374,7 +377,7 @@ def emit_all():
         yaw = int(round(math.atan2(n[0], n[2]) / (2*math.pi) * 65536)) & 0xFFFF
         dest = didx[d['to']]
         lc = geos[roomidx[d['room']]].shade((cx + n[0]*60, 170, cz + n[2]*60))
-        dt.append('    { %d, %d, %d, %d, %d, %d, %d, %d, %d, 0x%04X, %d, %d, %d, %d },  // %s\n' % (roomidx[d['room']], s16(cx), s16(cz), s16(n[0]), s16(n[2]), dest, d.get('key', 0), s16(sx), s16(sz), yaw, lc[0], lc[1], lc[2], door_emblem(d), d['id']))
+        dt.append('    { %d, %d, %d, %d, %d, %d, %d, %d, %d, 0x%04X, %d, %d, %d, %d, %d },  // %s\n' % (roomidx[d['room']], s16(cx), s16(cz), s16(n[0]), s16(n[2]), dest, d.get('key', 0), s16(sx), s16(sz), yaw, lc[0], lc[1], lc[2], door_emblem(d), d.get('stair', 0), d['id']))
     dt.append('};\n')
     # ---------------- room objects: loaded/unloaded at runtime, not by the level script -----
     # Every pickup, zombie, prop, cinematic actor, typewriter, console and Luigi is a row in

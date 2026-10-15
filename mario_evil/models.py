@@ -491,6 +491,75 @@ def stairs():
         vine_strand(m, [(p[0], 40 + t * 28 + 18 * math.sin(t * 1.3), p[2]) for t, p in enumerate(pts)], r=5)
     return m
 
+# ---- v0.2.6 grand hall: two-storey atrium pieces ---------------------------------------------------------
+MARB = (176, 172, 162); MARB_D = (140, 136, 128); CARPET_R = (128, 22, 26); BLOODW = (104, 12, 16)
+
+def stair_flight():
+    """Straight flight, 500 wide, climbing 500 over 750 toward -z. Origin = centre of the foot. 14 steps,
+    red runner, stone balustrades (handrail tilted along the slope)."""
+    m = Mesh()
+    N, W, RUN, RISE = 14, 500, 750.0, 500.0
+    d = RUN / N; r = RISE / N
+    for i in range(N):
+        top = r * (i + 1); zc = -(i + 0.5) * d
+        m.box((0, top / 2, zc), (W, top, d), MARB if i % 2 == 0 else MARB_D)
+        zf = -i * d; zb = -(i + 1) * d
+        m.quad((-180, top + 1.5, zf), (180, top + 1.5, zf), (180, top + 1.5, zb), (-180, top + 1.5, zb), CARPET_R, inside=(0, top / 2, zc))
+        m.quad((-180, r * i, zf + 1.5), (180, r * i, zf + 1.5), (180, top, zf + 1.5), (-180, top, zf + 1.5), CARPET_R, inside=(0, top / 2, zc))
+    ang = math.degrees(math.atan2(RISE, RUN)); L = math.hypot(RISE, RUN)
+    for sx in (-1, 1):
+        x = sx * 238
+        m.box((x, RISE / 2 + 98, -RUN / 2), (16, 14, L), MARB, rot(pitch=-ang))
+        m.box((x, RISE / 2 + 10, -RUN / 2), (16, 10, L), MARB_D, rot(pitch=-ang))
+        for k in range(0, N + 1, 2):
+            zk = -k * d; yk = r * k + 55
+            m.box((x, yk + 18, zk - d * 0.5), (14, 90, 14), MARB)
+        m.box((x, 30, 18), (30, 100, 30), MARB)                                 # newel post at the foot
+        m.box((x, RISE + 60, -RUN + 12), (30, 110, 30), MARB)                  # newel post at the top
+    return m
+
+def balustrade():
+    """250-long stone balcony rail along x, 100 high. Origin = centre of the base."""
+    m = Mesh()
+    m.box((0, 7, 0), (250, 14, 26), MARB_D)
+    m.box((0, 97, 0), (250, 14, 30), MARB)
+    for k in range(-5, 6):
+        m.cyl((k * 21, 52, 0), 7, 76, MARB, n=6, r_top=5)
+    for sx in (-1, 1):
+        m.box((sx * 122, 52, 0), (12, 90, 24), MARB)
+    return m
+
+def hall_fountain():
+    """Atrium fountain: octagonal basin of blood-red water, moss, a tall stone figure holding up a golden star."""
+    m = Mesh()
+    m.cyl((0, 50, 0), 300, 100, MARB, n=8, smooth=False)
+    m.cyl((0, 108, 0), 312, 16, MARB_D, n=8, smooth=False)
+    m.cyl((0, 98, 0), 276, 4, BLOODW, n=8, smooth=False)
+    m.cyl((0, 170, 0), 52, 140, MARB, n=8, r_top=40)
+    m.cyl((0, 250, 0), 150, 30, MARB_D, n=8, r_top=110, smooth=False)
+    m.cyl((0, 268, 0), 130, 4, BLOODW, n=8, smooth=False)
+    m.cyl((0, 310, 0), 46, 80, MARB_D, n=8)                                   # plinth
+    # the figure (generic stone statue)
+    STN = (150, 150, 142)
+    m.cyl((-16, 400, 0), 14, 100, STN, n=6); m.cyl((16, 400, 0), 14, 100, STN, n=6)      # legs
+    m.cyl((0, 500, 0), 30, 110, STN, n=8, r_top=24)                                      # torso
+    m.sphere((0, 580, 0), 28, STN, nlat=4, nlon=8)                                       # head
+    m.cyl((0, 612, 0), 30, 12, STN, n=8, r_top=20)                                       # cap brim
+    m.cyl((-40, 500, 0), 9, 80, STN, n=6, R=rot(roll=25))                                # left arm down
+    m.cyl((40, 545, 0), 9, 90, STN, n=6, R=rot(roll=-25))                                # right arm raised
+    m.cyl((58, 592, 0), 9, 40, STN, n=6, R=rot(roll=-10))
+    pts = []
+    for i in range(10):
+        rr = 36 if i % 2 == 0 else 15; a = math.pi / 2 + i * math.pi / 5
+        pts.append((rr * math.cos(a), rr * math.sin(a)))
+    m.prism(pts, 14, (240, 200, 40), c=(62, 650, 0))
+    for k in range(8):                                                                   # blood drips and moss
+        a = k * math.pi / 4 + 0.2
+        m.cyl((312 * math.cos(a), 78, 312 * math.sin(a)), 4, 50 + 14 * (k % 3), BLOODW, n=4)
+        m.sphere((290 * math.cos(a + 0.4), 116, 290 * math.sin(a + 0.4)), 16, MOSS, nlat=3, nlon=6)
+    return m
+
+
 def table():
     """Dining table, 900 long (x) x 400 deep (z), top at y=160, with a candelabra and a cloth runner."""
     m = Mesh()
@@ -702,6 +771,9 @@ MODELS = {
     'prop_pot': pot,
     'prop_clock': clock,
     'prop_stairs': stairs,
+    'prop_stair_flight': stair_flight,
+    'prop_balustrade': balustrade,
+    'prop_hall_fountain': hall_fountain,
     'prop_toad': toad,
     'prop_vine': vine,
     'prop_table': table,
