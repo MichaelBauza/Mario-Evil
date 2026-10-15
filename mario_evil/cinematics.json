@@ -182,5 +182,46 @@
     "body": "Somewhere above you, a door creaks open."
    }
   ]
+ },
+ {
+  "name": "Courtyard_01",
+  "trigger": {
+   "type": "zone",
+   "rect": [
+    1440,
+    -2320,
+    6450,
+    -980
+   ]
+  },
+  "steps": [
+   {
+    "op": "cam",
+    "pos": [
+     3980,
+     200,
+     -2070
+    ],
+    "focus": [
+     4110,
+     239,
+     -1640
+    ],
+    "fov": 50,
+    "frames": 0,
+    "follow": false,
+    "height": 100
+   },
+   {
+    "op": "move",
+    "actor": 0,
+    "pos": [
+     3400,
+     0,
+     -1760
+    ],
+    "frames": 60
+   }
+  ]
  }
 ]

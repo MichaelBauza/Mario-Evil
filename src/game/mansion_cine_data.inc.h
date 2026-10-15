@@ -22,9 +22,14 @@ static const struct CineStep gCineSteps2[] = {
     { .op = CINE_CAM, .actor = 0, .par = 0, .follow = 0, .frames = 150, .v = {-500, 300, -700, 0, 150, 640, 50}, .speaker = NULL, .line0 = NULL, .line1 = NULL, .sfx = 0 },
     { .op = CINE_TEXT, .actor = 0, .par = 0, .follow = 0, .frames = 0, .v = {0, 0, 0, 0, 0, 0, 0}, .speaker = NULL, .line0 = "Somewhere above you, a door creaks open.", .line1 = "", .sfx = 0 },
 };
+static const struct CineStep gCineSteps3[] = {
+    { .op = CINE_CAM, .actor = 0, .par = 0, .follow = 0, .frames = 0, .v = {3980, 200, -2070, 4110, 239, -1640, 50}, .speaker = NULL, .line0 = NULL, .line1 = NULL, .sfx = 0 },
+    { .op = CINE_MOVE, .actor = 0, .par = 0, .follow = 0, .frames = 60, .v = {3400, 0, -1760, 0, 0, 0, 0}, .speaker = NULL, .line0 = NULL, .line1 = NULL, .sfx = 0 },
+};
 const struct CineScript gCines[] = {
     { .zx0 = 0, .zz0 = 0, .zx1 = 0, .zz1 = 0, .talkRadius = 260, .talkActor = 1, .once = 0, .nSteps = 5, .steps = gCineSteps0 },   /* toad_talk */
     { .zx0 = -4100, .zz0 = 1500, .zx1 = -3700, .zz1 = 1750, .talkRadius = 0, .talkActor = 255, .once = 1, .nSteps = 4, .steps = gCineSteps1 },   /* intro_hall */
     { .zx0 = -300, .zz0 = 560, .zx1 = 300, .zz1 = 720, .talkRadius = 0, .talkActor = 255, .once = 1, .nSteps = 8, .steps = gCineSteps2 },   /* dining_fire */
+    { .zx0 = 1440, .zz0 = -2320, .zx1 = 6450, .zz1 = -980, .talkRadius = 0, .talkActor = 255, .once = 1, .nSteps = 2, .steps = gCineSteps3 },   /* Courtyard_01 */
 };
-const s32 gMansionCineCount = 3;
+const s32 gMansionCineCount = 4;
