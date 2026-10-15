@@ -285,6 +285,7 @@ add('hall', dict(kind='prop', model='stair_flight', pos=(-4650, -300), y=0, yaw=
 for bx in (-5050, -4275, -4025, -3775, -3525, -2775, -2525):      # gallery balustrade, gaps at the two stair heads
     add('hall', dict(kind='prop', model='balustrade', pos=(bx, -1062), y=500, yaw=0))
 RM['hall']['decor'] = []     # no painted door decorations: none of them leads to a room
+RM['hall']['decoy_doors'] = [dict(wall='S', at=-3900, w=480)]   # decorative double door at the entrance: no transition
 add('hall', on_wall('hall', 'N', -3350, 'clock'),
     lamp_on('hall', 'W', -700, 430), lamp_on('hall', 'W', 1000, 430), lamp_on('hall', 'E', -950, 430),
     on_wall('hall', 'E', -1150, 'vine'), on_wall('hall', 'E', 1150, 'vine'), on_wall('hall', 'W', -350, 'vine'), on_wall('hall', 'W', 350, 'vine'),

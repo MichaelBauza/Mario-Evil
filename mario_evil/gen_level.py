@@ -202,6 +202,29 @@ def build_room(room):
         for sgn in (-1, 1):
             pb = add(add(c, mul(al, sgn*(DOOR_W/2+15))), mul(n, 6))
             g.face('mans_wood', sub(pb, mul(al, 15)), mul(al, 30), (0, DOOR_H+40, 0), n, False, uvflip_v=True, cell=2000)
+    # decorative double doors (no transition): two leaves, brass lever handles and keyholes on the meeting edges
+    for dd in room.get('decoy_doors', []):
+        O, A, n = wall_of(room, dd['wall'])
+        al = norm(A)
+        c = add(O, mul(al, dd['at'] - (O[0] if abs(al[0]) > .5 else O[2])))
+        W = dd.get('w', 480)
+        lb = add(sub(c, mul(al, W/2+30)), mul(n, 6))
+        g.face('mans_wood', add(lb, (0, DOOR_H, 0)), mul(al, W+60), (0, 40, 0), n, False, uvflip_v=True, cell=2000)
+        for sgn in (-1, 1):
+            pb = add(add(c, mul(al, sgn*(W/2+15))), mul(n, 6))
+            g.face('mans_wood', sub(pb, mul(al, 15)), mul(al, 30), (0, DOOR_H+40, 0), n, False, uvflip_v=True, cell=2000)
+        for sgn in (-1, 1):
+            lc = add(c, mul(al, sgn*W/4))
+            g.face('mans_door', add(sub(lc, mul(al, W/4)), mul(n, 4)), mul(al, W/2), (0, DOOR_H, 0), n, False, uvflip_v=True, lit=True, cell=170, uv_once=True)
+            hu = -sgn*(W/4 - 35)                       # handle sits on the meeting edge, offset from the leaf centre along al
+            def hq(tex, u0, u1, v0, v1, w):
+                O2 = add(add(lc, mul(al, u0)), mul(n, w))
+                g.face(tex, add(O2, (0, v0, 0)), mul(al, u1 - u0), (0, v1 - v0, 0), n, False, uvflip_v=True, cell=2000, uv_once=True)
+            hq('mans_brass', hu-22, hu+22, 138, 182, 9)                                   # plate
+            hq('mans_brass', hu-14, hu+14, 81, 129, 9)                                    # keyhole escutcheon
+            hq('mans_keyhole', hu-3, hu+3, 84, 105, 14)                                   # keyhole slot
+            hq('mans_keyhole', hu-6, hu+6, 105, 117, 14)                                  # keyhole head
+            hq('mans_brass', min(hu, hu+sgn*60), max(hu, hu+sgn*60), 152, 168, 22)       # lever handle, horizontal, toward the hinge
     return g
 
 def validate():
