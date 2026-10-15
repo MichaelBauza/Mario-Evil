@@ -30,10 +30,10 @@ hall = room('hall', 'Main Hall', -5200, -1400, -2400, 1400, 1100, floor='mans_fl
                    dict(x0=-4900, z0=-1050, x1=-4400, z1=-300, y1=500, hidden=True),      # west flight (collision only; the model is drawn)
                    dict(x0=-3400, z0=-1050, x1=-2900, z1=-300, y1=500, hidden=True),      # east flight
                    dict(x0=-4160, z0=360, x1=-3640, z1=880, y1=300, hidden=True),         # fountain
-                   dict(x0=-5170, z0=-770, x1=-5030, z1=-630, y1=1100, side='mans_marble', top='mans_marble'),
-                   dict(x0=-5170, z0=630, x1=-5030, z1=770, y1=1100, side='mans_marble', top='mans_marble'),
-                   dict(x0=-2570, z0=-770, x1=-2430, z1=-630, y1=1100, side='mans_marble', top='mans_marble'),
-                   dict(x0=-2570, z0=630, x1=-2430, z1=770, y1=1100, side='mans_marble', top='mans_marble')],
+                   dict(x0=-5190, z0=-720, x1=-5050, z1=-580, y1=1100, side='mans_marble', top='mans_marble'),   # west wall pillars
+                   dict(x0=-5190, z0=480, x1=-5050, z1=620, y1=1100, side='mans_marble', top='mans_marble'),
+                   dict(x0=-2550, z0=-720, x1=-2410, z1=-580, y1=1100, side='mans_marble', top='mans_marble'),   # east wall pillars
+                   dict(x0=-2550, z0=480, x1=-2410, z1=620, y1=1100, side='mans_marble', top='mans_marble')],
             lights=[(-3900, 330, 620, 0.55, 1500), (-4400, 650, 350, 0.40, 900), (-3400, 650, 350, 0.40, 900), (-3900, 320, -1200, 0.35, 800),
                     (-4650, 700, -700, 0.30, 700), (-3150, 700, -700, 0.30, 700)],
             objs=[dict(kind='herb_g', pos=(-2750, -650)), dict(kind='file', file=1, pos=(-4300, 650))])
@@ -283,13 +283,13 @@ RM['hall']['decor'] = [dict(tex='mans_door_k%d' % k, wall='N', at=at, w=300, h=3
                        for (at, k) in ((-4950, 2), (-4350, 3), (-3450, 3), (-2850, 1))]
 RM['hall']['decor'].append(dict(tex='mans_door', wall='N', at=-3900, w=340, h=360, y0=0))      # the great double door under the gallery (set dressing)
 add('hall', on_wall('hall', 'N', -3350, 'clock'),
-    lamp_on('hall', 'W', -700, 430), lamp_on('hall', 'W', 700, 430), lamp_on('hall', 'E', -950, 430), lamp_on('hall', 'E', 950, 430),
+    lamp_on('hall', 'W', -700, 430), lamp_on('hall', 'W', 700, 430), lamp_on('hall', 'E', -950, 430),
     on_wall('hall', 'E', -1150, 'vine'), on_wall('hall', 'E', 1150, 'vine'), on_wall('hall', 'W', -350, 'vine'), on_wall('hall', 'W', 350, 'vine'),
     pot(-4300, 1250), pot(-3500, 1250, 0x4000))
 for (mx, mz, myaw) in ((-5000, 600, 0x1000), (-5120, 790, 0x5000), (-2560, 620, 0x9000), (-2630, 800, 0xD000), (-4500, -240, 0x2000), (-3000, -250, 0x6000)):
     add('hall', dict(kind='prop', model='mushroom', pos=(mx, mz), y=0, yaw=myaw))
 chand('hall', -4400, 350); chand('hall', -3400, 350); chand('hall', -3900, -500)
-portrait('hall', 'W', -1150, 1); portrait('hall', 'W', 1150, 3); portrait('hall', 'E', -500, 2); portrait('hall', 'E', 500, 1)
+portrait('hall', 'W', -1150, 1); portrait('hall', 'W', 1150, 3); portrait('hall', 'E', -500, 2); portrait('hall', 'E', -200, 1)
 
 # -- other rooms
 chand('dining', 0, 0); portrait('dining', 'S', -500, 2); portrait('dining', 'S', 500, 3); portrait('dining', 'N', -600, 1)
@@ -384,13 +384,13 @@ painting('tunnel', 'N', 6800, 'mans_paint_drybones')     # Dry Bones: service tu
 
 
 DOORS = [
-    dict(id='hall_e',  room='hall',   wall='E', at=0,     to='dining_w'),
+    dict(id='hall_e',  room='hall',   wall='E', at=900,   to='dining_w'),
     dict(id='dining_w', room='dining', wall='W', at=0,     to='hall_e'),
     dict(id='dining_n', room='dining', wall='N', at=0,     to='corrn_s'),
     dict(id='corrn_s', room='corr_n', wall='S', at=0,     to='dining_n'),
     dict(id='corrn_e', room='corr_n', wall='E', at=-3000, to='save_w'),
     dict(id='save_w',  room='save',   wall='W', at=-3000, to='corrn_e'),
-    dict(id='hall_w',  room='hall',   wall='W', at=0,     to='corrw_e', key=1),
+    dict(id='hall_w',  room='hall',   wall='W', at=900,   to='corrw_e', key=1),
     dict(id='corrw_e', room='corr_w', wall='E', at=0,     to='hall_w'),
     dict(id='dining_e', room='dining', wall='E', at=0,     to='kitchen_w'),
     dict(id='kitchen_w', room='kitchen', wall='W', at=0,   to='dining_e'),
