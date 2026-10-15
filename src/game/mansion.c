@@ -1130,6 +1130,34 @@ static u8 combine_result(u8 a, u8 b) {
     return MI_NONE;
 }
 
+#if DEV_ROOM_WARP
+// DEV WARP: put Mario in a room (same moves as a door, but a straight cut and no door). Remove with DEV_ROOM_WARP.
+static void dev_warp_to_room(s32 r) {
+    struct MarioState *m = gMarioState;
+    const struct MansionRoom *R = &gMansionRooms[r];
+    u8 oldRoom = gMansion.room;
+    f32 px = (R->x0 + R->x1) * 0.5f, pz = R->z0 + (R->z1 - R->z0) * 0.8f;
+    m->pos[0] = px;
+    m->pos[2] = pz;
+    m->pos[1] = find_floor_height(px, 20000.f, pz);
+    m->vel[0] = m->vel[1] = m->vel[2] = 0.f;
+    m->forwardVel = 0.f;
+    m->marioObj->oPosX = m->pos[0]; m->marioObj->oPosY = m->pos[1]; m->marioObj->oPosZ = m->pos[2];
+    vec3f_copy(m->marioObj->header.gfx.pos, m->pos);
+    set_mario_action(m, ACT_IDLE, 0);
+    gMansion.room = r;
+    gMansion.camIdx = -1;
+    if (r != oldRoom) {
+        u8 viewOld = gMansionViewOf[oldRoom];
+        mansion_unload_room(oldRoom);
+        if (viewOld != 255 && viewOld != r) mansion_unload_room(viewOld);
+        mansion_unload_room(r);
+        mansion_load_room(r);
+        if (gMansionViewOf[r] != 255) mansion_load_scenery(gMansionViewOf[r]);
+    }
+}
+#endif
+
 void mansion_paused_update(void) {
     struct Controller *c = gPlayer1Controller;
     s32 dx, dy;
@@ -1172,6 +1200,24 @@ void mansion_paused_update(void) {
         }
         return;
     }
+#if DEV_ROOM_WARP
+    if (gMansion.menu != MENU_DEV && (c->buttonPressed & D_CBUTTONS)) {      // DEV WARP: C-Down opens the room list
+        gMansion.menu = MENU_DEV;
+        gMansion.devSel = gMansion.room;
+        gMansion.devTop = (gMansion.devSel > 6) ? gMansion.devSel - 6 : 0;
+        return;
+    }
+    if (gMansion.menu == MENU_DEV) {
+        s32 n = MANSION_NUM_ROOMS;
+        moved = menu_dir(&dx, &dy);
+        if (moved && dy) gMansion.devSel = (gMansion.devSel + dy + n) % n;
+        if (gMansion.devSel < gMansion.devTop) gMansion.devTop = gMansion.devSel;
+        if (gMansion.devSel >= gMansion.devTop + 10) gMansion.devTop = gMansion.devSel - 9;
+        if (c->buttonPressed & B_BUTTON) { gMansion.menu = MENU_ITEMS; return; }
+        if (c->buttonPressed & A_BUTTON) { dev_warp_to_room(gMansion.devSel); close_menu(); }
+        return;
+    }
+#endif
     moved = menu_dir(&dx, &dy);
 
     if (c->buttonPressed & START_BUTTON) { close_menu(); return; }
@@ -1488,6 +1534,22 @@ static void draw_menu(void) {
     }
 }
 
+#if DEV_ROOM_WARP
+// DEV WARP: the room list (ten rows at a time, A warps, B goes back)
+static void draw_dev(void) {
+    s32 i;
+    draw_box(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, 200);
+    print_small_text(SAFE_L, 14, "DEV: WARP TO ROOM", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+    for (i = 0; i < 10 && gMansion.devTop + i < MANSION_NUM_ROOMS; i++) {
+        s32 r = gMansion.devTop + i;
+        s32 y = 36 + i * 16;
+        if (r == gMansion.devSel) draw_box(SAFE_L - 4, y - 3, SCREEN_WIDTH - SAFE_L + 4, y + 11, 110, 110, 40, 230);
+        print_small_text(SAFE_L, y, gMansionRooms[r].name, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+    }
+    print_small_text(SAFE_L, 212, "A: WARP   B: BACK", PRINT_TEXT_ALIGN_LEFT, PRINT_ALL, 1);
+}
+#endif
+
 static void draw_title(void) {
     gSPDisplayList(gDisplayListHead++, mansion_title_dl);
     if (gMansion.titleOut > 0) {
@@ -1587,6 +1649,12 @@ void mansion_render_hud(void) {
         draw_comic();
         return;
     }
+#if DEV_ROOM_WARP
+    if (gMansion.menu == MENU_DEV) {
+        draw_dev();
+        return;
+    }
+#endif
     if (gMansion.menu != MENU_NONE) {
         draw_menu();
         if (gMansion.msgTimer > 0) print_small_text(SCREEN_WIDTH / 2, 186, gMansion.msg, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL, 1);

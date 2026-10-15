@@ -15,7 +15,9 @@ enum MansionItem {
     MI_HERB_GG, MI_HERB_GR, MI_HERB_GB, MI_AMMO, MI_COUNT
 };
 
-enum MansionMenu { MENU_NONE, MENU_ITEMS, MENU_FILES, MENU_BOX, MENU_TITLE, MENU_MAP, MENU_COMIC };
+enum MansionMenu { MENU_NONE, MENU_ITEMS, MENU_FILES, MENU_BOX, MENU_TITLE, MENU_MAP, MENU_COMIC, MENU_DEV };
+/* DEV ONLY: room warp list (pause menu, C-Down). Set to 0 and delete the DEV WARP blocks before release. */
+#define DEV_ROOM_WARP 1
 #define MANSION_COMIC_PAGES 5   /* intro comic, shown after the main menu */
 
 struct MansionRoom { s16 x0, z0, x1, z1; u8 camFirst, camCount; const char *name; s16 mx0, mz0, mx1, mz1; };  // m* = map rectangle (tenths of 100 units)
@@ -62,6 +64,8 @@ struct MansionState {
     s16 comicPage;      // intro comic: which panel is showing
     s16 comicTimer;     // intro comic: frames since it opened
     s16 comicOut;       // intro comic: >0 while fading out after the last panel
+    s16 devSel;         // DEV WARP: highlighted room
+    s16 devTop;         // DEV WARP: first room shown in the list
     s8  stickLatchX, stickLatchY;
     // persistent
     struct MansionSlot inv[MANSION_INV_SLOTS];
