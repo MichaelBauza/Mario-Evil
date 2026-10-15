@@ -262,7 +262,8 @@ function ptF(label, arr, owner){
   });
   const btn = h('button',{class:'sm',title:'Click the map to set X and Z'},'⌖ Pick');
   btn.addEventListener('click',e=>{ e.stopPropagation(); startPick({kind:'pt',arr,ins,btn,owner}); });
-  return h('label',{class:'f'},h('span',null,label+' (X, Y height, Z)'),h('div',{class:'xyz'},...ins,btn));
+  const lab = h('label',{class:'f'},h('span',null,label+' (X, Y height, Z)'),h('div',{class:'xyz'},...ins,btn));
+  lab._ins = ins; return lab;
 }
 
 /* ---------- editor rendering ---------- */
@@ -297,16 +298,46 @@ function stepCard(s, list, i, inGroup){
   switch(s.op){
     case 'cam': {
       const fo = h('div',{class:'bd',style:'padding:0'});
+      let focusF = null, posF = null;
+      const hdist = () => Math.hypot(s.focus[0]-s.pos[0], s.focus[2]-s.pos[2]);
+      const pitchDeg = () => Math.atan2(s.focus[1]-s.pos[1], Math.max(hdist(),1))*180/Math.PI;
+      const angNum = h('input',{type:'number',step:1,min:-89,max:89}), angRange = h('input',{type:'range',step:1,min:-89,max:89,'aria-label':'Vertical angle'});
+      const setAngle = deg => {
+        deg = clamp(deg,-89,89);
+        if (hdist() < 1) s.focus[2] = s.pos[2]-100;       // no horizontal direction yet: look toward -z
+        s.focus[1] = Math.round(s.pos[1] + hdist()*Math.tan(deg*Math.PI/180));
+        if (focusF) focusF._ins[1].value = s.focus[1];
+        angNum.value = Math.round(deg); angRange.value = Math.round(deg);
+        changed();
+      };
+      angNum.addEventListener('input',()=>{ if (angNum.value!=='') setAngle(parseFloat(angNum.value)); });
+      angRange.addEventListener('input',()=>setAngle(parseFloat(angRange.value)));
+      const side = h('canvas',{width:480,height:150,style:'height:150px;cursor:default','aria-label':'Side view of the camera'});
+      const aRead = h('p',{class:'hint'});
+      const angBox = h('div',{class:'bd',style:'padding:0'});
       const draw = ()=>{
-        fo.replaceChildren();
-        if (s.follow) fo.append(numF('Look height above Mario’s feet',s,'height',{step:10}),h('p',{class:'hint'},'The camera stays where you put it and turns to keep Mario in view.'));
-        else fo.append(ptF('Looks at',s.focus,s));
+        fo.replaceChildren(); angBox.replaceChildren();
+        if (s.follow){
+          fo.append(numF('Look height above Mario’s feet',s,'height',{step:10}),h('p',{class:'hint'},'The camera stays where you put it and turns to keep Mario in view. Raise or lower the camera’s Y (height) above to change how steeply it looks down.'));
+          angBox.append(aRead);
+        } else {
+          focusF = ptF('Looks at',s.focus,s); fo.append(focusF);
+          angNum.value = Math.round(pitchDeg()); angRange.value = Math.round(pitchDeg());
+          angBox.append(h('div',{class:'row'},h('label',{class:'f'},h('span',null,'Vertical angle (degrees: 0 level, negative looks down)'),angNum),h('label',{class:'f'},h('span',null,'Tilt'),angRange)));
+        }
       };
       draw();
-      bd.append(ptF('Camera position',s.pos,s),
+      posF = ptF('Camera position',s.pos,s);
+      readouts.push(()=>{
+        if (!s.follow){ const d=Math.round(pitchDeg()); if (document.activeElement!==angNum) angNum.value=d; if (document.activeElement!==angRange) angRange.value=d; }
+        else { const inf=currentSim.info.get(s); if (inf){ const m=inf.startM; const dd=Math.atan2(m[1]+(+s.height||0)-s.pos[1], Math.max(Math.hypot(m[0]-s.pos[0],m[2]-s.pos[2]),1))*180/Math.PI; aRead.textContent='Vertical angle to Mario at the start of the shot: '+Math.round(dd)+'°'; } }
+        drawSide(side,s);
+      });
+      bd.append(posF,
         h('label',{class:'f'},h('span',null,'Camera behavior'),(()=>{const sel=h('select',null,h('option',{value:'0'},'Look at a fixed point'),h('option',{value:'1'},'Stay put and follow Mario'));sel.value=s.follow?'1':'0';sel.addEventListener('change',()=>{s.follow=sel.value==='1';if(s.follow&&s.height==null)s.height=100;draw();changed()});return sel})()),
-        fo,
-        h('div',{class:'row'},numF('Field of view',s,'fov',{min:10}),numF('Frames to get there (0 = cut)',s,'frames',{min:0})));
+        fo, angBox,
+        h('div',{class:'row'},numF('Field of view (vertical, degrees)',s,'fov',{min:10}),numF('Frames to get there (0 = cut)',s,'frames',{min:0})),
+        side);
       break; }
     case 'walk': {
       const sp = h('input',{type:'number',step:0.1,min:0.1});
@@ -353,6 +384,38 @@ function addBar(list, inGroup){
   }
   if (!inGroup) bar.append(h('button',{class:'sm',onclick:()=>{ const n=DEFAULTS.cam(); n.follow=true; n.pos=base(-0,200,-350); list.push(n); selStep=n; build(); changed(); }},'+ Follow camera'));
   return bar;
+}
+function drawSide(cvs,s){
+  const g = cvs.getContext('2d'), dpr = window.devicePixelRatio||1, r = cvs.getBoundingClientRect();
+  const w = Math.max(200,Math.round(r.width)), hh = 150;
+  if (cvs.width !== Math.round(w*dpr)) { cvs.width = Math.round(w*dpr); cvs.height = Math.round(hh*dpr); }
+  g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,w,hh);
+  const cMute=col('--mute'), cLine=col('--line'), cCam=col('--cam'), cWalk=col('--walk');
+  let dx, dz, tgtY, mario = null;
+  const inf = currentSim.info.get(s);
+  if (s.follow && inf){ const m=inf.startM; dx=m[0]-s.pos[0]; dz=m[2]-s.pos[2]; tgtY=m[1]+(+s.height||0); }
+  else { dx=s.focus[0]-s.pos[0]; dz=s.focus[2]-s.pos[2]; tgtY=s.focus[1]; }
+  let hd = Math.hypot(dx,dz); if (hd<1) { hd = 1; dz = -1; dx = 0; }
+  const ux=dx/hd, uz=dz/hd;
+  const pitch = Math.atan2(tgtY-s.pos[1],hd), half=(s.fov||50)*Math.PI/360;
+  const L = Math.max(hd*1.25,700);
+  // Mario markers: where he is when this shot starts, measured along the camera's direction
+  const mp = inf ? inf.startM : startMario(cines[ci]);
+  const md = (mp[0]-s.pos[0])*ux + (mp[2]-s.pos[2])*uz;
+  const xmax = Math.max(L, md+200), ymaxW = Math.max(s.pos[1], tgtY, 200)+150, yminW = Math.min(-50, s.pos[1]-L*Math.sin(Math.abs(pitch)+half)*0, tgtY-50);
+  const pad = 14, sc = Math.min((w-2*pad)/xmax, (hh-2*pad)/(ymaxW-yminW));
+  const X = d => pad + d*sc, Y = y => hh-pad-(y-yminW)*sc;
+  g.strokeStyle=cLine; g.lineWidth=1; g.beginPath(); g.moveTo(0,Y(0)); g.lineTo(w,Y(0)); g.stroke();
+  g.fillStyle=cMute; g.font='11px '+col('--f-body'); g.fillText('floor',w-34,Y(0)-3);
+  // view cone
+  g.fillStyle=cCam; g.globalAlpha=0.15; g.beginPath(); g.moveTo(X(0),Y(s.pos[1]));
+  g.lineTo(X(L*Math.cos(pitch-half)),Y(s.pos[1]+L*Math.sin(pitch-half))); g.lineTo(X(L*Math.cos(pitch+half)),Y(s.pos[1]+L*Math.sin(pitch+half))); g.closePath(); g.fill(); g.globalAlpha=1;
+  g.strokeStyle=cCam; g.lineWidth=1; g.setLineDash([4,3]); g.beginPath(); g.moveTo(X(0),Y(s.pos[1])); g.lineTo(X(L*Math.cos(pitch-half)),Y(s.pos[1]+L*Math.sin(pitch-half))); g.moveTo(X(0),Y(s.pos[1])); g.lineTo(X(L*Math.cos(pitch+half)),Y(s.pos[1]+L*Math.sin(pitch+half))); g.stroke(); g.setLineDash([]);
+  g.lineWidth=2.5; g.beginPath(); g.moveTo(X(0),Y(s.pos[1])); g.lineTo(X(hd),Y(tgtY)); g.stroke();
+  g.fillStyle=cCam; g.beginPath(); g.arc(X(0),Y(s.pos[1]),5,0,7); g.fill(); g.beginPath(); g.arc(X(hd),Y(tgtY),3.5,0,7); g.stroke();
+  // Mario, 160 units tall
+  if (md > 0){ g.strokeStyle=cWalk; g.lineWidth=3; g.beginPath(); g.moveTo(X(md),Y(0)); g.lineTo(X(md),Y(160)); g.stroke(); }
+  g.fillStyle=cMute; g.fillText('side view · '+Math.round(pitch*180/Math.PI)+'°  camera height '+Math.round(s.pos[1]),6,12);
 }
 function build(){
   readouts = [];
