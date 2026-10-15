@@ -159,14 +159,6 @@ const GeoLayout mansion_geo_prop_clock[] = {
    GEO_END(),
 };
 
-const GeoLayout mansion_geo_prop_stairs[] = {
-   GEO_NODE_START(),
-   GEO_OPEN_NODE(),
-      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_stairs),
-   GEO_CLOSE_NODE(),
-   GEO_END(),
-};
-
 const GeoLayout mansion_geo_prop_vine[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
@@ -331,6 +323,22 @@ const GeoLayout mansion_geo_prop_panel_bank[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
       GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_panel_bank),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_lab_table[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_lab_table),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_wall_shelf[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_wall_shelf),
    GEO_CLOSE_NODE(),
    GEO_END(),
 };

@@ -850,6 +850,71 @@ def panel_bank():
     m.box((0, 60, 92), (420, 10, 10), METAL)                       # kick rail
     return m
 
+def lab_table():
+    """Laboratory bench: steel top, 400 long (x) x 200 deep (z), top surface at y=110, with glassware and kit on top.
+    Origin = floor centre."""
+    m = Mesh()
+    STEEL = (168, 172, 180); GLASS_L = (170, 210, 200); LIQ_B = (70, 150, 240)
+    m.box((0, 106, 0), (400, 8, 200), STEEL)                          # steel top
+    m.box((0, 30, 0), (372, 10, 172), METAL_D)                        # undershelf
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            m.box((sx * 186, 52, sz * 86), (16, 104, 16), METAL_D)    # legs
+    # beaker with blue liquid
+    m.cyl((-130, 140, -40), 22, 56, GLASS_L, n=8)
+    m.cyl((-130, 124, -40), 19, 28, LIQ_B, n=8)
+    # erlenmeyer flask, green
+    m.cyl((-50, 132, 40), 28, 40, GLASS_L, n=8, r_top=8)
+    m.cyl((-50, 166, 40), 7, 28, GLASS_L, n=6)
+    m.cyl((-50, 124, 40), 22, 14, (110, 230, 90), n=8)
+    # round-bottom flask, red
+    m.sphere((30, 150, -60), 30, GLASS_L, nlat=4, nlon=8)
+    m.sphere((30, 142, -60), 24, (230, 52, 60), nlat=3, nlon=6)
+    m.cyl((30, 186, -60), 8, 26, GLASS_L, n=6)
+    # test tube rack with tubes
+    m.box((120, 118, -40), (130, 8, 44), WOOD)
+    for k in range(4):
+        x = 90 + k * 30
+        m.cyl((x, 150, -40), 7, 64, GLASS_L, n=6)
+        m.cyl((x, 136, -40), 6, 26, [(230, 200, 70), (170, 70, 220), (90, 230, 90), (230, 52, 60)][k], n=6)
+    # bunsen burner
+    m.cyl((140, 124, 50), 18, 14, METAL, n=8)
+    m.cyl((140, 152, 50), 5, 50, METAL_D, n=6)
+    m.sphere((140, 182, 50), 7, (120, 200, 255), nlat=2, nlon=5)
+    # notebook and a pipette stand
+    m.box((-150, 113, 70), (80, 4, 60), (210, 200, 170), rot(yaw=18))
+    m.cyl((-40, 150, -62), 3, 80, METAL, n=5)
+    m.box((-40, 190, -62), (34, 3, 3), METAL, IDENT)
+    return m
+
+def wall_shelf():
+    """Bookshelf mounted on a wall: 340 wide (x), 70 deep (z, back on the wall), 300 tall. Origin = bottom centre of
+    the back face; mount it with y above the floor. Three bays of books."""
+    m = Mesh()
+    rng = _random.Random(11)
+    BOOKS = [(150, 38, 34), (40, 96, 52), (44, 60, 120), (150, 118, 52), (210, 196, 150), (88, 46, 30), (70, 70, 74)]
+    m.box((0, 150, 4), (340, 300, 8), WOOD_D)                       # back
+    for sx in (-1, 1):
+        m.box((sx * 166, 150, 36), (8, 300, 68), WOOD)              # sides
+    m.box((0, 296, 36), (340, 8, 68), WOOD)                         # top
+    boards = [4, 75, 150, 225]
+    for yb in boards[1:]:
+        m.box((0, yb, 36), (324, 8, 64), WOOD)                      # shelf boards
+    for bi, yb in enumerate(boards):
+        y0 = yb + 4
+        y1 = (boards[bi + 1] if bi + 1 < len(boards) else 292) - 4
+        x = -156.0
+        while x < 150:
+            w = rng.choice((10, 12, 14, 16))
+            if rng.random() < 0.12:
+                x += w + 10; continue
+            if x + w > 156: break
+            h = rng.uniform(0.6, 0.92) * (y1 - y0)
+            d = rng.uniform(40, 58)
+            m.box((x + w / 2, y0 + h / 2, 36), (w, h, d), rng.choice(BOOKS))
+            x += w + rng.choice((0, 1, 2))
+    return m
+
 def vine():
     """Hanging thorn vine for walls: ~420 tall, origin at the bottom centre, wanders in x with a little z."""
     m = Mesh()
@@ -902,6 +967,8 @@ MODELS = {
     'prop_chair': chair,
     'prop_fireplace': fireplace,
     'prop_bookshelf': bookshelf,
+    'prop_lab_table': lab_table,
+    'prop_wall_shelf': wall_shelf,
     'prop_vial_rack': vial_rack,
     'prop_tank': tank,
     'prop_cauldron': cauldron,

@@ -207,17 +207,30 @@ lab = room('lab', "Kamek's Laboratory", 5000, 1100, 8000, 3500, 1500, floor='man
                   dict(x0=6860, z0=1100, x1=6900, z1=1140, y1=900, side='mans_metal_plate', top='mans_metal_plate'),
                   dict(x0=6560, z0=3040, x1=6680, z1=3160, y1=880, side='mans_marble', top='mans_marble'),
                   dict(x0=7320, z0=3040, x1=7440, z1=3160, y1=880, side='mans_marble', top='mans_marble'),
-                  dict(x0=6000, z0=1800, x1=6400, z1=2000, y1=110, side='mans_marble', top='mans_marble'),
-                  dict(x0=7350, z0=2100, x1=7650, z1=2300, y1=110, side='mans_marble', top='mans_marble'),
-                  dict(x0=5880, z0=2300, x1=6080, z1=2600, y1=100, side='mans_marble', top='mans_marble'),
-                  dict(x0=5850, z0=1450, x1=5970, z1=1570, y1=880, side='mans_marble', top='mans_marble')],
+                  dict(x0=6000, z0=1800, x1=6400, z1=2000, y1=110, hidden=True),         # lab bench (model drawn)
+                  dict(x0=7300, z0=2100, x1=7700, z1=2300, y1=110, hidden=True),         # lab bench (model drawn)
+                  dict(x0=6700, z0=2450, x1=7100, z1=2650, y1=110, hidden=True),         # lab bench (model drawn)
+                  dict(x0=6400, z0=3000, x1=6800, z1=3200, y1=110, hidden=True),         # lab bench (model drawn)
+                  dict(x0=5180, z0=1100, x1=5520, z1=1172, y0=140, y1=440, hidden=True),  # wall shelves (collision under them)
+                  dict(x0=7630, z0=1100, x1=7970, z1=1172, y0=140, y1=440, hidden=True),
+                  dict(x0=5000, z0=2430, x1=5072, z1=2770, y0=140, y1=440, hidden=True),
+                  dict(x0=7928, z0=2330, x1=8000, z1=2670, y0=140, y1=440, hidden=True)],
            lights=[(6800, 700, 2300, 0.55, 1500), (6000, 500, 2900, 0.30, 700), (7500, 500, 1700, 0.30, 700),
                    (7000, 1300, 2300, 0.45, 1400), (7600, 1200, 3100, 0.40, 1200), (6200, 1200, 1700, 0.40, 1200),
                    (5400, 1300, 1300, 0.40, 1200), (5400, 1300, 3200, 0.40, 1200)],
            objs=[dict(kind='file', file=8, pos=(6200, 1900), y=110),
                  dict(kind='console', pos=(5980, 2450), y=100, yaw=0x4000),
                  dict(kind='zombie', pos=(7000, 2950), yaw=0x8000, hp=30, boss=1),
-                 dict(kind='cagekey', pos=(7000, 2950)),           # Bowser's drop: the Cage Key (shown once tyrant == 2)
+                 dict(kind='cagekey', pos=(7000, 2950)),
+                 dict(kind='prop', model='lab_table', pos=(6200, 1900), y=0, yaw=0),
+                 dict(kind='prop', model='lab_table', pos=(7500, 2200), y=0, yaw=0),
+                 dict(kind='prop', model='lab_table', pos=(6900, 2550), y=0, yaw=0x8000),
+                 dict(kind='prop', model='lab_table', pos=(6600, 3100), y=0, yaw=0x8000),
+                 # bookcases on the walls, mounted above the floor
+                 dict(kind='prop', model='wall_shelf', pos=(5350, 1102), y=140, yaw=0),          # north wall
+                 dict(kind='prop', model='wall_shelf', pos=(7800, 1102), y=140, yaw=0),          # north wall
+                 dict(kind='prop', model='wall_shelf', pos=(5002, 2600), y=140, yaw=0x4000),     # west wall
+                 dict(kind='prop', model='wall_shelf', pos=(7998, 2500), y=140, yaw=0xC000),     # east wall           # Bowser's drop: the Cage Key (shown once tyrant == 2)
                  dict(kind='prop', model='tank', pos=(7450, 1500), y=0, yaw=0),
                  dict(kind='prop', model='tank', pos=(6600, 1500), y=0, yaw=0),
                  dict(kind='prop', model='tank', pos=(7650, 2750), y=0, yaw=0),
@@ -414,7 +427,7 @@ add('stair', lamp_on('stair', 'N', 5000, 340), on_wall('stair', 'S', 5600, 'vine
 add('cellar', lamp_on('cellar', 'E', 600, 380), on_wall('cellar', 'N', 6600, 'vine'), pot(7550, 900))
 desk_at('cellar', 0)                                  # typewriter desk
 add('lab', lamp_on('lab', 'W', 3000, 420), lamp_on('lab', 'E', 1250, 420), pot(6100, 3100, 0x2000),
-    on_wall('lab', 'N', 7600, 'vine'), on_wall('lab', 'E', 3000, 'vine'))
+    on_wall('lab', 'E', 3000, 'vine'))
 add('tunnel', lamp_on('tunnel', 'S', 6200, 340), on_wall('tunnel', 'N', 5900, 'vine'))
 add('dock', lamp_on('dock', 'S', 4400, 400), on_wall('dock', 'E', 3600, 'vine'))
 
