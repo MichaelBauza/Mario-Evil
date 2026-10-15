@@ -279,9 +279,7 @@ add('hall', dict(kind='prop', model='stair_flight', pos=(-4650, -300), y=0, yaw=
     dict(kind='prop', model='hall_fountain', pos=(-3900, 620), y=0, yaw=0))
 for bx in (-5050, -4275, -4025, -3775, -3525, -2775, -2525):      # gallery balustrade, gaps at the two stair heads
     add('hall', dict(kind='prop', model='balustrade', pos=(bx, -1062), y=500, yaw=0))
-RM['hall']['decor'] = [dict(tex='mans_door_k%d' % k, wall='N', at=at, w=300, h=340, y0=500)
-                       for (at, k) in ((-4950, 2), (-4350, 3), (-3450, 3), (-2850, 1))]
-RM['hall']['decor'].append(dict(tex='mans_door', wall='N', at=-3900, w=340, h=360, y0=0))      # the great double door under the gallery (set dressing)
+RM['hall']['decor'] = []     # no painted door decorations: none of them leads to a room
 add('hall', on_wall('hall', 'N', -3350, 'clock'),
     lamp_on('hall', 'W', -700, 430), lamp_on('hall', 'W', 1000, 430), lamp_on('hall', 'E', -950, 430),
     on_wall('hall', 'E', -1150, 'vine'), on_wall('hall', 'E', 1150, 'vine'), on_wall('hall', 'W', -350, 'vine'), on_wall('hall', 'W', 350, 'vine'),
@@ -356,9 +354,7 @@ chand('lib', -7000, 1700); portrait('lib', 'N', -6600, 1, y=360); portrait('lib'
 add('lib', lamp_on('lib', 'E', 1700, 420), on_wall('lib', 'N', -7600, 'vine'), pot(-6300, 2250))
 desk_at('lib', 2)                                     # reading table (boxes 0/1 are the bookshelves)
 # (the four locked doors that were here are removed: none leads to a room)
-RM['land'].setdefault('decor', []).append(dict(tex='mans_door', wall='S', at=-3900, w=340, h=360, y0=0))          # the centre door, as the gallery's great door in the hall (it was missing here)
 RM['land'].setdefault('decor', []).append(dict(tex='mans_paint_peach', wall='S', at=-3900, w=230, h=230, y0=420))  # Peach above it, kept inside the wall height
-RM['hall']['decor'].append(dict(tex='mans_door', wall='E', at=-1170, w=300, h=340, y0=500))          # the east end of the gallery: the door the balcony's east door leads through
 portrait('land', 'E', 2080, 1)
 for bx in (-5050, -4275, -4025, -3775, -3525, -2775, -2525):   # balcony rail along the open edge, gaps at the two stairwells
     add('land', dict(kind='prop', model='balustrade', pos=(bx, 1825), y=0, yaw=0))
