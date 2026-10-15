@@ -117,11 +117,13 @@ ROOMS.append(guard)
 
 # ---- Library (west wing) ----------------------------------------------------
 lib = room('lib', 'Library', -7900, 1000, -6100, 2400, 750, floor='mans_floor', carpets=[(-7500, 1100, -6500, 2300)],
-           boxes=[dict(x0=-7900, z0=1500, x1=-7700, z1=2000, y1=650, side='mans_wood', top='mans_wood'),
-                  dict(x0=-6300, z0=1500, x1=-6100, z1=2000, y1=650, side='mans_wood', top='mans_wood'),
+           boxes=[dict(x0=-7900, z0=1500, x1=-7700, z1=2000, y1=650, side='mans_wood', top='mans_wood', hidden=True),   # bookcase (model drawn)
+                  dict(x0=-6300, z0=1500, x1=-6100, z1=2000, y1=650, side='mans_wood', top='mans_wood', hidden=True),   # bookcase (model drawn)
                   dict(x0=-7150, z0=1650, x1=-6850, z1=1850, y1=110, side='mans_wood', top='mans_wood')],
            lights=[(-7000, 560, 1700, 0.55, 800), (-6400, 450, 1200, 0.25, 500)],
-           objs=[dict(kind='zombie', pos=(-6600, 2100), yaw=0x8000), dict(kind='zombie', pos=(-7500, 2100), yaw=0xC000),
+           objs=[dict(kind='prop', model='bookshelf', pos=(-7900, 1750), y=0, yaw=0x4000),    # west bookcase (back on the wall)
+                 dict(kind='prop', model='bookshelf', pos=(-6100, 1750), y=0, yaw=0xC000),    # east bookcase
+                 dict(kind='zombie', pos=(-6600, 2100), yaw=0x8000), dict(kind='zombie', pos=(-7500, 2100), yaw=0xC000),
                  dict(kind='herb_g', pos=(-7600, 1200)), dict(kind='herb_b', pos=(-6400, 1200)),
                  dict(kind='key', pos=(-7000, 2150), keyid=2), dict(kind='file', file=4, pos=(-7000, 1750), y=110)])
 lib['cams'] = cams_along_x(lib, front='N')
@@ -189,23 +191,53 @@ cellar['cams'] = [dict(pos=(7650, 600, 950), look=(6900, 60, 350), zone=(6300, 0
 ROOMS.append(cellar)
 
 # ---- Kamek's Laboratory (boss) ----------------------------------------------------
-lab = room('lab', "Kamek's Laboratory", 5800, 1400, 7800, 3200, 900, floor='mans_tile', wall='mans_metal_plate', panel='mans_metal_plate',
+lab = room('lab', "Kamek's Laboratory", 5800, 1100, 8000, 3500, 1500, floor='mans_tile', wall='mans_metal_plate', panel='mans_metal_plate',
            wainscot=350, ambient=0.30,
-           boxes=[dict(x0=6000, z0=1800, x1=6400, z1=2000, y1=110, side='mans_marble', top='mans_marble'),
+           boxes=[dict(x0=7280, z0=1330, x1=7620, z1=1670, y1=480, hidden=True),          # specimen tank (north-east)
+                  dict(x0=6430, z0=1330, x1=6770, z1=1670, y1=480, hidden=True),          # specimen tank (north-west)
+                  dict(x0=7480, z0=2580, x1=7820, z1=2920, y1=480, hidden=True),          # specimen tank (east)
+                  dict(x0=6280, z0=2280, x1=6520, z1=2520, y1=170, hidden=True),          # cauldron (by the console)
+                  dict(x0=6880, z0=3180, x1=7120, z1=3420, y1=170, hidden=True),          # cauldron (south)
+                  dict(x0=7480, z0=3396, x1=7920, z1=3500, y1=280, hidden=True),          # control bank (south wall)
+                  dict(x0=5800, z0=1730, x1=5900, z1=2170, y1=260, hidden=True),          # control bank (west wall)
+                  dict(x0=7910, z0=1810, x1=8000, z1=2190, y1=300, hidden=True),          # vial rack (east wall)
+                  dict(x0=6110, z0=1100, x1=6490, z1=1190, y1=300, hidden=True),          # vial rack (north wall)
+                  dict(x0=5950, z0=1100, x1=6900, z1=1340, y0=900, y1=940, side='mans_metal_plate', top='mans_metal_plate'),   # north catwalk (above the floor)
+                  dict(x0=5950, z0=1100, x1=5990, z1=1140, y1=900, side='mans_metal_plate', top='mans_metal_plate'),           # catwalk posts
+                  dict(x0=6860, z0=1100, x1=6900, z1=1140, y1=900, side='mans_metal_plate', top='mans_metal_plate'),
+                  dict(x0=6560, z0=3040, x1=6680, z1=3160, y1=880, side='mans_marble', top='mans_marble'),
+                  dict(x0=7320, z0=3040, x1=7440, z1=3160, y1=880, side='mans_marble', top='mans_marble'),
+                  dict(x0=6000, z0=1800, x1=6400, z1=2000, y1=110, side='mans_marble', top='mans_marble'),
                   dict(x0=7350, z0=2100, x1=7650, z1=2300, y1=110, side='mans_marble', top='mans_marble'),
                   dict(x0=5880, z0=2300, x1=6080, z1=2600, y1=100, side='mans_marble', top='mans_marble'),
-                  dict(x0=5850, z0=1450, x1=5970, z1=1570, y1=880, side='mans_marble', top='mans_marble'),
-                  dict(x0=6560, z0=3040, x1=6680, z1=3160, y1=880, side='mans_marble', top='mans_marble'),
-                  dict(x0=7320, z0=3040, x1=7440, z1=3160, y1=880, side='mans_marble', top='mans_marble')],
-           lights=[(6800, 700, 2300, 0.55, 1500), (6000, 500, 2900, 0.30, 700), (7500, 500, 1700, 0.30, 700)],
+                  dict(x0=5850, z0=1450, x1=5970, z1=1570, y1=880, side='mans_marble', top='mans_marble')],
+           lights=[(6800, 700, 2300, 0.55, 1500), (6000, 500, 2900, 0.30, 700), (7500, 500, 1700, 0.30, 700),
+                   (7000, 1300, 2300, 0.45, 1400), (7600, 1200, 3100, 0.40, 1200), (6200, 1200, 1700, 0.40, 1200)],
            objs=[dict(kind='file', file=8, pos=(6200, 1900), y=110),
                  dict(kind='console', pos=(5980, 2450), y=100, yaw=0x4000),
                  dict(kind='zombie', pos=(7000, 2950), yaw=0x8000, hp=30, boss=1),
-                 dict(kind='luigi', pos=(7560, 3000), yaw=0xA000),
-                 dict(kind='ammo', pos=(6000, 2900), amount=15), dict(kind='ammo', pos=(7600, 2550), amount=15),
+                 dict(kind='cagekey', pos=(7000, 2950)),           # Bowser's drop: the Cage Key (shown once tyrant == 2)
+                 dict(kind='prop', model='tank', pos=(7450, 1500), y=0, yaw=0),
+                 dict(kind='prop', model='tank', pos=(6600, 1500), y=0, yaw=0),
+                 dict(kind='prop', model='tank', pos=(7650, 2750), y=0, yaw=0),
+                 dict(kind='prop', model='cauldron', pos=(6400, 2400), y=0, yaw=0x2000),
+                 dict(kind='prop', model='cauldron', pos=(7000, 3300), y=0, yaw=0x6000),
+                 dict(kind='prop', model='panel_bank', pos=(5950, 3500), y=0, yaw=0x8000),
+                 dict(kind='prop', model='panel_bank', pos=(5800, 1950), y=0, yaw=0x4000),
+                 dict(kind='prop', model='vial_rack', pos=(8000, 2050), y=0, yaw=0xC000),
+                 dict(kind='prop', model='vial_rack', pos=(6300, 1100), y=0, yaw=0),
+                 dict(kind='ammo', pos=(6000, 2900), amount=15), dict(kind='ammo', pos=(7600, 2000), amount=15),
                  dict(kind='herb_r', pos=(6500, 2700)), dict(kind='herb_g', pos=(7300, 2700))])
 lab['cams'] = cams_along_x(lab, ya=0.8, inset=150, fov=55, front='N')
 ROOMS.append(lab)
+
+# ---- Luigi's cell (behind the iron bars; the gate is opened with the Cage Key, dropped by Tyrant Bowser) ----
+cell = room('cell', "Luigi's Cell", 7300, 3600, 8000, 4300, 900, floor='mans_metal_diamond', wall='mans_bars', panel='mans_bars', wainscot=0,
+            ambient=0.30,
+            lights=[(7650, 700, 3950, 0.55, 800)],
+            objs=[dict(kind='luigi', pos=(7500, 4050), yaw=0x8000)])
+cell['cams'] = cams_along_x(cell, ya=0.8, inset=120, fov=58, front='N')
+ROOMS.append(cell)
 
 # ---- Escape tunnel ------------------------------------------------------------------
 tunnel = room('tunnel', 'Service Tunnel', 5400, 3600, 7000, 4100, 600, floor='mans_metal_diamond', wall='mans_metal_plate', wainscot=300, ambient=0.30,
@@ -357,7 +389,7 @@ for (wall, at) in (('S', 2300), ('E', -250), ('N', 1900)):
 add('guard', lamp_on('guard', 'N', 7300, 360), on_wall('guard', 'S', 7600, 'vine'))
 desk_at('guard', 0)                                   # typewriter desk
 chand('lib', -7000, 1700); portrait('lib', 'N', -6600, 1, y=360); portrait('lib', 'S', -7300, 2, y=360)
-add('lib', lamp_on('lib', 'E', 1700, 420), on_wall('lib', 'N', -7600, 'vine'), pot(-6300, 2250))
+add('lib', lamp_on('lib', 'E', 2250, 420), on_wall('lib', 'N', -7600, 'vine'), pot(-6300, 2250))
 desk_at('lib', 2)                                     # reading table (boxes 0/1 are the bookshelves)
 # (the four locked doors that were here are removed: none leads to a room)
 RM['land'].setdefault('decor', []).append(dict(tex='mans_paint_peach', wall='S', at=-3900, w=230, h=230, y0=420))  # Peach above it, kept inside the wall height
@@ -373,7 +405,8 @@ add('bed', lamp_on('bed', 'E', 4400, 380), on_wall('bed', 'N', -1650, 'vine'))
 add('stair', lamp_on('stair', 'N', 5000, 340), on_wall('stair', 'S', 5600, 'vine'))
 add('cellar', lamp_on('cellar', 'E', 600, 380), on_wall('cellar', 'N', 6600, 'vine'), pot(7550, 900))
 desk_at('cellar', 0)                                  # typewriter desk
-add('lab', lamp_on('lab', 'W', 3000, 420), lamp_on('lab', 'E', 1900, 420), on_wall('lab', 'N', 6200, 'vine'), pot(6100, 3100, 0x2000))
+add('lab', lamp_on('lab', 'W', 3000, 420), lamp_on('lab', 'E', 1250, 420), pot(6100, 3100, 0x2000),
+    on_wall('lab', 'N', 7600, 'vine'), on_wall('lab', 'E', 3000, 'vine'))
 add('tunnel', lamp_on('tunnel', 'S', 6200, 340), on_wall('tunnel', 'N', 5900, 'vine'))
 add('dock', lamp_on('dock', 'S', 4400, 400), on_wall('dock', 'E', 3600, 'vine'))
 
@@ -423,6 +456,8 @@ DOORS = [
     dict(id='cellar_s', room='cellar', wall='S', at=7000,  to='lab_n'),
     dict(id='lab_n',   room='lab',   wall='N', at=7000,    to='cellar_s'),
     dict(id='lab_s',   room='lab',   wall='S', at=6300,    to='tun_n', key=9),
+    dict(id='lab_c',   room='lab',   wall='S', at=7650,    to='cell_n', key=8),     # the barred cell gate (Cage Key)
+    dict(id='cell_n',  room='cell',  wall='N', at=7650,    to='lab_c', key=8),
     dict(id='tun_n',   room='tunnel', wall='N', at=6300,   to='lab_s'),
     dict(id='tun_w',   room='tunnel', wall='W', at=3850,   to='dock_e'),
     dict(id='dock_e',  room='dock',  wall='E', at=3850,    to='tun_w'),
@@ -436,7 +471,7 @@ MAPRECTS = {
     'court': (22, -45, 72, 5), 'save': (35.5, -55, 45.5, -45), 'guard': (72, -7, 83, 4),
     'corr_w': (-38, 10.5, -21, 15.5), 'lib': (-47, 15.5, -29, 29.5),
     'land': (-21, 22, -1, 34), 'corr2': (-1, 25.5, 25, 30.5), 'gal': (25, 22, 45, 33), 'bed': (2, 30.5, 20, 42.5),
-    'stair': (41, 5, 57, 10), 'cellar': (57, 5, 71, 15), 'lab': (54, 15, 74, 33),
+    'stair': (41, 5, 57, 10), 'cellar': (57, 5, 71, 15), 'lab': (54, 16, 80, 32), 'cell': (73, 36, 80, 43),
     'tunnel': (50, 33, 66, 38), 'dock': (38, 34, 50, 45),
 }
 

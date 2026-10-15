@@ -203,6 +203,7 @@ extern const LevelScript level_bbh_entry[];
 
 
 
+
 // MANSION-BEGIN (generated)
 extern const GeoLayout mansion_geo_area[];
 extern const Collision mansion_collision[];
@@ -280,6 +281,16 @@ extern const GeoLayout mansion_geo_prop_balustrade[];
 extern const Gfx mansion_dl_prop_balustrade[];
 extern const GeoLayout mansion_geo_prop_hall_fountain[];
 extern const Gfx mansion_dl_prop_hall_fountain[];
+extern const GeoLayout mansion_geo_prop_bookshelf[];
+extern const Gfx mansion_dl_prop_bookshelf[];
+extern const GeoLayout mansion_geo_prop_vial_rack[];
+extern const Gfx mansion_dl_prop_vial_rack[];
+extern const GeoLayout mansion_geo_prop_tank[];
+extern const Gfx mansion_dl_prop_tank[];
+extern const GeoLayout mansion_geo_prop_cauldron[];
+extern const Gfx mansion_dl_prop_cauldron[];
+extern const GeoLayout mansion_geo_prop_panel_bank[];
+extern const Gfx mansion_dl_prop_panel_bank[];
 extern const Gfx mansion_door_begin_dl0[];
 extern const Gfx mansion_door_begin_dl1[];
 extern const Gfx mansion_door_begin_dl2[];
@@ -309,6 +320,7 @@ extern const Gfx mansion_dl_bed[];
 extern const Gfx mansion_dl_stair[];
 extern const Gfx mansion_dl_cellar[];
 extern const Gfx mansion_dl_lab[];
+extern const Gfx mansion_dl_cell[];
 extern const Gfx mansion_dl_tunnel[];
 extern const Gfx mansion_dl_dock[];
 // MANSION-END

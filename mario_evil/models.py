@@ -736,6 +736,120 @@ def toad():
     m.box((0, 158, 58), (6, 34, 3), BLOOD)                          # blood from the mouth
     return m
 
+# ---- library + laboratory set (v0.2.33) -------------------------------------------------------
+import random as _random
+
+def bookshelf():
+    """Full bookcase, 500 wide (x) x 200 deep (z) x 660 tall. Origin = floor centre of the BACK face (the face on
+    the wall); the front projects +z.  Five bays of books on shelves, a few books lying flat on top."""
+    m = Mesh()
+    rng = _random.Random(7)
+    BOOKS = [(150, 38, 34), (40, 96, 52), (44, 60, 120), (150, 118, 52), (210, 196, 150), (88, 46, 30), (120, 30, 60), (70, 70, 74)]
+    m.box((0, 330, 4), (500, 660, 8), WOOD_D)                       # back board
+    for sx in (-1, 1):
+        m.box((sx * 246, 330, 100), (8, 660, 200), WOOD)           # side panels
+    m.box((0, 656, 100), (500, 12, 200), WOOD)                     # top
+    m.box((0, 6, 100), (500, 12, 200), WOOD_D)                     # plinth
+    shelves = [12, 150, 290, 430, 570]                              # top of each bay's floor board
+    for y in shelves[1:]:
+        m.box((0, y + 5, 100), (484, 10, 200), WOOD)                # shelf boards
+    for bi, y0 in enumerate(shelves):
+        y1 = (shelves[bi + 1] if bi + 1 < len(shelves) else 646) - 10
+        x = -236.0
+        while x < 214:
+            w = rng.choice((14, 16, 18, 20, 22, 26))
+            if rng.random() < 0.10:                               # a gap: nothing on the shelf here
+                x += w + 12
+                continue
+            h = rng.uniform(0.62, 0.92) * (y1 - y0 - 10)
+            d = rng.uniform(120, 170)
+            col = rng.choice(BOOKS)
+            if x + w > 236: break
+            m.box((x + w / 2, y0 + 5 + h / 2, 100 - 40 + (170 - d) / 2 + 20), (w, h, d), col)
+            if rng.random() < 0.12:                               # bands on the spine
+                m.box((x + w / 2, y0 + 5 + h * 0.8, 100 - 40 + (170 - d) / 2 + 20 + d / 2 + 1), (w + 2, 6, 2), (220, 200, 120))
+            x += w + rng.choice((0, 0, 1, 2))
+    for bi, y0 in enumerate(shelves[:-1]):                         # a few books lying flat on the shelf tops
+        if bi == 2:
+            m.box((-120, shelves[bi + 1] + 15, 110), (110, 14, 130), (150, 38, 34))
+            m.box((-100, shelves[bi + 1] + 24, 105), (90, 12, 120), (44, 60, 120))
+    return m
+
+def vial_rack():
+    """Wall-mounted rack of glass test tubes and flasks, 380 wide (x), 300 tall, 90 deep (z). Origin = floor centre
+    of the back face; projects +z."""
+    m = Mesh()
+    GLASS = (168, 206, 190); METAL_B = (96, 98, 108)
+    LIQ = [(90, 230, 90), (230, 52, 60), (60, 120, 240), (170, 70, 220), (230, 200, 70)]
+    m.box((0, 150, 4), (380, 300, 8), METAL_D)                      # back plate
+    for sx in (-1, 1):
+        m.box((sx * 184, 150, 40), (10, 300, 80), METAL)            # uprights
+    for y in (96, 186, 276):
+        m.box((0, y, 40), (370, 10, 80), METAL)                     # shelves
+    for row, y in enumerate((130, 220)):
+        for k in range(8):
+            x = -155 + k * 44
+            col = LIQ[(k + row * 3) % len(LIQ)]
+            m.cyl((x, y - 25, 56), 12, 70, GLASS, n=8)               # glass tube
+            m.cyl((x, y - 45, 56), 9, 26, col, n=8)                  # liquid, low in the tube
+            m.cyl((x, y + 14, 56), 13, 6, METAL_B, n=8)              # rim
+    for k, x in enumerate((-20, 60)):                              # two round flasks on the bottom shelf
+        m.sphere((x, 120, 56), 22, GLASS, nlat=4, nlon=8)
+        m.sphere((x, 112, 56), 17, LIQ[k * 2 + 1], nlat=3, nlon=6)
+        m.cyl((x, 150, 56), 7, 26, GLASS, n=6)
+    return m
+
+def tank():
+    """Specimen tank: a green liquid column in a metal frame, 300 wide (x/z) x 470 tall. Origin = floor centre."""
+    m = Mesh()
+    LIQ_G = (96, 222, 110)
+    m.box((0, 20, 0), (340, 40, 340), METAL_D)                     # plinth
+    m.cyl((0, 250, 0), 130, 400, (150, 205, 170), n=12)            # glass
+    m.cyl((0, 190, 0), 116, 230, LIQ_G, n=12)                      # liquid
+    m.cyl((0, 80, 0), 118, 30, (140, 255, 170), n=12)              # brighter base glow
+    m.cyl((0, 452, 0), 140, 36, METAL, n=12)                       # top lid
+    m.cyl((0, 468, 0), 60, 14, METAL_D, n=10)                      # top vent
+    for k in range(4):
+        a = k * math.pi / 2 + 0.4
+        m.box((140 * math.cos(a), 250, 140 * math.sin(a)), (16, 420, 16), METAL)   # frame posts
+    for k in range(3):
+        m.sphere((30 * math.cos(k * 2.1), 120 + 60 * k, 30 * math.sin(k * 2.1)), 9, (220, 255, 230), nlat=2, nlon=5)   # bubbles
+    m.cyl((150, 210, 0), 8, 280, METAL_D, n=6)                     # feed pipe
+    return m
+
+def cauldron():
+    """Iron cauldron on a ring of embers, bubbling green. 260 wide, 230 tall. Origin = floor centre."""
+    m = Mesh()
+    BREW = (110, 230, 90)
+    for k in range(3):
+        a = k * 2.094
+        m.box((90 * math.cos(a), 40, 90 * math.sin(a)), (16, 80, 16), IRON, rot(yaw=-math.degrees(a)))   # legs
+    m.cyl((0, 8, 0), 118, 16, (200, 70, 30), n=12)                 # embers
+    m.cyl((0, 96, 0), 104, 150, (58, 60, 64), n=12, r_top=92)       # bowl
+    m.cyl((0, 178, 0), 112, 22, (78, 80, 86), n=12)                # rim
+    m.cyl((0, 170, 0), 98, 4, BREW, n=12)                          # brew surface
+    for (x, z, r) in ((-30, 10, 20), (25, -25, 14), (40, 30, 10), (-5, -40, 16)):
+        m.sphere((x, 178, z), r, BREW, nlat=3, nlon=6)              # bubbles
+    return m
+
+def panel_bank():
+    """Control panel bank for the wall: 440 wide (x) x 260 tall, 70 deep (z) with dials, levers and lamps.
+    Origin = floor centre of the back face; projects +z."""
+    m = Mesh()
+    m.box((0, 130, 30), (440, 260, 60), METAL_D)                   # cabinet
+    m.box((0, 200, 66), (430, 120, 6), (56, 60, 68), rot(pitch=-22))  # sloped face
+    for k in range(6):
+        x = -180 + k * 72
+        m.cyl((x, 196, 74), 20, 8, (220, 220, 200), n=8, R=rot(pitch=90 - 22))   # dial
+        m.box((x, 196 - 14, 74), (4, 20, 2), (30, 30, 36), rot(pitch=-22))       # needle
+    for k in range(5):
+        col = (210, 50, 50) if k % 2 else (90, 230, 110)
+        m.box((-160 + k * 40, 140, 86), (14, 14, 6), col, rot(pitch=-22))       # lamps
+    for k in range(4):
+        m.box((-120 + k * 80, 120, 92), (6, 46, 6), BRASS, rot(pitch=-22))     # levers
+    m.box((0, 60, 92), (420, 10, 10), METAL)                       # kick rail
+    return m
+
 def vine():
     """Hanging thorn vine for walls: ~420 tall, origin at the bottom centre, wanders in x with a little z."""
     m = Mesh()
@@ -787,6 +901,11 @@ MODELS = {
     'prop_mushroom_big': mushroom_big,
     'prop_chair': chair,
     'prop_fireplace': fireplace,
+    'prop_bookshelf': bookshelf,
+    'prop_vial_rack': vial_rack,
+    'prop_tank': tank,
+    'prop_cauldron': cauldron,
+    'prop_panel_bank': panel_bank,
 }
 
 def _sb(v):

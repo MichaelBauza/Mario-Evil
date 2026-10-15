@@ -295,6 +295,46 @@ const GeoLayout mansion_geo_prop_hall_fountain[] = {
    GEO_END(),
 };
 
+const GeoLayout mansion_geo_prop_bookshelf[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_bookshelf),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_vial_rack[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_vial_rack),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_tank[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_tank),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_cauldron[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_cauldron),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
+const GeoLayout mansion_geo_prop_panel_bank[] = {
+   GEO_NODE_START(),
+   GEO_OPEN_NODE(),
+      GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_prop_panel_bank),
+   GEO_CLOSE_NODE(),
+   GEO_END(),
+};
+
 const GeoLayout mansion_geo_area[] = {
    GEO_NODE_SCREEN_AREA(10, SCREEN_CENTER_X, SCREEN_CENTER_Y, SCREEN_CENTER_X, SCREEN_CENTER_Y),
    GEO_OPEN_NODE(),
@@ -311,7 +351,7 @@ const GeoLayout mansion_geo_area[] = {
          GEO_OPEN_NODE(),
             GEO_CAMERA(CAMERA_MODE_FIXED, 0, 600, 600, 0, 0, 0, geo_camera_main),
             GEO_OPEN_NODE(),
-               GEO_SWITCH_CASE(18, geo_switch_mansion_room),
+               GEO_SWITCH_CASE(19, geo_switch_mansion_room),
                GEO_OPEN_NODE(),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_hall),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_dining),
@@ -333,6 +373,7 @@ const GeoLayout mansion_geo_area[] = {
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_stair),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_cellar),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_lab),
+                  GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_cell),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_tunnel),
                   GEO_DISPLAY_LIST(LAYER_OPAQUE, mansion_dl_dock),
                GEO_CLOSE_NODE(),

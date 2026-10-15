@@ -340,3 +340,11 @@ for _i in range(8):
 save(_im, 'mans_stairs_down')
 
 print('textures written')
+
+# iron cell bars (Luigi's cell): dark stone behind vertical iron bars with a crossrail
+_im = new((46, 44, 50, 255)); _d = ImageDraw.Draw(_im)
+for _x in range(0, 32, 8):
+    _d.rectangle([_x + 2, 0, _x + 4, 31], fill=(150, 150, 160, 255))
+    _d.line([_x + 2, 0, _x + 2, 31], fill=(200, 200, 210, 255))
+_d.rectangle([0, 14, 31, 16], fill=(120, 120, 130, 255))
+save(_im, 'mans_bars')

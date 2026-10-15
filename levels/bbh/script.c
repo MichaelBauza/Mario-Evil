@@ -72,6 +72,11 @@ const LevelScript level_bbh_entry[] = {
     LOAD_MODEL_FROM_GEO(0xF6, mansion_geo_prop_stair_flight),
     LOAD_MODEL_FROM_GEO(0xF7, mansion_geo_prop_balustrade),
     LOAD_MODEL_FROM_GEO(0xF8, mansion_geo_prop_hall_fountain),
+    LOAD_MODEL_FROM_GEO(0xF9, mansion_geo_prop_bookshelf),
+    LOAD_MODEL_FROM_GEO(0xFA, mansion_geo_prop_vial_rack),
+    LOAD_MODEL_FROM_GEO(0xFB, mansion_geo_prop_tank),
+    LOAD_MODEL_FROM_GEO(0xFC, mansion_geo_prop_cauldron),
+    LOAD_MODEL_FROM_GEO(0xFD, mansion_geo_prop_panel_bank),
 
     LOAD_MODEL_FROM_GEO(MODEL_TOAD, mvtoad_geo),
     LOAD_MODEL_FROM_GEO(MODEL_BOWSER, bowser_geo),

@@ -50,7 +50,7 @@ static void str_append(char *dst, const char *src, s32 max) {
 
 static const char *const sItemNames[MI_COUNT] = {
     "", "Green Herb", "Red Herb", "Blue Herb", "Ink Ribbon", "Star Key", "Pistol",
-    "Mixed Herb (GG)", "Mixed Herb (GR)", "Mixed Herb (GB)", "Handgun Ammo"
+    "Mixed Herb (GG)", "Mixed Herb (GR)", "Mixed Herb (GB)", "Handgun Ammo", "Cage Key"
 };
 
 static const char *const sKeyNames[4] = { "Key", "Star Key", "Moon Key", "Sun Key" };
@@ -820,7 +820,9 @@ static s32 door_locked(s32 idx) {
 static s32 inv_find_key(u8 keyid) {
     s32 i;
     for (i = 0; i < MANSION_INV_SLOTS; i++) {
-        if (gMansion.inv[i].id == MI_KEY && gMansion.inv[i].extra == keyid) return i;
+        if (keyid == 8) {                       // key 8 = the cell gate, opened with the Cage Key (Bowser's drop)
+            if (gMansion.inv[i].id == MI_CAGE_KEY) return i;
+        } else if (gMansion.inv[i].id == MI_KEY && gMansion.inv[i].extra == keyid) return i;
     }
     return -1;
 }
@@ -928,7 +930,7 @@ static void update_doors(void) {
             {
                 char kb[40];
                 str_copy(kb, "Used the ", sizeof(kb));
-                str_append(kb, sKeyNames[d->key & 3], sizeof(kb));
+                str_append(kb, d->key == 8 ? "Cage Key" : sKeyNames[d->key & 3], sizeof(kb));
                 str_append(kb, ". It unlocks.", sizeof(kb));
                 mansion_message(kb);
             }
@@ -1115,6 +1117,7 @@ static void use_item(s32 slot) {
         case MI_HERB_R:  mansion_message("Red herbs do nothing alone. Combine with Green."); return;
         case MI_HERB_B:  mansion_message("Blue herbs do nothing alone. Combine with Green."); return;
         case MI_KEY:     mansion_message("Walk into the locked door to use it."); return;
+        case MI_CAGE_KEY: mansion_message("Walk into the cell gate to use it."); return;
         case MI_RIBBON:  mansion_message("Use it at a typewriter."); return;
         default: return;
     }
@@ -1733,6 +1736,7 @@ void bhv_mansion_pickup_loop(void) {
     char nb[14];
 
     if (!obj_in_current_room()) return;
+    if (id == MI_CAGE_KEY && gMansion.tyrant != 2) { cur_obj_hide(); return; }   // the Cage Key only appears once Bowser is down
     o->oPosY = o->oHomeY + 6.0f * sins(o->oTimer * 0x500);
     o->oFaceAngleYaw += 0x180;   // slow turntable spin
     if (o->oDistanceToMario < 120.0f && gMansion.menu == MENU_NONE) {

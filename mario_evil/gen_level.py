@@ -26,7 +26,7 @@ CELL = 520            # max vertex-lighting cell size
 
 TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil', 'mans_stone', 'mans_tile',
             'mans_door', 'mans_wood', 'mans_marble', 'mans_grass', 'mans_cement', 'mans_metal_plate', 'mans_metal_diamond',
-            'mans_door_k1', 'mans_door_k2', 'mans_door_k3', 'mans_brass', 'mans_keyhole',
+            'mans_door_k1', 'mans_door_k2', 'mans_door_k3', 'mans_brass', 'mans_keyhole', 'mans_bars',
             'mans_comic1', 'mans_comic2', 'mans_comic3', 'mans_comic4', 'mans_comic5',
             'mans_brick', 'mans_cobble', 'mans_rail', 'mans_gate', 'mans_portrait1', 'mans_portrait2', 'mans_portrait3',
             'mans_paint_bowser', 'mans_paint_drybones', 'mans_paint_mushroom', 'mans_paint_goomba', 'mans_paint_peach',
@@ -35,7 +35,8 @@ ICONS = ['item_herb_g', 'item_herb_r', 'item_herb_b', 'item_key', 'item_ribbon',
          'item_box', 'item_typewriter', 'item_gun', 'item_key2', 'item_key3', 'item_ammo', 'held_gun', 'item_console', 'item_luigi',
          'prop_fountain', 'prop_chandelier', 'prop_lamp', 'prop_pot', 'prop_clock', 'prop_stairs', 'prop_vine', 'prop_table', 'prop_desk', 'prop_chair', 'prop_fireplace',
          'prop_fridge', 'prop_stove', 'prop_counter', 'prop_sink', 'prop_kpot', 'prop_cup', 'prop_mushroom', 'prop_mushroom_big',
-         'prop_stair_flight', 'prop_balustrade', 'prop_hall_fountain']   # 3D models (models.py)
+         'prop_stair_flight', 'prop_balustrade', 'prop_hall_fountain',
+         'prop_bookshelf', 'prop_vial_rack', 'prop_tank', 'prop_cauldron', 'prop_panel_bank']   # 3D models (models.py)
 
 def door_emblem(d):
     """Key id whose emblem is painted on this door: its own key, or the key of the door it connects to."""
@@ -45,6 +46,7 @@ def door_emblem(d):
     return 0
 
 def door_tex(d):
+    if d.get('key') == 8: return 'mans_bars'      # the cell gate: a barred door (opened with the Cage Key)
     k = door_emblem(d)
     return 'mans_door_k%d' % k if k else 'mans_door'
 
@@ -459,6 +461,8 @@ def emit_all():
                         'gun': 'item_gun', 'ammo': 'item_ammo'}[kind.split(':')[0]]
                 par = (iid << 24) | (o.get('amount', 1) << 16) | (o.get('keyid', 0) << 8) | nuid()
                 room_objs.append((ridx, models[icon], 'bhvMansionPickup', x, y + 10, z, yaw, par))
+            elif kind == 'cagekey':   # Bowser's drop: the Cage Key (inventory id MI_CAGE_KEY = 11); hidden until he is down
+                room_objs.append((ridx, models['item_key2'], 'bhvMansionPickup', x, y + 10, z, yaw, (11 << 24) | nuid()))
             elif kind == 'file':
                 par = (o['file'] << 24)
                 room_objs.append((ridx, models['item_file'], 'bhvMansionFile', x, y + 10, z, 0, par))
