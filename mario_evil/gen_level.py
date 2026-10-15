@@ -26,7 +26,7 @@ CELL = 520            # max vertex-lighting cell size
 
 TEXTURES = ['mans_floor', 'mans_carpet', 'mans_wall', 'mans_panel', 'mans_ceil', 'mans_stone', 'mans_tile',
             'mans_door', 'mans_wood', 'mans_marble', 'mans_grass', 'mans_cement', 'mans_metal_plate', 'mans_metal_diamond',
-            'mans_door_k1', 'mans_door_k2', 'mans_door_k3',
+            'mans_door_k1', 'mans_door_k2', 'mans_door_k3', 'mans_brass', 'mans_keyhole',
             'mans_brick', 'mans_cobble', 'mans_rail', 'mans_gate', 'mans_portrait1', 'mans_portrait2', 'mans_portrait3',
             'mans_paint_bowser', 'mans_paint_drybones', 'mans_paint_mushroom', 'mans_paint_goomba', 'mans_paint_peach',
             'mans_caution', 'mans_stairs_down']
@@ -185,6 +185,17 @@ def build_room(room):
         c = add(O, mul(al, d['at'] - (O[0] if abs(al[0]) > .5 else O[2])))
         base = add(sub(c, mul(al, DOOR_W/2)), mul(n, 4))
         g.face(door_tex(d), base, mul(al, DOOR_W), (0, DOOR_H, 0), n, False, uvflip_v=True, lit=True, cell=170, uv_once=True)
+        # door hardware (matches the animated leaf in mansion.c): lever handle on the free (+axis) side, keyhole below it
+        def hw_quad(tex, u0, u1, v0, v1, w):
+            O2 = add(add(c, mul(al, u0)), mul(n, w))
+            g.face(tex, add(O2, (0, v0, 0)), mul(al, u1 - u0), (0, v1 - v0, 0), n, False, uvflip_v=True, cell=2000, uv_once=True)
+        KU, KV = DOOR_W/2 - 45, 160
+        hw_quad('mans_brass', KU-22, KU+22, KV-22, KV+22, 9)                 # rosette plate
+        hw_quad('mans_brass', KU-14, KU+14, 81, 129, 9)                      # keyhole escutcheon (below the handle, same u)
+        hw_quad('mans_keyhole', KU-3, KU+3, 84, 105, 14)                     # keyhole slot
+        hw_quad('mans_keyhole', KU-6, KU+6, 105, 117, 14)                    # keyhole head
+        hw_quad('mans_keyhole', KU-70+3, KU+12+3, KV-8-6, KV+8-6, 18)        # handle shadow
+        hw_quad('mans_brass', KU-70, KU+12, KV-8, KV+8, 22)                  # lever handle, resting horizontal (points to the hinge)
         # lintel
         lb = add(sub(c, mul(al, DOOR_W/2+30)), mul(n, 6))
         g.face('mans_wood', add(lb, (0, DOOR_H, 0)), mul(al, DOOR_W+60), (0, 40, 0), n, False, uvflip_v=True, cell=2000)
@@ -261,7 +272,7 @@ def emit_all():
         out.append('const Gfx mansion_dl_%s[] = {\n' % r['id'])
         out.append(tilesetup); out += body; out.append(tileend)
     # door-opening cinematic: textured, unlit, no z-test, no culling (drawn by geo_mansion_door_anim)
-    door_texs = ['mans_door', 'mans_door_k1', 'mans_door_k2', 'mans_door_k3']
+    door_texs = ['mans_door', 'mans_door_k1', 'mans_door_k2', 'mans_door_k3', 'mans_brass', 'mans_keyhole']
     for ei, dtex in enumerate(door_texs):
         out.append('const Gfx mansion_door_begin_dl%d[] = {\n' % ei)
         out.append(tilesetup)
@@ -337,7 +348,7 @@ def emit_all():
     blk = ['// MANSION-BEGIN (generated)\n', 'extern const GeoLayout mansion_geo_area[];\n', 'extern const Collision mansion_collision[];\n']
     for ic in ICONS:
         blk.append('extern const GeoLayout mansion_geo_%s[];\nextern const Gfx mansion_dl_%s[];\n' % (ic, ic))
-    blk.append(''.join('extern const Gfx mansion_door_begin_dl%d[];\n' % i for i in range(4)) + 'extern const Gfx mansion_door_end_dl[];\nextern const Gfx mansion_title_dl[];\n')
+    blk.append(''.join('extern const Gfx mansion_door_begin_dl%d[];\n' % i for i in range(6)) + 'extern const Gfx mansion_door_end_dl[];\nextern const Gfx mansion_title_dl[];\n')
     for r in ROOMS: blk.append('extern const Gfx mansion_dl_%s[];\n' % r['id'])
     blk.append('// MANSION-END\n')
     endif = hdr.rfind('#endif')

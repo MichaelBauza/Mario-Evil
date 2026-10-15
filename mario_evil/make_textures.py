@@ -41,8 +41,8 @@ for i in range(0, 32, 16):
 noise(im, 7, 6); save(im, 'mans_stone')
 im = new((84, 52, 30, 255)); d = ImageDraw.Draw(im)           # door
 d.rectangle([0, 0, 31, 31], outline=(34, 20, 10, 255)); d.rectangle([4, 3, 27, 14], outline=(52, 30, 16, 255))
-d.rectangle([4, 17, 27, 28], outline=(52, 30, 16, 255)); d.ellipse([24, 15, 27, 18], fill=(190, 160, 60, 255))
-noise(im, 4, 7); save(im, 'mans_door')
+d.rectangle([4, 17, 27, 28], outline=(52, 30, 16, 255))
+noise(im, 4, 7); save(im, 'mans_door')   # (the knob and keyhole are real geometry now)
 im = new((110, 70, 40, 255)); d = ImageDraw.Draw(im)          # table / furniture wood
 for y in range(0, 32, 4): d.line([0, y, 31, y], fill=(90, 56, 30, 255))
 noise(im, 6, 8); save(im, 'mans_wood')
@@ -222,7 +222,7 @@ import math
 def door_emblem(name, col, kind):
     im = new((84, 52, 30, 255)); d = ImageDraw.Draw(im)
     d.rectangle([0, 0, 31, 31], outline=(34, 20, 10, 255)); d.rectangle([4, 3, 27, 14], outline=(52, 30, 16, 255))
-    d.rectangle([4, 17, 27, 28], outline=(52, 30, 16, 255)); d.ellipse([24, 19, 27, 22], fill=(190, 160, 60, 255))
+    d.rectangle([4, 17, 27, 28], outline=(52, 30, 16, 255))
     noise(im, 4, 7)
     # emblem drawn 8x oversized and box-filtered down so it stays readable at 32x32
     K = 8; cx, cy = 15.5 * K, 8.6 * K
@@ -249,6 +249,14 @@ def door_emblem(name, col, kind):
 door_emblem('mans_door_k1', (240, 205, 70, 255), 'star')
 door_emblem('mans_door_k2', (160, 185, 240, 255), 'moon')
 door_emblem('mans_door_k3', (245, 140, 40, 255), 'sun')
+
+# --- door hardware: brass (knob, plate, handle) and the dark keyhole --------------------------------
+im = new((0, 0, 0, 255)); d = ImageDraw.Draw(im)
+for y in range(32):                                            # vertical brass gradient: bright top, dark bottom
+    t = y / 31.0
+    d.line([0, y, 31, y], fill=(int(226 - 90 * t), int(188 - 80 * t), int(84 - 50 * t), 255))
+noise(im, 6, 11); save(im, 'mans_brass')
+save(new((10, 8, 8, 255)), 'mans_keyhole')
 
 # --- main-menu title image (320x240, RGBA16, Floyd-Steinberg dithered to 5 bits/channel) --------------
 def title_image():

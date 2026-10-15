@@ -675,7 +675,9 @@ void mansion_pre_update(void) {
 /* RE1-style door cinematic: the camera cuts to a close-up of the door, the door swings open onto
    darkness while the camera creeps forward, then it fades out and Mario appears on the far side. */
 #define DOOR_ANIM_LEN    66
-#define DOOR_OPEN_START  10
+#define KNOB_TURN_START  2      /* the handle turns 90 degrees first ... */
+#define KNOB_TURN_END    10
+#define DOOR_OPEN_START  12     /* ... then the latch lets go and the door swings */
 #define DOOR_OPEN_END    50
 #define DOOR_FADE_START  52
 #define STAIR_LEN        72
@@ -687,11 +689,20 @@ extern const Gfx mansion_door_begin_dl0[];
 extern const Gfx mansion_door_begin_dl1[];
 extern const Gfx mansion_door_begin_dl2[];
 extern const Gfx mansion_door_begin_dl3[];
+extern const Gfx mansion_door_begin_dl4[];   /* brass */
+extern const Gfx mansion_door_begin_dl5[];   /* keyhole black */
 extern const Gfx mansion_door_end_dl[];
 extern const Gfx mansion_title_dl[];
 
 static f32 door_open_amount(void) {
     f32 t = ((f32) gMansion.doorTimer - DOOR_OPEN_START) / (DOOR_OPEN_END - DOOR_OPEN_START);
+    if (t < 0.f) t = 0.f;
+    if (t > 1.f) t = 1.f;
+    return t * t * (3.f - 2.f * t);
+}
+
+static f32 knob_turn_amount(void) {
+    f32 t = ((f32) gMansion.doorTimer - KNOB_TURN_START) / (KNOB_TURN_END - KNOB_TURN_START);
     if (t < 0.f) t = 0.f;
     if (t > 1.f) t = 1.f;
     return t * t * (3.f - 2.f * t);
@@ -708,8 +719,8 @@ Gfx *geo_mansion_door_anim(s32 callContext, struct GraphNode *node, UNUSED void 
     if (callContext == GEO_CONTEXT_RENDER && gMansion.doorState == 1 && !gMansionDoors[gMansion.doorTarget].stair) {
         const struct MansionDoor *d = &gMansionDoors[gMansion.doorTarget];
         struct GraphNodeGenerated *gen = (struct GraphNodeGenerated *) node;
-        Vtx *v = alloc_display_list(8 * sizeof(Vtx));
-        Gfx *dl = alloc_display_list(8 * sizeof(Gfx));
+        Vtx *v = alloc_display_list(32 * sizeof(Vtx));
+        Gfx *dl = alloc_display_list(24 * sizeof(Gfx));
         Gfx *g = dl;
         s32 ax = (d->nz != 0) ? 1 : 0;     // along-wall axis matches the generator (x for N/S walls, z for E/W)
         s32 az = (d->nz != 0) ? 0 : 1;
@@ -736,6 +747,39 @@ Gfx *geo_mansion_door_anim(s32 callContext, struct GraphNode *node, UNUSED void 
         set_vtx(&v[6], ex, DOOR_H, ez, 1020, 0,    lr, lg, lb);
         set_vtx(&v[7], hx, DOOR_H, hz, 0,    0,    lr, lg, lb);
 
+        /* door hardware, in the leaf's own frame: u along the leaf from the hinge, v up, w out of the face.
+           Same layout as the static door in gen_level.py: handle centre at u=255, v=160; keyhole below it. */
+        {
+            f32 Lx = ax * cs - d->nx * sn, Lz = az * cs - d->nz * sn;       /* leaf direction */
+            f32 Nx = d->nx * cs + ax * sn, Nz = d->nz * cs + az * sn;       /* leaf face normal */
+            f32 th = knob_turn_amount() * 0x4000;                           /* 0 .. 90 degrees */
+            f32 kc = coss((s16) th), ks = sins((s16) th);
+            f32 du = -kc, dv = -ks;                                         /* handle direction: from pointing at the hinge to pointing down */
+            f32 pu = ks, pv = -kc;
+            s32 i;
+            static const s16 plate[2][4] = { { 233, 277, 138, 182 }, { 241, 269, 81, 129 } };
+            static const s16 key[2][4]   = { { 252, 258, 84, 105 }, { 249, 261, 105, 117 } };
+#define LV(vx, uu, vv, ww, tu, tv) set_vtx(&v[vx], (s32) (hx + Lx * (uu) + Nx * (ww)), (s32) (vv), (s32) (hz + Lz * (uu) + Nz * (ww)), tu, tv, lr, lg, lb)
+#define LQUAD(base, u0, u1, v0, v1, ww) \
+            LV(base, u0, v0, ww, 0, 1020); LV(base + 1, u1, v0, ww, 1020, 1020); LV(base + 2, u1, v1, ww, 1020, 0); LV(base + 3, u0, v1, ww, 0, 0)
+            LQUAD(8, plate[0][0], plate[0][1], plate[0][2], plate[0][3], 4);      /* rosette */
+            LQUAD(12, plate[1][0], plate[1][1], plate[1][2], plate[1][3], 4);     /* escutcheon */
+            LQUAD(16, key[0][0], key[0][1], key[0][2], key[0][3], 6);             /* keyhole slot */
+            LQUAD(20, key[1][0], key[1][1], key[1][2], key[1][3], 6);             /* keyhole head */
+            /* handle (+ its drop shadow): a bar from 12 behind the pivot to 70 ahead, 16 wide */
+            for (i = 0; i < 2; i++) {
+                f32 cu = 255.f + (i == 0 ? 3.f : 0.f), cv = 160.f + (i == 0 ? -6.f : 0.f);
+                f32 ww = (i == 0) ? 10.f : 16.f;
+                s32 b = (i == 0) ? 24 : 28;
+                LV(b,     cu + du * -12 + pu * -8, cv + dv * -12 + pv * -8, ww, 0, 1020);
+                LV(b + 1, cu + du * 70 + pu * -8,  cv + dv * 70 + pv * -8,  ww, 1020, 1020);
+                LV(b + 2, cu + du * 70 + pu * 8,   cv + dv * 70 + pv * 8,   ww, 1020, 0);
+                LV(b + 3, cu + du * -12 + pu * 8,  cv + dv * -12 + pv * 8,  ww, 0, 0);
+            }
+#undef LQUAD
+#undef LV
+        }
+
         // NB: level-data symbols are segmented addresses; they may be handed to the RSP but never dereferenced by the CPU.
         switch (d->emblem & 3) {
             case 1:  gSPDisplayList(g++, mansion_door_begin_dl1); break;
@@ -743,9 +787,18 @@ Gfx *geo_mansion_door_anim(s32 callContext, struct GraphNode *node, UNUSED void 
             case 3:  gSPDisplayList(g++, mansion_door_begin_dl3); break;
             default: gSPDisplayList(g++, mansion_door_begin_dl0); break;
         }
-        gSPVertex(g++, v, 8, 0);
+        gSPVertex(g++, v, 32, 0);
         gSP2Triangles(g++, 0, 1, 2, 0x0, 0, 2, 3, 0x0);
         gSP2Triangles(g++, 4, 5, 6, 0x0, 4, 6, 7, 0x0);
+        gSPDisplayList(g++, mansion_door_begin_dl4);                                   // brass: rosette + escutcheon
+        gSP2Triangles(g++, 8, 9, 10, 0x0, 8, 10, 11, 0x0);
+        gSP2Triangles(g++, 12, 13, 14, 0x0, 12, 14, 15, 0x0);
+        gSPDisplayList(g++, mansion_door_begin_dl5);                                   // black: keyhole + handle shadow
+        gSP2Triangles(g++, 16, 17, 18, 0x0, 16, 18, 19, 0x0);
+        gSP2Triangles(g++, 20, 21, 22, 0x0, 20, 22, 23, 0x0);
+        gSP2Triangles(g++, 24, 25, 26, 0x0, 24, 26, 27, 0x0);
+        gSPDisplayList(g++, mansion_door_begin_dl4);                                   // brass: the handle on top
+        gSP2Triangles(g++, 28, 29, 30, 0x0, 28, 30, 31, 0x0);
         gSPDisplayList(g++, mansion_door_end_dl);
         gSPEndDisplayList(g);
         return dl;
@@ -816,7 +869,7 @@ static void update_doors(void) {
     }
     if (gMansion.doorState == 1) {
         gMansion.doorTimer++;
-        if (gMansion.doorTimer == 6) play_sound(SOUND_GENERAL_OPEN_WOOD_DOOR, gGlobalSoundSource);
+        if (gMansion.doorTimer == KNOB_TURN_END) play_sound(SOUND_GENERAL_OPEN_WOOD_DOOR, gGlobalSoundSource);
         gMansion.fade = (gMansion.doorTimer > DOOR_FADE_START)
             ? MIN(255, (gMansion.doorTimer - DOOR_FADE_START) * 255 / (DOOR_ANIM_LEN - DOOR_FADE_START)) : 0;
         if (gMansion.doorTimer >= DOOR_ANIM_LEN) {
