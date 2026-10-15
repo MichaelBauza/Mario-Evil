@@ -509,8 +509,8 @@ def stair_flight():
     ang = math.degrees(math.atan2(RISE, RUN)); L = math.hypot(RISE, RUN)
     for sx in (-1, 1):
         x = sx * 238
-        m.box((x, RISE / 2 + 98, -RUN / 2), (16, 14, L), MARB, rot(pitch=-ang))
-        m.box((x, RISE / 2 + 10, -RUN / 2), (16, 10, L), MARB_D, rot(pitch=-ang))
+        m.box((x, RISE / 2 + 98, -RUN / 2), (16, 14, L), MARB, rot(pitch=ang))
+        m.box((x, RISE / 2 + 10, -RUN / 2), (16, 10, L), MARB_D, rot(pitch=ang))
         for k in range(0, N + 1, 2):
             zk = -k * d; yk = r * k + 55
             m.box((x, yk + 18, zk - d * 0.5), (14, 90, 14), MARB)

@@ -25,22 +25,20 @@ ROOMS = []
 
 # ---- Main Hall -------------------------------------------------------------
 hall = room('hall', 'Main Hall', -5200, -1400, -2400, 1400, 1100, floor='mans_floor', wall='mans_brick', panel='mans_brick', wainscot=0,
-            carpets=[(-5100, -190, -2450, 190), (-4050, -1050, -3750, 1400)],
+            carpets=[(-5100, 440, -2450, 800), (-4050, -1050, -3750, 1400)],     # cross-shaped runners, the east-west one in front of the fountain
             boxes=[dict(x0=-5200, z0=-1400, x1=-2400, z1=-1050, y0=450, y1=500, side='mans_marble', top='mans_carpet', collide=False),   # the gallery (upper floor), seen from below and above
                    dict(x0=-4900, z0=-1050, x1=-4400, z1=-300, y1=500, hidden=True),      # west flight (collision only; the model is drawn)
                    dict(x0=-3400, z0=-1050, x1=-2900, z1=-300, y1=500, hidden=True),      # east flight
-                   dict(x0=-4160, z0=-260, x1=-3640, z1=260, y1=300, hidden=True),        # fountain
+                   dict(x0=-4160, z0=360, x1=-3640, z1=880, y1=300, hidden=True),         # fountain
                    dict(x0=-5170, z0=-770, x1=-5030, z1=-630, y1=1100, side='mans_marble', top='mans_marble'),
                    dict(x0=-5170, z0=630, x1=-5030, z1=770, y1=1100, side='mans_marble', top='mans_marble'),
                    dict(x0=-2570, z0=-770, x1=-2430, z1=-630, y1=1100, side='mans_marble', top='mans_marble'),
                    dict(x0=-2570, z0=630, x1=-2430, z1=770, y1=1100, side='mans_marble', top='mans_marble')],
-            lights=[(-3900, 330, 0, 0.55, 1500), (-4400, 650, 350, 0.40, 900), (-3400, 650, 350, 0.40, 900), (-3900, 320, -1200, 0.35, 800),
+            lights=[(-3900, 330, 620, 0.55, 1500), (-4400, 650, 350, 0.40, 900), (-3400, 650, 350, 0.40, 900), (-3900, 320, -1200, 0.35, 800),
                     (-4650, 700, -700, 0.30, 700), (-3150, 700, -700, 0.30, 700)],
             objs=[dict(kind='herb_g', pos=(-2750, -650)), dict(kind='file', file=1, pos=(-4300, 650))])
-hall['cams'] = [      # high cameras just outside the (one-sided, so see-through) south wall: the whole floor, Mario included, stays in frame
-    dict(pos=(-2800, 1000, 1850), look=(-2800, 400, 1050), zone=(-3500, -1400, -2400, 1400), fov=66, outside=True),
-    dict(pos=(-3900, 1000, 1850), look=(-3900, 400, 1050), zone=(-4300, -1400, -3500, 1400), fov=66, outside=True),
-    dict(pos=(-4800, 1000, 1850), look=(-4800, 400, 1050), zone=(-5200, -1400, -4300, 1400), fov=66, outside=True),
+hall['cams'] = [      # the one and only hall camera: high, just outside the (one-sided, so see-through) south wall, looking north
+    dict(pos=(-3900, 1100, 2400), look=(-3900, 330, 950), zone=(-5200, -1400, -2400, 1400), fov=72, outside=True),
 ]
 ROOMS.append(hall)
 
@@ -278,7 +276,7 @@ add('court', dict(kind='prop', model='fountain', pos=(4000, -1650), y=0, yaw=0),
 add('hall', dict(kind='actor', actor=1, model='toad_rom', pos=(-3000, 330), y=0, yaw=0x8000))   # Toad: talk with B (see cinematics.py)
 RM['hall']['boxes'].append(dict(x0=-3030, z0=300, x1=-2970, z1=360, y1=180, side='mans_wood', top='mans_wood', hidden=True))   # toad
 add('hall', dict(kind='prop', model='stair_flight', pos=(-4650, -300), y=0, yaw=0), dict(kind='prop', model='stair_flight', pos=(-3150, -300), y=0, yaw=0),
-    dict(kind='prop', model='hall_fountain', pos=(-3900, 0), y=0, yaw=0))
+    dict(kind='prop', model='hall_fountain', pos=(-3900, 620), y=0, yaw=0))
 for bx in (-5050, -4275, -4025, -3775, -3525, -2775, -2525):      # gallery balustrade, gaps at the two stair heads
     add('hall', dict(kind='prop', model='balustrade', pos=(bx, -1062), y=500, yaw=0))
 RM['hall']['decor'] = [dict(tex='mans_door_k%d' % k, wall='N', at=at, w=300, h=340, y0=500)
@@ -438,4 +436,4 @@ MAPRECTS = {
     'tunnel': (50, 33, 66, 38), 'dock': (38, 34, 50, 45),
 }
 
-START = (-2440, 0, 0xC000)   # (x, z, yaw): just inside the hall doorway, facing west (intro walks in)
+START = (-3900, 1330, 0x8000)   # (x, z, yaw): at the south wall of the hall, facing north up the carpet (the intro walks in from here)
