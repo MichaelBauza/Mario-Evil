@@ -471,11 +471,13 @@ def write_cinematics():
             par = 0
             if st[0] == 'P': par = 1; st = st[1:]
             op = st[0]
-            v = [0] * 7; frames = 0; actor = 0; speaker = l0 = l1 = None; snd = 0
+            v = [0] * 7; frames = 0; actor = 0; speaker = l0 = l1 = None; snd = 0; follow = 0
             if op == 'walk':
                 v = [*st[1], 0, 0, 0, 0]; frames = st[2]
             elif op == 'cam':
                 v = [*st[1], *st[2], int(st[3])]; frames = st[4]
+                if len(st) > 5 and st[5] is not None:
+                    follow = 1; v[3] = v[5] = 0; v[4] = int(st[5])   # follow: v[4] = look height above Mario's feet
             elif op == 'move':
                 actor = st[1]; v = [*st[2], 0, 0, 0, 0]; frames = st[3]
             elif op == 'rot':
@@ -487,8 +489,8 @@ def write_cinematics():
             elif op == 'text':
                 speaker, l0, l1 = st[1], st[2], st[3]
             assert not (par and op == 'text'), 'text cannot run together with other steps'
-            rows.append('    { .op = %s, .actor = %d, .par = %d, .frames = %d, .v = {%s}, .speaker = %s, .line0 = %s, .line1 = %s, .sfx = %s },\n' % (
-                OPS[op], actor, par, frames, ', '.join(str(int(x)) for x in v), c_str(speaker), c_str(l0), c_str(l1), snd or 0))
+            rows.append('    { .op = %s, .actor = %d, .par = %d, .follow = %d, .frames = %d, .v = {%s}, .speaker = %s, .line0 = %s, .line1 = %s, .sfx = %s },\n' % (
+                OPS[op], actor, par, follow, frames, ', '.join(str(int(x)) for x in v), c_str(speaker), c_str(l0), c_str(l1), snd or 0))
         tables.append('static const struct CineStep gCineSteps%d[] = {\n%s};\n' % (i, ''.join(rows)))
     out.extend(tables)
     out.append('const struct CineScript gCines[] = {\n')

@@ -25,7 +25,7 @@ ROOMS = []
 
 # ---- Main Hall -------------------------------------------------------------
 hall = room('hall', 'Main Hall', -5200, -1400, -2400, 1800, 1100, floor='mans_floor', wall='mans_brick', panel='mans_brick', wainscot=0,
-            carpets=[(-5100, 440, -2450, 800), (-4050, -1050, -3750, 1400)],     # cross-shaped runners, the east-west one in front of the fountain
+            carpets=[(-5100, 440, -2450, 800), (-4050, -1050, -3750, 1800)],     # cross-shaped runners, the east-west one in front of the fountain
             boxes=[dict(x0=-5200, z0=-1400, x1=-2400, z1=-1050, y0=450, y1=500, side='mans_marble', top='mans_carpet', collide=False),   # the gallery (upper floor), seen from below and above
                    dict(x0=-4900, z0=-1050, x1=-4400, z1=-300, y1=500, hidden=True),      # west flight (collision only; the model is drawn)
                    dict(x0=-3400, z0=-1050, x1=-2900, z1=-300, y1=500, hidden=True),      # east flight

@@ -11,6 +11,7 @@ struct CineStep {
     u8  op;                  // enum CineOp
     u8  actor;               // MOVE / ROT: actor number
     u8  par;                 // 1 = runs at the same time as the step before it (a group)
+    u8  follow;              // CAM: 1 = the camera stays put but keeps looking at Mario; v[4] = look height above his feet
     u16 frames;              // duration of MOVE / ROT / CAM / WAIT (0 = instant)
     s16 v[7];                // CAM: pos xyz, focus xyz, fov.  MOVE / WALK: xyz.  ROT: yaw in v[0]
     const char *speaker;     // TEXT: speaker name, or NULL

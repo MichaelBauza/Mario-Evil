@@ -1,0 +1,614 @@
+<title>Cinematic Editor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: storyboard tool. Cinematic list | step cards | sticky top-down map with a scrub timeline. */
+:root{
+  --bg:#e9ecf0; --panel:#ffffff; --panel2:#f3f5f8; --line:#cfd5dd; --fg:#1b2027; --mute:#5d6877;
+  --accent:#a8232b; --accent-fg:#ffffff; --ok:#1d7a4d; --warn:#b26a00; --cam:#1f5fbf; --walk:#a8232b; --map-bg:#dfe4ea;
+  --f-disp:"Barlow Condensed","Arial Narrow",sans-serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121418; --panel:#1b1e24; --panel2:#23272e; --line:#343a44; --fg:#e6e9ee; --mute:#97a1b0;
+  --accent:#e0555d; --accent-fg:#1a0c0d; --ok:#4cc58a; --warn:#e6a23c; --cam:#6aa4ff; --walk:#ff6b73; --map-bg:#171a1f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121418; --panel:#1b1e24; --panel2:#23272e; --line:#343a44; --fg:#e6e9ee; --mute:#97a1b0;
+  --accent:#e0555d; --accent-fg:#1a0c0d; --ok:#4cc58a; --warn:#e6a23c; --cam:#6aa4ff; --walk:#ff6b73; --map-bg:#171a1f; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 var(--f-body);padding-block:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font:700 26px/1 var(--f-disp);letter-spacing:.04em;text-transform:uppercase;margin:0}
+h2{font:600 15px/1 var(--f-disp);letter-spacing:.08em;text-transform:uppercase;margin:0;color:var(--mute)}
+header.top{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:12px}
+header.top p{margin:0;color:var(--mute);flex:1 1 280px;min-width:0}
+.app{display:grid;grid-template-columns:200px minmax(0,1fr) minmax(0,520px);gap:12px;align-items:start}
+@media(max-width:1080px){.app{grid-template-columns:200px minmax(0,1fr)}.mapcol{grid-column:1/-1;order:-1}}
+@media(max-width:640px){.app{grid-template-columns:minmax(0,1fr)}}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px;min-width:0}
+.mapcol{position:sticky;top:8px;display:flex;flex-direction:column;gap:8px}
+@media(max-width:1080px){.mapcol{position:static}}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:4px 9px;cursor:pointer;min-height:30px}
+button:hover{border-color:var(--mute)}
+button.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
+button.sm{padding:1px 7px;min-height:24px}
+button.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,canvas:focus-visible{outline:2px solid var(--cam);outline-offset:1px}
+input[type=number],input[type=text],select,textarea{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:3px 6px;min-height:28px;width:100%;min-width:0}
+input[type=number]{font-family:var(--f-mono);font-size:13px}
+textarea{font-family:var(--f-mono);font-size:12px;resize:vertical}
+label.f{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em;min-width:0}
+label.f>*:not(span){text-transform:none;letter-spacing:0;color:var(--fg);font-size:13px}
+.list{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+.list button{text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:5px 8px}
+.list button.sel{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.list small{color:var(--mute);font-size:11px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.row>*{flex:1 1 90px;min-width:0}
+.row>button{flex:0 0 auto}
+.xyz{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:4px;align-items:end}
+.card{border:1px solid var(--line);border-left:4px solid var(--mute);border-radius:6px;background:var(--panel);margin-top:8px;min-width:0}
+.card.sel{outline:2px solid var(--accent);outline-offset:0}
+.card.cam{border-left-color:var(--cam)}.card.walk{border-left-color:var(--walk)}.card.text{border-left-color:var(--ok)}.card.together{border-left-color:var(--warn)}
+.card>.hd{display:flex;gap:6px;align-items:center;padding:6px 8px;cursor:pointer;flex-wrap:wrap}
+.chip{font:600 12px/1 var(--f-disp);letter-spacing:.08em;text-transform:uppercase;padding:3px 6px;border-radius:3px;background:var(--panel2);border:1px solid var(--line)}
+.sum{flex:1 1 120px;min-width:0;color:var(--mute);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bd{padding:2px 8px 10px;display:flex;flex-direction:column;gap:8px}
+.nest{margin:0 0 4px 10px}
+.adds{display:flex;gap:4px;flex-wrap:wrap;margin-top:10px}
+.mono{font-family:var(--f-mono)}
+.hint{color:var(--mute);font-size:12px;margin:0}
+.warns{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px}
+.warns li{font-size:12px;color:var(--warn)}
+.warns li.ok{color:var(--ok)}
+canvas{width:100%;display:block;border:1px solid var(--line);border-radius:4px;background:var(--map-bg);touch-action:none;cursor:grab}
+canvas.pick{cursor:crosshair}
+.tl{display:flex;gap:8px;align-items:center}
+.tl input[type=range]{flex:1;min-width:0}
+.rd{font-family:var(--f-mono);font-size:12px;color:var(--mute)}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--mute)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+details summary{cursor:pointer;color:var(--mute);font:600 15px/1 var(--f-disp);letter-spacing:.08em;text-transform:uppercase}
+.sr{position:absolute;left:-9999px}
+</style>
+
+<header class="top">
+  <h1>Cinematic Editor</h1>
+  <p>Build Mario EVIL cutscenes: pick positions on the map, scrub the timeline, then copy the JSON and send it back to Claude.</p>
+  <button id="copyBtn" class="pri">Copy JSON</button>
+</header>
+
+<div class="app">
+  <aside class="box" aria-label="Cinematics">
+    <h2>Cinematics</h2>
+    <div id="cineList" class="list"></div>
+    <div class="row"><button id="addCine">+ New</button><button id="dupCine">Duplicate</button><button id="delCine">Delete</button></div>
+  </aside>
+
+  <main class="box" id="editor" aria-label="Steps"></main>
+
+  <section class="mapcol" aria-label="Map and preview">
+    <div class="box">
+      <div class="row" style="align-items:center;margin-bottom:6px">
+        <h2 style="flex:1 1 auto">Map (north is up)</h2>
+        <button class="sm" id="zIn" aria-label="Zoom in">+</button>
+        <button class="sm" id="zOut" aria-label="Zoom out">−</button>
+        <button class="sm" id="zFit">Fit scene</button>
+        <button class="sm" id="zAll">Whole mansion</button>
+      </div>
+      <canvas id="map" width="520" height="340" tabindex="0" aria-label="Top-down map of the mansion"></canvas>
+      <div class="rd" id="coord" style="margin-top:4px">Drag to pan. Click a camera or walk marker to select its step.</div>
+      <div class="legend" style="margin-top:4px">
+        <span><i style="background:var(--cam)"></i>camera</span><span><i style="background:var(--walk)"></i>Mario / walk</span>
+        <span><i style="background:var(--warn)"></i>trigger</span><span><i style="background:var(--ok)"></i>actor</span>
+      </div>
+    </div>
+    <div class="box">
+      <div class="tl">
+        <button id="play" class="pri" style="min-width:68px">Play</button>
+        <input type="range" id="scrub" min="0" max="100" value="0" aria-label="Timeline">
+      </div>
+      <div class="rd" id="timeRd" style="margin-top:4px"></div>
+      <p class="hint" style="margin-top:4px">Preview is a top-down sketch at 30 frames per second. Text lines are timed as if read at normal speed.</p>
+    </div>
+    <div class="box"><h2 style="margin-bottom:6px">Checks</h2><ul class="warns" id="warns"></ul></div>
+  </section>
+</div>
+
+<div class="box" style="margin-top:12px">
+  <details>
+    <summary>Import / export JSON</summary>
+    <p class="hint" style="margin:8px 0">The text below is always the current state. To load someone else's file, paste it here and press Load.</p>
+    <textarea id="json" rows="12" spellcheck="false" aria-label="Cinematics JSON"></textarea>
+    <div class="row" style="margin-top:6px"><button id="loadJson">Load from text</button><button id="copyBtn2">Copy JSON</button><button id="resetBtn">Reset to the version in the game</button></div>
+    <p class="hint" id="jsonMsg" style="margin-top:6px"></p>
+  </details>
+</div>
+
+<script>
+"use strict";
+const DATA = /*DATA*/null;
+const FPS = 30;
+const MAX_GROUP = 6, MAX_CINES = 32;
+const SOUNDS = ["SOUND_GENERAL_OPEN_WOOD_DOOR","SOUND_GENERAL_CLOSE_WOOD_DOOR","SOUND_GENERAL_OPEN_IRON_DOOR","SOUND_GENERAL_CLOSE_IRON_DOOR","SOUND_GENERAL_DOOR_INSERT_KEY","SOUND_GENERAL_DOOR_TURN_KEY","SOUND_GENERAL_BREAK_BOX"];
+const YAWS = [["+z (south)",0],["+x (east)",16384],["-z (north)",32768],["-x (west)",49152]];
+const KEY = "marioevil-cine-draft:" + hash(JSON.stringify(DATA.cines));
+
+function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return String(h)}
+const clone = o => JSON.parse(JSON.stringify(o));
+const clamp = (v,a,b) => Math.min(b,Math.max(a,v));
+const smooth = p => p*p*(3-2*p);
+const lerp = (a,b,e) => a+(b-a)*e;
+const lerp3 = (a,b,e) => [lerp(a[0],b[0],e),lerp(a[1],b[1],e),lerp(a[2],b[2],e)];
+const $ = id => document.getElementById(id);
+
+function normalize(list){
+  const fix = s => {
+    if (s.op==='cam'){ if (!s.focus) s.focus=[0,100,0]; if (s.fov==null) s.fov=50; if (s.frames==null) s.frames=0; s.follow=!!s.follow; if (s.height==null) s.height=100; }
+    if (s.op==='together') s.steps.forEach(fix);
+  };
+  list.forEach(c=>c.steps.forEach(fix)); return list;
+}
+let cines = normalize(clone(DATA.cines));
+try { const d = localStorage.getItem(KEY); if (d) { const p = JSON.parse(d); if (Array.isArray(p) && p.length) cines = normalize(p); } } catch(e){}
+let ci = 0;                 // selected cinematic
+let selStep = null;         // selected step object
+let pick = null;            // {kind:'pt', arr, btn} or {kind:'rect', rect}
+let time = 0, playing = false, lastTs = 0;
+
+/* ---------- step model ---------- */
+const DEFAULTS = {
+  cam:   () => ({op:'cam', pos:[...base(0,200,500)], focus:[...base(0,100,0)], fov:50, frames:0, follow:false, height:100}),
+  walk:  () => ({op:'walk', pos:[...base(0,0,-300)], frames:60}),
+  text:  () => ({op:'text', speaker:'MARIO', body:'...'}),
+  wait:  () => ({op:'wait', frames:20}),
+  move:  () => ({op:'move', actor:0, pos:[...base(0,0,0)], frames:60}),
+  rot:   () => ({op:'rot', actor:0, yaw:0, frames:0}),
+  sfx:   () => ({op:'sfx', name:SOUNDS[0]}),
+  together: () => ({op:'together', steps:[]}),
+};
+const LABEL = {cam:'Camera', walk:'Walk', text:'Text', wait:'Wait', move:'Move actor', rot:'Turn actor', sfx:'Sound', together:'Together'};
+function base(dx,dy,dz){ const s = startMario(cines[ci]); return [Math.round(s[0]+dx),dy,Math.round(s[2]+dz)]; }
+
+function startMario(c){
+  if (c.trigger.type === 'talk') { const a = DATA.actors.find(a=>a.actor===c.trigger.actor); return a ? [a.pos[0]+0,0,a.pos[1]+c.trigger.radius*0.6] : [0,0,0]; }
+  const r = c.trigger.rect; return [(r[0]+r[2])/2, 0, (r[1]+r[3])/2];
+}
+function durOf(s){
+  switch(s.op){
+    case 'text': return Math.round(((s.body||'').length)*2+45);
+    case 'sfx': return 0;
+    default: return Math.max(0, Math.round(+s.frames||0));
+  }
+}
+function flat(c){ const out=[]; for (const it of c.steps){ if (it.op==='together') it.steps.forEach(x=>out.push(x)); else out.push(it);} return out; }
+
+/* ---------- simulation (preview only) ---------- */
+function simulate(c){
+  const info = new Map(), groups = []; let t = 0, mario = startMario(c);
+  for (const item of c.steps){
+    const members = item.op==='together' ? item.steps : [item];
+    const startM = mario.slice(); let dur = 0;
+    for (const m of members){ const d = durOf(m); dur = Math.max(dur,d); info.set(m,{t0:t,startM,dur:d}); if (m.op==='walk') mario = m.pos.slice(); }
+    groups.push({item,members,t0:t,dur}); t += dur;
+  }
+  return {groups,total:t,info,end:mario};
+}
+function stateAt(sim,c,t){
+  const st = {mario:startMario(c), cam:null, follow:null, actors:{}};
+  for (const g of sim.groups){
+    if (t < g.t0) break;
+    const lt = clamp(t-g.t0,0,g.dur), snap = clone(st);
+    let blending = false;
+    for (const m of g.members.filter(m=>m.op==='walk')){
+      const e = m.frames>0 ? clamp(lt/m.frames,0,1) : 1;
+      st.mario = lerp3(snap.mario, m.pos, e);
+    }
+    for (const m of g.members){
+      if (m.op==='move'){ const a0 = snap.actors[m.actor] || actorPos(m.actor); const e = smooth(m.frames>0?clamp(lt/m.frames,0,1):1); st.actors[m.actor] = lerp3(a0,m.pos,e); }
+      if (m.op==='cam'){
+        const e = smooth(m.frames>0 ? clamp(lt/m.frames,0,1) : 1);
+        const tgt = m.follow ? [st.mario[0], st.mario[1]+(+m.height||0), st.mario[2]] : m.focus;
+        const c0 = snap.cam || {pos:m.pos, focus:tgt, fov:m.fov};
+        st.cam = {pos:lerp3(c0.pos,m.pos,e), focus:lerp3(c0.focus,tgt,e), fov:lerp(c0.fov,m.fov,e)};
+        st.follow = m.follow ? (+m.height||0) : null;
+        if (m.follow && e<1) blending = true;
+      }
+    }
+    if (st.follow!==null && st.cam && !blending) st.cam.focus = [st.mario[0], st.mario[1]+st.follow, st.mario[2]];
+  }
+  return st;
+}
+function actorPos(n){ const a = DATA.actors.find(a=>a.actor===n); return a ? [a.pos[0],0,a.pos[1]] : [0,0,0]; }
+
+/* ---------- persistence ---------- */
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(cines)); } catch(e){} }
+function exportText(){
+  const s = JSON.stringify(cines, null, 1);
+  return s.replace(/\[\s*(-?[\d.]+(?:,\s*-?[\d.]+)*)\s*\]/g, (m,inner)=>'['+inner.replace(/\s+/g,'')+']');
+}
+function syncJson(){ $('json').value = exportText(); }
+
+/* ---------- DOM helpers ---------- */
+function h(tag, props, ...kids){
+  const e = document.createElement(tag);
+  for (const k in (props||{})){
+    const v = props[k];
+    if (k==='class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (v === true) e.setAttribute(k,''); else if (v !== false && v != null) e.setAttribute(k,v);
+  }
+  for (const kid of kids.flat()) if (kid != null) e.append(kid.nodeType ? kid : document.createTextNode(kid));
+  return e;
+}
+let readouts = [];
+function changed(){ save(); syncJson(); refresh(); }
+
+function numF(label, obj, key, opt={}){
+  const inp = h('input',{type:'number',step:opt.step||1,min:opt.min,value:obj[key]});
+  inp.addEventListener('input',()=>{ obj[key] = inp.value===''?0:parseFloat(inp.value); if (opt.after) opt.after(); changed(); });
+  return h('label',{class:'f'},h('span',null,label),inp);
+}
+function txtF(label, obj, key, opt={}){
+  const inp = opt.area ? h('textarea',{rows:3}) : h('input',{type:'text'});
+  inp.value = obj[key]==null ? '' : obj[key];
+  inp.addEventListener('input',()=>{ obj[key] = inp.value; if (opt.after) opt.after(); changed(); });
+  if (opt.list) inp.setAttribute('list',opt.list);
+  return h('label',{class:'f'},h('span',null,label),inp);
+}
+function ptF(label, arr, owner){
+  const ins = [0,1,2].map(i=>{
+    const inp = h('input',{type:'number',step:10,value:arr[i],'aria-label':label+' '+'XYZ'[i]});
+    inp.addEventListener('input',()=>{ arr[i] = inp.value===''?0:parseFloat(inp.value); changed(); });
+    return inp;
+  });
+  const btn = h('button',{class:'sm',title:'Click the map to set X and Z'},'⌖ Pick');
+  btn.addEventListener('click',e=>{ e.stopPropagation(); startPick({kind:'pt',arr,ins,btn,owner}); });
+  return h('label',{class:'f'},h('span',null,label+' (X, Y height, Z)'),h('div',{class:'xyz'},...ins,btn));
+}
+
+/* ---------- editor rendering ---------- */
+function summary(s){
+  switch(s.op){
+    case 'cam': return s.follow ? `follow Mario from (${s.pos[0]}, ${s.pos[2]})` : `to (${s.pos[0]}, ${s.pos[2]}) looking at (${s.focus[0]}, ${s.focus[2]})`;
+    case 'walk': return `to (${s.pos[0]}, ${s.pos[2]}) in ${s.frames} frames`;
+    case 'text': return (s.speaker?s.speaker+': ':'')+(s.body||'');
+    case 'wait': return s.frames+' frames';
+    case 'move': return `actor ${s.actor} to (${s.pos[0]}, ${s.pos[2]})`;
+    case 'rot': return `actor ${s.actor} yaw ${s.yaw}`;
+    case 'sfx': return s.name;
+    case 'together': return s.steps.length+' steps at once';
+  }
+  return '';
+}
+function moveIn(list,i,d){ const j=i+d; if (j<0||j>=list.length) return; [list[i],list[j]]=[list[j],list[i]]; selStep=list[j]; build(); changed(); }
+
+function stepCard(s, list, i, inGroup){
+  const card = h('div',{class:'card '+s.op+(selStep===s?' sel':'')});
+  const sumEl = h('span',{class:'sum'},summary(s));
+  readouts.push(()=>{ sumEl.textContent = summary(s); });
+  const hd = h('div',{class:'hd'},
+    h('span',{class:'chip'},LABEL[s.op]), sumEl,
+    h('button',{class:'sm','aria-label':'Move up',onclick:e=>{e.stopPropagation();moveIn(list,i,-1)}},'↑'),
+    h('button',{class:'sm','aria-label':'Move down',onclick:e=>{e.stopPropagation();moveIn(list,i,1)}},'↓'),
+    h('button',{class:'sm','aria-label':'Duplicate',onclick:e=>{e.stopPropagation();const n=clone(s);list.splice(i+1,0,n);selStep=n;build();changed()}},'⧉'),
+    h('button',{class:'sm','aria-label':'Delete step',onclick:e=>{e.stopPropagation();list.splice(i,1);if(selStep===s)selStep=null;build();changed()}},'✕'));
+  hd.addEventListener('click',()=>{ selStep = s; build(); refresh(); });
+  card.append(hd);
+  const bd = h('div',{class:'bd'});
+  switch(s.op){
+    case 'cam': {
+      const fo = h('div',{class:'bd',style:'padding:0'});
+      const draw = ()=>{
+        fo.replaceChildren();
+        if (s.follow) fo.append(numF('Look height above Mario’s feet',s,'height',{step:10}),h('p',{class:'hint'},'The camera stays where you put it and turns to keep Mario in view.'));
+        else fo.append(ptF('Looks at',s.focus,s));
+      };
+      draw();
+      bd.append(ptF('Camera position',s.pos,s),
+        h('label',{class:'f'},h('span',null,'Camera behavior'),(()=>{const sel=h('select',null,h('option',{value:'0'},'Look at a fixed point'),h('option',{value:'1'},'Stay put and follow Mario'));sel.value=s.follow?'1':'0';sel.addEventListener('change',()=>{s.follow=sel.value==='1';if(s.follow&&s.height==null)s.height=100;draw();changed()});return sel})()),
+        fo,
+        h('div',{class:'row'},numF('Field of view',s,'fov',{min:10}),numF('Frames to get there (0 = cut)',s,'frames',{min:0})));
+      break; }
+    case 'walk': {
+      const sp = h('input',{type:'number',step:0.1,min:0.1});
+      const setSp = ()=>{ const inf=currentSim.info.get(s); if(!inf) return; const d=Math.hypot(s.pos[0]-inf.startM[0],s.pos[2]-inf.startM[2]); sp.value = s.frames>0 ? (d/s.frames).toFixed(2) : '—'; };
+      sp.addEventListener('input',()=>{ const inf=currentSim.info.get(s); const v=parseFloat(sp.value); if(!inf||!(v>0)) return; const d=Math.hypot(s.pos[0]-inf.startM[0],s.pos[2]-inf.startM[2]); s.frames=Math.max(1,Math.round(d/v)); framesIn.value=s.frames; changed(); });
+      const framesIn = h('input',{type:'number',step:1,min:1,value:s.frames});
+      framesIn.addEventListener('input',()=>{ s.frames=framesIn.value===''?1:Math.max(1,parseFloat(framesIn.value)); changed(); });
+      readouts.push(()=>{ if (document.activeElement!==sp) setSp(); });
+      bd.append(ptF('Mario walks to',s.pos,s),
+        h('div',{class:'row'},h('label',{class:'f'},h('span',null,'Frames'),framesIn),h('label',{class:'f'},h('span',null,'Speed (units per frame)'),sp)),
+        h('p',{class:'hint'},'Mario’s walk is about 4 to 6 units per frame; the controls stay locked while it plays.'));
+      break; }
+    case 'text': {
+      bd.append(h('div',{class:'row'},txtF('Speaker (empty = narration)',s,'speaker'),h('span')),
+        txtF('What is said (wrapped into two-line pages automatically)',s,'body',{area:true}));
+      break; }
+    case 'wait': bd.append(numF('Frames',s,'frames',{min:0})); break;
+    case 'move': bd.append(numF('Actor number',s,'actor',{min:0}),ptF('Slides to',s.pos,s),numF('Frames',s,'frames',{min:0})); break;
+    case 'rot': {
+      const sel = h('select',null,h('option',{value:''},'Pick a direction…'),...YAWS.map(y=>h('option',{value:y[1]},'Face '+y[0])));
+      const yawIn = numF('Yaw (0 to 65535)',s,'yaw',{step:256});
+      sel.addEventListener('change',()=>{ if(sel.value==='') return; s.yaw=+sel.value; yawIn.querySelector('input').value=s.yaw; changed(); });
+      bd.append(numF('Actor number',s,'actor',{min:0}),h('label',{class:'f'},h('span',null,'Direction preset'),sel),yawIn,numF('Frames (0 = instant)',s,'frames',{min:0}));
+      break; }
+    case 'sfx': {
+      const dl = h('datalist',{id:'sounds'},...SOUNDS.map(x=>h('option',{value:x})));
+      bd.append(txtF('Sound macro',s,'name',{list:'sounds'}),dl);
+      break; }
+    case 'together': {
+      bd.append(h('p',{class:'hint'},`These start at the same moment and the group ends when the slowest finishes (up to ${MAX_GROUP} steps; no text).`));
+      s.steps.forEach((x,k)=>{ const c=stepCard(x,s.steps,k,true); c.classList.add('nest'); bd.append(c); });
+      bd.append(addBar(s.steps,true));
+      break; }
+  }
+  card.append(bd);
+  return card;
+}
+function addBar(list, inGroup){
+  const ops = inGroup ? ['cam','walk','wait','move','rot','sfx'] : ['cam','walk','text','wait','move','rot','sfx','together'];
+  const bar = h('div',{class:'adds'});
+  for (const op of ops){
+    const label = '+ '+LABEL[op];
+    bar.append(h('button',{class:'sm',onclick:()=>{ const n=DEFAULTS[op](); list.push(n); selStep=n; build(); changed(); }},label));
+  }
+  if (!inGroup) bar.append(h('button',{class:'sm',onclick:()=>{ const n=DEFAULTS.cam(); n.follow=true; n.pos=base(-0,200,-350); list.push(n); selStep=n; build(); changed(); }},'+ Follow camera'));
+  return bar;
+}
+function build(){
+  readouts = [];
+  const c = cines[ci], ed = $('editor');
+  ed.replaceChildren();
+  if (!c){ ed.append(h('p',{class:'hint'},'No cinematics yet. Press “+ New” on the left.')); renderList(); return; }
+  const head = h('div',{class:'bd',style:'padding:0'});
+  head.append(h('div',{class:'row'},
+    h('label',{class:'f'},h('span',null,'Name (letters, digits, underscore)'),(()=>{const i=h('input',{type:'text',value:c.name});i.addEventListener('input',()=>{c.name=i.value.replace(/[^A-Za-z0-9_]/g,'_');renderList();changed()});return i})()),
+    h('label',{class:'f'},h('span',null,'Starts when'),(()=>{const s=h('select',null,h('option',{value:'zone'},'Mario walks into an area (plays once)'),h('option',{value:'talk'},'Mario presses B near an actor (repeats)'));s.value=c.trigger.type;s.addEventListener('change',()=>{
+      if (s.value==='zone') c.trigger={type:'zone',rect:[-100,-100,100,100]}; else c.trigger={type:'talk',actor:1,radius:260};
+      build(); changed(); fitScene();});return s})())));
+  if (c.trigger.type==='zone'){
+    const r = c.trigger.rect;
+    const ins = [0,1,2,3].map(i=>{const inp=h('input',{type:'number',step:10,value:r[i],'aria-label':['X min','Z min','X max','Z max'][i]});inp.addEventListener('input',()=>{r[i]=inp.value===''?0:parseFloat(inp.value);changed()});return h('label',{class:'f'},h('span',null,['X min','Z min','X max','Z max'][i]),inp)});
+    const btn = h('button',{class:'sm'},'⌖ Draw area on map');
+    btn.addEventListener('click',()=>startPick({kind:'rect',rect:r,ins:ins.map(l=>l.querySelector('input')),btn}));
+    head.append(h('div',{class:'row'},...ins,btn));
+  } else {
+    head.append(h('div',{class:'row'},numF('Actor number',c.trigger,'actor',{min:0,after:()=>fitScene()}),numF('Distance (units)',c.trigger,'radius',{min:10})));
+  }
+  ed.append(h('div',{class:'row',style:'align-items:center;margin-bottom:6px'},h('h2',null,'Steps')),head);
+  c.steps.forEach((s,i)=>ed.append(stepCard(s,c.steps,i,false)));
+  ed.append(addBar(c.steps,false));
+  renderList();
+}
+function renderList(){
+  const l = $('cineList'); l.replaceChildren();
+  cines.forEach((c,i)=>{
+    const b = h('button',{class:i===ci?'sel':'',onclick:()=>{ci=i;selStep=null;time=0;build();changed();fitScene();}},c.name||'(unnamed)',h('small',null,(c.trigger.type==='talk'?'talk to actor '+c.trigger.actor:'area trigger')+' · '+c.steps.length+' steps'));
+    l.append(b);
+  });
+}
+
+/* ---------- checks ---------- */
+function checks(){
+  const w = [];
+  const names = new Set();
+  if (cines.length > MAX_CINES) w.push(`The game fits ${MAX_CINES} cinematics; there are ${cines.length}.`);
+  cines.forEach((c,i)=>{
+    if (!c.name) w.push(`Cinematic ${i+1} has no name.`);
+    if (names.has(c.name)) w.push(`Two cinematics are named “${c.name}”.`);
+    names.add(c.name);
+    c.steps.forEach((s,k)=>{
+      if (s.op==='together'){
+        if (s.steps.length > MAX_GROUP) w.push(`${c.name}: a Together group has ${s.steps.length} steps; the game plays at most ${MAX_GROUP}.`);
+        if (s.steps.length === 0) w.push(`${c.name}: step ${k+1} is an empty Together group.`);
+        if (s.steps.some(x=>x.op==='text')) w.push(`${c.name}: text cannot go inside a Together group.`);
+      }
+    });
+    const f = flat(c);
+    if (!f.some(s=>s.op==='text'||s.op==='walk'||s.op==='wait'||s.op==='cam')) w.push(`${c.name}: has nothing that takes time.`);
+    f.filter(s=>s.op==='walk'&&!(s.frames>0)).forEach(()=>w.push(`${c.name}: a Walk step needs at least 1 frame.`));
+    f.filter(s=>s.op==='text'&&!(s.body||'').trim()).forEach(()=>w.push(`${c.name}: a Text step is empty.`));
+    f.filter(s=>s.op==='text'&&(s.speaker||'').length>20).forEach(()=>w.push(`${c.name}: a speaker name over 20 characters may not fit the box.`));
+  });
+  const ul = $('warns'); ul.replaceChildren();
+  if (!w.length) ul.append(h('li',{class:'ok'},'No problems found.'));
+  w.forEach(x=>ul.append(h('li',null,x)));
+}
+
+/* ---------- map ---------- */
+const cv = $('map'), ctx = cv.getContext('2d');
+let view = {cx:-3900, cz:400, sc:0.1}, hits = [], hover = null;
+let dragging = null, pickDrag = null;
+const col = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function resize(){
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio||1;
+  const w = Math.max(200,Math.round(r.width)), hh = Math.round(Math.min(Math.max(w*0.66,260),520));
+  cv.style.height = hh+'px'; cv.width = Math.round(w*dpr); cv.height = Math.round(hh*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0); draw();
+}
+const W = () => cv.width/(window.devicePixelRatio||1), H = () => cv.height/(window.devicePixelRatio||1);
+const sx = x => (x-view.cx)*view.sc+W()/2, sy = z => (z-view.cz)*view.sc+H()/2;
+const wx = px => (px-W()/2)/view.sc+view.cx, wz = py => (py-H()/2)/view.sc+view.cz;
+function fitRect(x0,z0,x1,z1){
+  const pad = 1.25, w = Math.max(400,(x1-x0))*pad, hh = Math.max(400,(z1-z0))*pad;
+  view.cx=(x0+x1)/2; view.cz=(z0+z1)/2; view.sc=Math.min(W()/w,H()/hh); draw();
+}
+function fitScene(){
+  const c = cines[ci]; if (!c) return fitAll();
+  const pts = [startMario(c)];
+  if (c.trigger.type==='zone'){ pts.push([c.trigger.rect[0],0,c.trigger.rect[1]],[c.trigger.rect[2],0,c.trigger.rect[3]]); }
+  else { const a=actorPos(c.trigger.actor); pts.push([a[0]-c.trigger.radius,0,a[2]-c.trigger.radius],[a[0]+c.trigger.radius,0,a[2]+c.trigger.radius]); }
+  flat(c).forEach(s=>{ if (s.pos && s.op!=='text') pts.push(s.pos); if (s.op==='cam'&&!s.follow) pts.push(s.focus); });
+  fitRect(Math.min(...pts.map(p=>p[0])),Math.min(...pts.map(p=>p[2])),Math.max(...pts.map(p=>p[0])),Math.max(...pts.map(p=>p[2])));
+}
+function fitAll(){
+  const rs = DATA.rooms.map(r=>r.rect);
+  fitRect(Math.min(...rs.map(r=>r[0])),Math.min(...rs.map(r=>r[1])),Math.max(...rs.map(r=>r[2])),Math.max(...rs.map(r=>r[3])));
+}
+function arrow(x0,y0,x1,y1,color){
+  ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+  const a=Math.atan2(y1-y0,x1-x0); ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x1-9*Math.cos(a-0.4),y1-9*Math.sin(a-0.4)); ctx.lineTo(x1-9*Math.cos(a+0.4),y1-9*Math.sin(a+0.4)); ctx.closePath(); ctx.fill();
+}
+function camShape(pos,focus,fov,color,fill,selected){
+  const px=sx(pos[0]), py=sy(pos[2]);
+  const ang=Math.atan2(focus[2]-pos[2],focus[0]-pos[0]);
+  const hf = 2*Math.atan(Math.tan((fov||50)*Math.PI/360)*4/3)/2;
+  const len = Math.max(Math.hypot(focus[0]-pos[0],focus[2]-pos[2]),300)*view.sc;
+  if (fill){ ctx.fillStyle=color; ctx.globalAlpha=0.16; ctx.beginPath(); ctx.moveTo(px,py); ctx.arc(px,py,len,ang-hf,ang+hf); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1; }
+  ctx.strokeStyle=color; ctx.lineWidth=selected?2.5:1.2; ctx.setLineDash(selected?[]:[4,3]);
+  ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px+Math.cos(ang-hf)*len,py+Math.sin(ang-hf)*len); ctx.moveTo(px,py); ctx.lineTo(px+Math.cos(ang+hf)*len,py+Math.sin(ang+hf)*len); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle=color; ctx.save(); ctx.translate(px,py); ctx.rotate(ang); ctx.beginPath(); ctx.moveTo(10,0); ctx.lineTo(-7,-7); ctx.lineTo(-7,7); ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function draw(){
+  const w=W(), hh=H(); ctx.clearRect(0,0,w,hh);
+  const cMute=col('--mute'), cLine=col('--line'), cFg=col('--fg'), cCam=col('--cam'), cWalk=col('--walk'), cWarn=col('--warn'), cOk=col('--ok');
+  hits = [];
+  // grid
+  ctx.strokeStyle=cLine; ctx.globalAlpha=0.35; ctx.lineWidth=1;
+  const step = view.sc>0.05?500:view.sc>0.02?1000:2000;
+  for (let x=Math.floor(wx(0)/step)*step; x<wx(w); x+=step){ ctx.beginPath(); ctx.moveTo(sx(x),0); ctx.lineTo(sx(x),hh); ctx.stroke(); }
+  for (let z=Math.floor(wz(0)/step)*step; z<wz(hh); z+=step){ ctx.beginPath(); ctx.moveTo(0,sy(z)); ctx.lineTo(w,sy(z)); ctx.stroke(); }
+  ctx.globalAlpha=1;
+  // rooms
+  ctx.font='11px '+col('--f-body'); ctx.textBaseline='top';
+  for (const r of DATA.rooms){
+    const [x0,z0,x1,z1]=r.rect;
+    ctx.fillStyle=col('--panel'); ctx.globalAlpha=0.7; ctx.fillRect(sx(x0),sy(z0),(x1-x0)*view.sc,(z1-z0)*view.sc); ctx.globalAlpha=1;
+    ctx.strokeStyle=cMute; ctx.lineWidth=1.2; ctx.strokeRect(sx(x0),sy(z0),(x1-x0)*view.sc,(z1-z0)*view.sc);
+    if ((x1-x0)*view.sc>46){ ctx.fillStyle=cMute; ctx.fillText(r.name,sx(x0)+4,sy(z0)+3); }
+  }
+  const c = cines[ci]; if (!c){ return; }
+  const sim = currentSim, st = stateAt(sim,c,time);
+  // trigger
+  ctx.strokeStyle=cWarn; ctx.fillStyle=cWarn; ctx.lineWidth=1.5; ctx.setLineDash([6,4]);
+  if (c.trigger.type==='zone'){ const r=c.trigger.rect; ctx.globalAlpha=0.14; ctx.fillRect(sx(r[0]),sy(r[1]),(r[2]-r[0])*view.sc,(r[3]-r[1])*view.sc); ctx.globalAlpha=1; ctx.strokeRect(sx(r[0]),sy(r[1]),(r[2]-r[0])*view.sc,(r[3]-r[1])*view.sc); }
+  else { const a=actorPos(c.trigger.actor); ctx.beginPath(); ctx.arc(sx(a[0]),sy(a[2]),c.trigger.radius*view.sc,0,7); ctx.stroke(); }
+  ctx.setLineDash([]);
+  // actors
+  for (const a of DATA.actors){ ctx.fillStyle=cOk; ctx.fillRect(sx(a.pos[0])-5,sy(a.pos[1])-5,10,10); ctx.fillStyle=cMute; ctx.fillText('actor '+a.actor+(a.model?' ('+a.model+')':''),sx(a.pos[0])+8,sy(a.pos[1])-5); }
+  for (const k in st.actors){ const p=st.actors[k]; ctx.strokeStyle=cOk; ctx.strokeRect(sx(p[0])-5,sy(p[2])-5,10,10); }
+  // Mario path
+  let prev = startMario(c);
+  ctx.fillStyle=cWalk; ctx.beginPath(); ctx.arc(sx(prev[0]),sy(prev[2]),4,0,7); ctx.fill(); ctx.fillStyle=cMute; ctx.fillText('start',sx(prev[0])+6,sy(prev[2])+4);
+  flat(c).filter(s=>s.op==='walk').forEach(s=>{
+    const inf = sim.info.get(s), from = inf?inf.startM:prev, sel = selStep===s;
+    ctx.globalAlpha=sel?1:0.75; arrow(sx(from[0]),sy(from[2]),sx(s.pos[0]),sy(s.pos[2]),cWalk); ctx.globalAlpha=1;
+    ctx.beginPath(); ctx.arc(sx(s.pos[0]),sy(s.pos[2]),sel?6:4,0,7); ctx.fill();
+    hits.push({x:sx(s.pos[0]),y:sy(s.pos[2]),r:12,step:s}); prev = s.pos;
+  });
+  // cameras
+  flat(c).filter(s=>s.op==='cam').forEach(s=>{
+    const sel = selStep===s;
+    const focus = s.follow ? st.mario.slice(0,1).concat([0],st.mario.slice(2,3)) : s.focus;
+    ctx.globalAlpha = sel?1:0.7; camShape(s.pos,s.follow?[sim.end[0],0,sim.end[2]]:focus,s.fov,cCam,false,sel); ctx.globalAlpha=1;
+    if (!s.follow){ ctx.strokeStyle=cCam; ctx.beginPath(); ctx.arc(sx(s.focus[0]),sy(s.focus[2]),4,0,7); ctx.stroke(); hits.push({x:sx(s.focus[0]),y:sy(s.focus[2]),r:9,step:s}); }
+    hits.push({x:sx(s.pos[0]),y:sy(s.pos[2]),r:12,step:s});
+  });
+  // moves
+  flat(c).filter(s=>s.op==='move').forEach(s=>{ ctx.strokeStyle=cOk; ctx.setLineDash([3,3]); ctx.beginPath(); ctx.arc(sx(s.pos[0]),sy(s.pos[2]),5,0,7); ctx.stroke(); ctx.setLineDash([]); hits.push({x:sx(s.pos[0]),y:sy(s.pos[2]),r:10,step:s}); });
+  // live preview
+  if (st.cam) camShape(st.cam.pos,st.cam.focus,st.cam.fov,cCam,true,true);
+  ctx.fillStyle=cWalk; ctx.strokeStyle=cFg; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(sx(st.mario[0]),sy(st.mario[2]),6,0,7); ctx.fill(); ctx.stroke();
+  // pick rectangle in progress
+  if (pickDrag){ ctx.strokeStyle=cWarn; ctx.lineWidth=2; ctx.strokeRect(pickDrag.x0,pickDrag.y0,pickDrag.x1-pickDrag.x0,pickDrag.y1-pickDrag.y0); }
+  // scale bar
+  const bar = 1000*view.sc; ctx.fillStyle=cFg; ctx.fillRect(10,hh-14,bar,2); ctx.fillStyle=cMute; ctx.textBaseline='bottom'; ctx.fillText('1000 units',10,hh-17); ctx.textBaseline='top';
+  if (pick) { ctx.fillStyle=col('--accent'); ctx.font='600 12px '+col('--f-body'); ctx.fillText(pick.kind==='rect'?'Drag a rectangle on the map':'Click the map to place the point',10,8); }
+}
+function startPick(p){
+  cancelPick(); pick = p; if (p.btn) p.btn.classList.add('on'); cv.classList.add('pick');
+  draw(); cv.scrollIntoView({block:'nearest'});
+}
+function cancelPick(){ if (pick&&pick.btn) pick.btn.classList.remove('on'); pick=null; pickDrag=null; cv.classList.remove('pick'); }
+const snap10 = v => Math.round(v/10)*10;
+function pos(e){ const r=cv.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; }
+cv.addEventListener('pointerdown',e=>{
+  cv.setPointerCapture(e.pointerId); const [px,py]=pos(e);
+  if (pick && pick.kind==='rect') pickDrag={x0:px,y0:py,x1:px,y1:py};
+  else dragging={px,py,cx:view.cx,cz:view.cz,moved:false};
+});
+cv.addEventListener('pointermove',e=>{
+  const [px,py]=pos(e);
+  $('coord').textContent = `x ${Math.round(wx(px))}   z ${Math.round(wz(py))}`;
+  if (pickDrag){ pickDrag.x1=px; pickDrag.y1=py; draw(); }
+  else if (dragging){ const dx=px-dragging.px, dy=py-dragging.py; if (Math.hypot(dx,dy)>3) dragging.moved=true; if (dragging.moved){ view.cx=dragging.cx-dx/view.sc; view.cz=dragging.cz-dy/view.sc; draw(); } }
+});
+cv.addEventListener('pointerup',e=>{
+  const [px,py]=pos(e);
+  if (pickDrag){
+    const a=[wx(Math.min(pickDrag.x0,px)),wz(Math.min(pickDrag.y0,py))], b=[wx(Math.max(pickDrag.x0,px)),wz(Math.max(pickDrag.y0,py))];
+    if (Math.abs(px-pickDrag.x0)>4 && Math.abs(py-pickDrag.y0)>4){
+      const r=pick.rect; r[0]=snap10(a[0]); r[1]=snap10(a[1]); r[2]=snap10(b[0]); r[3]=snap10(b[1]);
+      pick.ins.forEach((inp,i)=>inp.value=r[i]); cancelPick(); changed();
+    } else pickDrag=null;
+    return;
+  }
+  if (dragging && !dragging.moved){
+    const x=wx(px), z=wz(py);
+    if (pick && pick.kind==='pt'){ pick.arr[0]=snap10(x); pick.arr[2]=snap10(z); pick.ins.forEach((inp,i)=>inp.value=pick.arr[i]); cancelPick(); changed(); }
+    else {
+      const hit = hits.slice().reverse().find(k=>Math.hypot(k.x-px,k.y-py)<=k.r);
+      if (hit){ selStep=hit.step; build(); refresh(); const n=document.querySelector('.card.sel'); if (n) n.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+    }
+  }
+  dragging=null;
+});
+cv.addEventListener('keydown',e=>{ if (e.key==='Escape'){ cancelPick(); draw(); } });
+cv.addEventListener('wheel',e=>{ e.preventDefault(); zoom(e.deltaY<0?1.2:1/1.2,pos(e)); },{passive:false});
+function zoom(f,at){
+  const [px,py]= at||[W()/2,H()/2]; const x=wx(px), z=wz(py);
+  view.sc=clamp(view.sc*f,0.012,1.5); view.cx=x-(px-W()/2)/view.sc; view.cz=z-(py-H()/2)/view.sc; draw();
+}
+$('zIn').onclick=()=>zoom(1.4); $('zOut').onclick=()=>zoom(1/1.4); $('zFit').onclick=fitScene; $('zAll').onclick=fitAll;
+
+/* ---------- timeline ---------- */
+let currentSim = {groups:[],total:0,info:new Map(),end:[0,0,0]};
+function refresh(){
+  const c = cines[ci];
+  currentSim = c ? simulate(c) : currentSim;
+  const total = Math.max(1,currentSim.total);
+  const sc = $('scrub'); sc.max = total; time = clamp(time,0,total); sc.value = time;
+  $('timeRd').textContent = `frame ${Math.round(time)} of ${currentSim.total}  ·  ${(time/FPS).toFixed(1)}s of ${(currentSim.total/FPS).toFixed(1)}s`;
+  readouts.forEach(f=>f());
+  checks(); draw();
+}
+$('scrub').addEventListener('input',e=>{ time = +e.target.value; playing=false; $('play').textContent='Play'; refresh(); });
+$('play').onclick = ()=>{ playing=!playing; if (playing && time>=currentSim.total) time=0; $('play').textContent=playing?'Pause':'Play'; lastTs=0; if (playing) requestAnimationFrame(tick); };
+function tick(ts){
+  if (!playing) return;
+  if (lastTs) time += (ts-lastTs)*FPS/1000; lastTs = ts;
+  if (time >= currentSim.total){ time = currentSim.total; playing=false; $('play').textContent='Play'; }
+  refresh(); if (playing) requestAnimationFrame(tick);
+}
+
+/* ---------- list actions and JSON ---------- */
+$('addCine').onclick = ()=>{
+  const n = {name:'new_cinematic', trigger:{type:'zone',rect:[-100,-100,100,100]}, steps:[]};
+  let k=1; while (cines.some(c=>c.name===n.name)) n.name='new_cinematic_'+(++k);
+  const cur = cines[ci]; if (cur && cur.trigger.type==='zone') { const r=cur.trigger.rect; n.trigger.rect=[r[0],r[1],r[2],r[3]]; }
+  cines.push(n); ci=cines.length-1; selStep=null; build(); changed(); fitScene();
+};
+$('dupCine').onclick = ()=>{ if(!cines[ci]) return; const n=clone(cines[ci]); n.name=n.name+'_copy'; cines.splice(ci+1,0,n); ci++; selStep=null; build(); changed(); };
+$('delCine').onclick = ()=>{ if(!cines[ci]) return; cines.splice(ci,1); ci=Math.max(0,Math.min(ci,cines.length-1)); selStep=null; build(); changed(); fitScene(); };
+async function copy(){
+  const t = exportText(); let ok = false;
+  try { await navigator.clipboard.writeText(t); ok = true; } catch(e){}
+  if (!ok){ const ta=$('json'); ta.closest('details').open=true; ta.focus(); ta.select(); }
+  $('jsonMsg').textContent = ok ? 'Copied. Paste it into the chat with Claude.' : 'Your browser blocked copying. The text is selected below: copy it by hand.';
+  const b=$('copyBtn'); const old=b.textContent; b.textContent=ok?'Copied':'Select & copy'; setTimeout(()=>b.textContent=old,1800);
+}
+$('copyBtn').onclick = copy; $('copyBtn2').onclick = copy;
+$('loadJson').onclick = ()=>{
+  try {
+    let p = JSON.parse($('json').value); if (p && p.cinematics) p = p.cinematics;
+    if (!Array.isArray(p)) throw new Error('Expected a list of cinematics.');
+    p.forEach((c,i)=>{ if (!c.name||!c.trigger||!Array.isArray(c.steps)) throw new Error('Cinematic '+(i+1)+' is missing name, trigger or steps.'); });
+    cines = normalize(p); ci = 0; selStep = null; time = 0; build(); changed(); fitScene(); $('jsonMsg').textContent = 'Loaded '+p.length+' cinematics.';
+  } catch(e){ $('jsonMsg').textContent = 'Could not load: '+e.message; }
+};
+$('resetBtn').onclick = ()=>{ cines = clone(DATA.cines); ci=0; selStep=null; time=0; try{localStorage.removeItem(KEY)}catch(e){} build(); changed(); fitScene(); $('jsonMsg').textContent='Reset to the version currently in the game.'; };
+
+new ResizeObserver(resize).observe(cv);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);
+build(); syncJson(); resize(); refresh(); fitScene();
+</script>

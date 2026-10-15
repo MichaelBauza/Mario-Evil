@@ -31,6 +31,9 @@ static s16   sSnapYaw[CINE_MAX_GROUP];
    cinematic feeds a forward push matched to its walk speed (set after the pad is cleared each frame). */
 static s32   sWalkFeed;
 static s16   sWalkStickY;
+static s32   sFollow;                     /* 1 while a follow camera is active (stationary, looking at Mario) */
+static f32   sFollowY;                    /* look height above Mario's feet */
+static s32   sFollowSet;                  /* 1 once the blend into the follow focus has finished */
 static s32   sPressAt;   /* text timer of the last accepted A/B press on this page */
 
 static const struct CineScript *cur_script(void) { return &gCines[gMansion.cine - 1]; }
@@ -132,6 +135,8 @@ static void cine_start(s32 i) {
     vec3f_copy(sCamPos, gLakituState.pos);
     vec3f_copy(sCamFocus, gLakituState.focus);
     sCamFov = gMansionFov;
+    sFollow = 0;
+    sFollowSet = 0;
     group_begin();
 }
 
@@ -173,9 +178,23 @@ static s32 member_step(const struct CineStep *st, s32 k, s32 t) {
         case CINE_CAM: {
             f32 e = ease(t, st->frames);
             s32 j;
+            f32 tgt[3];
+            if (st->follow) {
+                /* follow: the focus target is Mario himself, re-read every frame */
+                tgt[0] = gMarioState->pos[0];
+                tgt[1] = gMarioState->pos[1] + (f32) st->v[4];
+                tgt[2] = gMarioState->pos[2];
+                sFollow = 1;
+                sFollowY = (f32) st->v[4];
+                sFollowSet = (t >= st->frames);
+            } else {
+                tgt[0] = st->v[3]; tgt[1] = st->v[4]; tgt[2] = st->v[5];
+                sFollow = 0;
+                sFollowSet = 0;
+            }
             for (j = 0; j < 3; j++) {
-                sCamPos[j]   = sSnapPos[k][j]   + ((f32) st->v[j]     - sSnapPos[k][j])   * e;
-                sCamFocus[j] = sSnapFocus[k][j] + ((f32) st->v[j + 3] - sSnapFocus[k][j]) * e;
+                sCamPos[j]   = sSnapPos[k][j]   + ((f32) st->v[j] - sSnapPos[k][j]) * e;
+                sCamFocus[j] = sSnapFocus[k][j] + (tgt[j] - sSnapFocus[k][j]) * e;
             }
             sCamFov = sSnapFov[k] + ((f32) st->v[6] - sSnapFov[k]) * e;
             return t >= st->frames;
@@ -293,6 +312,12 @@ s32 mansion_cine_camera(struct Camera *c) {
     Vec3f pos, focus;
     s16 yaw;
     if (!gMansion.cine) return FALSE;
+    if (sFollow && sFollowSet) {
+        /* follow camera: fixed position, focus rides along with Mario */
+        sCamFocus[0] = gMarioState->pos[0];
+        sCamFocus[1] = gMarioState->pos[1] + sFollowY;
+        sCamFocus[2] = gMarioState->pos[2];
+    }
     vec3f_copy(pos, sCamPos);
     vec3f_copy(focus, sCamFocus);
     vec3f_copy(c->pos, pos);

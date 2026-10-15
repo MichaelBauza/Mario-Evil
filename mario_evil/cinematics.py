@@ -4,6 +4,7 @@ A cinematic plays once per session when Mario walks into its trigger zone (x0, z
 Steps run in order; Mario's controls are locked while one plays.
 
   cam(pos, focus, fov=50, frames=0)   move the camera to a new angle (frames=0 is a hard cut)
+  cam(pos, follow=100, fov, frames)   stationary camera at pos that keeps looking at Mario (100 = look height)
   text(speaker, body)                 dialogue box: typewriter text, A reveals / advances. Body is wrapped
                                       automatically into pages of two lines. speaker=None for narration.
   move(actor, pos, frames=60)         slide an actor (a prop placed with kind='actor') to (x, y, z)
@@ -15,13 +16,17 @@ Steps run in order; Mario's controls are locked while one plays.
 
 Actors are declared in mansion_map.py like any other object:
   dict(kind='actor', actor=0, model='pot', pos=(x, z), y=0, yaw=0)
+The cinematics themselves live in mario_evil/cinematics.json (edit them with the Cinematic Editor and
+send the exported file back); this file turns that JSON into steps for the generator.
 Build with `python3 mario_evil/gen_level.py` (writes src/game/mansion_cine_data.inc.h).
 """
-import textwrap
+import json, os, textwrap
 
 WRAP = 46   # characters per dialogue line
 
-def cam(pos, focus, fov=50, frames=0):  return ('cam', tuple(pos), tuple(focus), fov, frames)
+def cam(pos, focus=(0, 0, 0), fov=50, frames=0, follow=None):
+    # follow = look height above Mario's feet (None = look at the fixed focus point)
+    return ('cam', tuple(pos), tuple(focus), fov, frames, follow)
 def move(actor, pos, frames=60):        return ('move', actor, tuple(pos), frames)
 def rot(actor, yaw, frames=0):          return ('rot', actor, yaw, frames)
 def walk(pos, frames=120):              return ('walk', tuple(pos), frames)   # Mario walks to (x, y, z) at a steady pace
@@ -38,27 +43,33 @@ def text(speaker, body):
     pages = [lines[i:i + 2] for i in range(0, len(lines), 2)]
     return [('text', speaker, p[0], p[1] if len(p) > 1 else '') for p in pages]
 
-CINES = [
-    # Talk: press B next to the Toad in the hall. Repeats every time.
-    dict(name='toad_talk', talk=(1, 260), once=False, steps=[
-        text('TOAD', "Whaaa! Mario your here! I was starting to think we were doomed...."),
-        text('TOAD', "I came here with my friends as a dare, but then we heard a Scary sound and everyone ran in to different directions!"),
-        text('TOAD', "Now we have all split up! Help me rescue my friends Mario Whaaaa!!!"),
-    ]),
-    # Intro: plays once, as soon as the title screen is dismissed and Mario is in the hall.
-    dict(name='intro_hall', zone=(-4100, 1500, -3700, 1750), steps=[
-        walk((-3900, 0, 1000), frames=130),                         # Mario walks in from the south wall up the carpet (hall camera stays as is)
-        text('MARIO', "Let's-a go!"),
-        wait(20),
-    ]),
-    dict(name='dining_fire', zone=(-300, 560, 300, 720), steps=[
-        cam((0, 330, -120), (0, 200, 740), fov=50),
-        text('MARIO', 'The fire is still warm. Someone was dining here not long ago.'),
-        wait(20),
-        move(0, (-600, 0, -420), frames=120),
-        rot(0, 0x2000, frames=40),
-        text(None, 'Something knocked that pot across the floor.'),
-        cam((-500, 300, -700), (0, 150, 640), fov=50, frames=150),
-        text(None, 'Somewhere above you, a door creaks open.'),
-    ]),
-]
+
+def _step(d):
+    op = d['op']
+    if op == 'cam':
+        if d.get('follow'):
+            return cam(d['pos'], (0, d.get('height', 100), 0), d.get('fov', 50), d.get('frames', 0), follow=d.get('height', 100))
+        return cam(d['pos'], d['focus'], d.get('fov', 50), d.get('frames', 0))
+    if op == 'walk':     return walk(d['pos'], d.get('frames', 120))
+    if op == 'wait':     return wait(d.get('frames', 20))
+    if op == 'sfx':      return sfx(d['name'])
+    if op == 'move':     return move(d['actor'], d['pos'], d.get('frames', 60))
+    if op == 'rot':      return rot(d['actor'], d['yaw'], d.get('frames', 0))
+    if op == 'text':     return text(d.get('speaker'), d['body'])
+    if op == 'together': return together(*[_step(x) for x in d['steps']])
+    raise ValueError('unknown cinematic step op: %r' % op)
+
+def load(path=None):
+    path = path or os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cinematics.json')
+    out = []
+    for c in json.load(open(path)):
+        t = c['trigger']
+        e = dict(name=c['name'], steps=[_step(d) for d in c['steps']])
+        if t['type'] == 'talk':
+            e['talk'] = (t['actor'], t['radius']); e['once'] = False
+        else:
+            e['zone'] = tuple(t['rect'])
+        out.append(e)
+    return out
+
+CINES = load()
