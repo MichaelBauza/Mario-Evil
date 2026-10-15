@@ -305,7 +305,7 @@ noise(_im, 6, 31); save(_im, 'mans_caution')
 # stairwell seen from above (balcony floor opening): marble treads sinking into darkness, red runner down the middle
 _im = new((20, 20, 22, 255)); _d = ImageDraw.Draw(_im)
 for _i in range(8):
-    _k = 1.0 - _i * 0.115; _y = _i * 4
+    _k = 1.0 - (7 - _i) * 0.115; _y = _i * 4
     _d.rectangle([0, _y, 31, _y + 3], fill=(int(176 * _k), int(172 * _k), int(160 * _k), 255))
     _d.rectangle([7, _y, 24, _y + 3], fill=(int(128 * _k), int(22 * _k), int(26 * _k), 255))
     _d.line([0, _y + 3, 31, _y + 3], fill=(int(40 * _k), int(38 * _k), int(36 * _k), 255))

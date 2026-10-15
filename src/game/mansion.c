@@ -240,6 +240,22 @@ void mansion_load_room(s32 room) {
     }
 }
 
+// Spawns only the static scenery (props) of a room that is merely visible from the room Mario is in
+// (the balcony looks down into the hall); mansion_unload_room() removes them again.
+static void mansion_load_scenery(s32 room) {
+    s32 i;
+    for (i = 0; i < gMansionRoomObjCount; i++) {
+        const struct MansionRoomObj *ro = &gMansionRoomObjs[i];
+        struct Object *obj;
+        if (ro->room != room || ro->beh != bhvMansionProp) continue;
+        obj = spawn_object(gMarioState->marioObj, ro->model, ro->beh);
+        obj_set_pos(obj, ro->x, ro->y, ro->z);
+        obj_set_angle(obj, 0, ro->yaw, 0);
+        obj->oBehParams = ro->behParam;
+        obj->oBehParams2ndByte = GET_BPARAM2(ro->behParam);
+    }
+}
+
 // Deletes every currently-spawned object belonging to 'room'. Items already collected and
 // zombies already killed are gone by then anyway, so nothing here touches save state --
 // that's tracked separately in gMansion.collected / gMansion.killed and is re-checked by
@@ -345,6 +361,7 @@ s32 lvl_mansion_init(UNUSED s16 arg, UNUSED s32 unused) {
     gMansion.room = (u8) MAX(0, find_room(gMarioState->pos[0], gMarioState->pos[2]));
     gMansion.visited |= 1u << gMansion.room;
     mansion_load_room(gMansion.room);   // only the starting room's objects exist until a door is used
+    if (gMansionViewOf[gMansion.room] != 255) mansion_load_scenery(gMansionViewOf[gMansion.room]);
     return 0;
 }
 
@@ -749,7 +766,7 @@ static void door_teleport(void) {
 
     m->pos[0] = dst->sx;
     m->pos[2] = dst->sz;
-    h = find_floor_height(m->pos[0], m->pos[1] + 200.f, m->pos[2]);
+    h = find_floor_height(m->pos[0], 20000.f, m->pos[2]);     // rooms can be raised (the balcony), so probe from far above
     m->pos[1] = h;
     m->vel[0] = m->vel[1] = m->vel[2] = 0.f;
     m->forwardVel = 0.f;
@@ -764,8 +781,12 @@ static void door_teleport(void) {
     // door-opening fade finishes), so the swap is invisible: unload the room Mario is
     // leaving and load the one he is arriving in.
     if (dst->room != oldRoom) {
+        u8 viewOld = gMansionViewOf[oldRoom];
         mansion_unload_room(oldRoom);
+        if (viewOld != 255 && viewOld != dst->room) mansion_unload_room(viewOld);   // scenery that was only visible from the old room
+        mansion_unload_room(dst->room);                                            // clears scenery spawned for it earlier
         mansion_load_room(dst->room);
+        if (gMansionViewOf[dst->room] != 255) mansion_load_scenery(gMansionViewOf[dst->room]);
     }
 }
 
@@ -851,13 +872,14 @@ static void update_doors(void) {
         gMansion.doorPush = 0;
         if (d->stair) {
             f32 wx = -d->nx, wz = -d->nz;    // walking direction (into the stairs)
+            m->action = ACT_UNINITIALIZED;   // no action code runs: the idle action would reset the walk animation each frame
             vec3f_copy(sStairStart, m->pos);
             vec3f_copy(sStairVis, m->pos);
             if (d->stair == 1) {    // up: keep walking straight until the top of the flight
                 sStairEnd[0] = d->x + wx * 800.0f; sStairEnd[2] = d->z + wz * 800.0f; sStairEnd[1] = m->pos[1] + 500.0f;
                 sStairSink = 0.0f;
             } else {                // down: a few steps forward while sinking into the stairwell
-                sStairEnd[0] = m->pos[0] + wx * 230.0f; sStairEnd[2] = m->pos[2] + wz * 230.0f; sStairEnd[1] = m->pos[1];
+                sStairEnd[0] = d->x + wx * 120.0f; sStairEnd[2] = d->z + wz * 120.0f; sStairEnd[1] = m->pos[1];
                 sStairSink = 250.0f;
             }
             sStairCam[0] = m->pos[0] + d->nx * 450.0f; sStairCam[2] = m->pos[2] + d->nz * 450.0f;
@@ -865,7 +887,7 @@ static void update_doors(void) {
         }
         m->forwardVel = 0.f;
         m->vel[0] = m->vel[1] = m->vel[2] = 0.f;
-        set_mario_action(m, ACT_IDLE, 0);
+        if (d->stair) m->action = ACT_UNINITIALIZED; else set_mario_action(m, ACT_IDLE, 0);
         return;
     }
     gMansion.doorPush = 0;
@@ -924,6 +946,7 @@ void mansion_post_update(void) {
         m->marioObj->header.gfx.angle[0] = 0;
         m->marioObj->header.gfx.angle[1] = yaw;
         m->marioObj->header.gfx.angle[2] = 0;
+        m->action = ACT_UNINITIALIZED;
         set_mario_anim_with_accel(m, MARIO_ANIM_WALKING, 0x28000);
         if (gMansion.doorTimer >= 4 && gMansion.doorTimer < 64 && (gMansion.doorTimer % 9) == 0) {
             play_sound(((gMansion.doorTimer / 9) & 1) ? SOUND_OBJ_BOWSER_WALK : SOUND_MEVIL_STEP1, gGlobalSoundSource);

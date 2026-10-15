@@ -539,20 +539,19 @@ def hall_fountain():
     m.cyl((0, 250, 0), 150, 30, MARB_D, n=8, r_top=110, smooth=False)
     m.cyl((0, 268, 0), 130, 4, BLOODW, n=8, smooth=False)
     m.cyl((0, 310, 0), 46, 80, MARB_D, n=8)                                   # plinth
-    # the figure (generic stone statue)
-    STN = (150, 150, 142)
-    m.cyl((-16, 400, 0), 14, 100, STN, n=6); m.cyl((16, 400, 0), 14, 100, STN, n=6)      # legs
-    m.cyl((0, 500, 0), 30, 110, STN, n=8, r_top=24)                                      # torso
-    m.sphere((0, 580, 0), 28, STN, nlat=4, nlon=8)                                       # head
-    m.cyl((0, 612, 0), 30, 12, STN, n=8, r_top=20)                                       # cap brim
-    m.cyl((-40, 500, 0), 9, 80, STN, n=6, R=rot(roll=25))                                # left arm down
-    m.cyl((40, 545, 0), 9, 90, STN, n=6, R=rot(roll=-25))                                # right arm raised
-    m.cyl((58, 592, 0), 9, 40, STN, n=6, R=rot(roll=-10))
+    # the statue: the game's own Mario model (actors/mario, idle pose) baked in flat stone grey, standing on the plinth
+    import mario_statue
+    sc = 0.62
+    for (tri, col) in mario_statue.build():
+        lum = 0.30 * col[0] + 0.59 * col[1] + 0.11 * col[2]
+        g = int(min(232, 90 + 0.9 * lum)); gc = (g, g, g)
+        P = [(p[0][0] * sc, p[0][1] * sc + 350, (p[0][2] - 40) * sc) for p in tri]
+        m.tri(P[0], P[1], P[2], gc, normals=(tri[0][1], tri[1][1], tri[2][1]))
     pts = []
     for i in range(10):
         rr = 36 if i % 2 == 0 else 15; a = math.pi / 2 + i * math.pi / 5
         pts.append((rr * math.cos(a), rr * math.sin(a)))
-    m.prism(pts, 14, (240, 200, 40), c=(62, 650, 0))
+    m.prism(pts, 14, (240, 200, 40), c=(0, 790, 60))                                    # a golden star floating above his head
     for k in range(8):                                                                   # blood drips and moss
         a = k * math.pi / 4 + 0.2
         m.cyl((312 * math.cos(a), 78, 312 * math.sin(a)), 4, 50 + 14 * (k % 3), BLOODW, n=4)

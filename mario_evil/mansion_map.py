@@ -37,10 +37,10 @@ hall = room('hall', 'Main Hall', -5200, -1400, -2400, 1400, 1100, floor='mans_fl
             lights=[(-3900, 330, 0, 0.55, 1500), (-4400, 650, 350, 0.40, 900), (-3400, 650, 350, 0.40, 900), (-3900, 320, -1200, 0.35, 800),
                     (-4650, 700, -700, 0.30, 700), (-3150, 700, -700, 0.30, 700)],
             objs=[dict(kind='herb_g', pos=(-2750, -650)), dict(kind='file', file=1, pos=(-4300, 650))])
-hall['cams'] = [
-    dict(pos=(-2550, 760, 1250), look=(-4100, 330, -700), zone=(-3500, -1400, -2400, 1400), fov=52),
-    dict(pos=(-3900, 800, 1300), look=(-3900, 330, -900), zone=(-4300, -1400, -3500, 1400), fov=52),
-    dict(pos=(-5050, 760, 1250), look=(-3500, 330, -700), zone=(-5200, -1400, -4300, 1400), fov=52),
+hall['cams'] = [      # high cameras just outside the (one-sided, so see-through) south wall: the whole floor, Mario included, stays in frame
+    dict(pos=(-2800, 1000, 1850), look=(-2800, 400, 1050), zone=(-3500, -1400, -2400, 1400), fov=66, outside=True),
+    dict(pos=(-3900, 1000, 1850), look=(-3900, 400, 1050), zone=(-4300, -1400, -3500, 1400), fov=66, outside=True),
+    dict(pos=(-4800, 1000, 1850), look=(-4800, 400, 1050), zone=(-5200, -1400, -4300, 1400), fov=66, outside=True),
 ]
 ROOMS.append(hall)
 
@@ -129,14 +129,18 @@ lib['cams'] = cams_along_x(lib, front='N')
 ROOMS.append(lib)
 
 # ---- Second floor landing -----------------------------------------------------
-land = room('land', 'Second Floor Balcony', -5200, 2000, -2400, 2900, 800, floor='mans_floor', wall='mans_brick', panel='mans_brick', wainscot=0,
-            carpets=[(-5100, 2150, -2450, 2450)],
-            pads=[(-5050, 2560, -4550, 2890, 'mans_stairs_down', True), (-3050, 2560, -2550, 2890, 'mans_stairs_down', True)],   # the two stairwells down to the hall
+land = room('land', 'Second Floor Balcony', -5200, 1410, -2400, 2310, 800, floor='mans_floor', wall='mans_brick', panel='mans_brick', wainscot=0,
+            yoff=500, noceil=True, open='N', see='hall',     # raised to the gallery height; the north edge is open onto the hall below
+            carpets=[(-5100, 1850, -2450, 2150)],
+            pads=[(-4900, 1420, -4400, 1750, 'mans_stairs_down', True), (-3400, 1420, -2900, 1750, 'mans_stairs_down', True)],   # the two stairwells down to the hall
             boxes=[],
-            lights=[(-4300, 600, 2450, 0.50, 1200), (-3200, 600, 2450, 0.50, 1200), (-4800, 450, 2700, 0.30, 600), (-2800, 450, 2700, 0.30, 600)],
-            objs=[dict(kind='zombie', pos=(-3300, 2350), yaw=0x8000), dict(kind='herb_g', pos=(-4300, 2300)),
-                  dict(kind='ammo', pos=(-2900, 2250), amount=10)])
-land['cams'] = cams_along_x(land, inset=150, fov=55, front='S')
+            lights=[(-4300, 450, 1900, 0.50, 1200), (-3200, 450, 1900, 0.50, 1200), (-4650, 350, 1650, 0.30, 600), (-3150, 350, 1650, 0.30, 600)],
+            objs=[dict(kind='zombie', pos=(-3300, 2050), yaw=0x8000), dict(kind='herb_g', pos=(-4300, 1950)),
+                  dict(kind='ammo', pos=(-2900, 1950), amount=10)])
+land['cams'] = [      # outside the end walls (one-sided, so see-through), high up: Mario on the balcony and the hall below both in frame
+    dict(pos=(-1400, 900, 2200), look=(-2800, -100, 1700), zone=(-3800, 1410, -2400, 2310), fov=62, outside=True),
+    dict(pos=(-6000, 900, 2200), look=(-4600, -100, 1700), zone=(-5200, 1410, -3800, 2310), fov=62, outside=True),
+]
 ROOMS.append(land)
 
 # ---- Second floor corridor ----------------------------------------------------
@@ -281,13 +285,13 @@ RM['hall']['decor'] = [dict(tex='mans_door_k%d' % k, wall='N', at=at, w=300, h=3
                        for (at, k) in ((-4950, 2), (-4350, 3), (-3450, 3), (-2850, 1))]
 RM['hall']['decor'].append(dict(tex='mans_door', wall='N', at=-3900, w=340, h=360, y0=0))      # the great double door under the gallery (set dressing)
 add('hall', on_wall('hall', 'N', -3350, 'clock'),
-    lamp_on('hall', 'S', -4900, 430), lamp_on('hall', 'S', -2900, 430), lamp_on('hall', 'W', -700, 430), lamp_on('hall', 'W', 700, 430),
-    on_wall('hall', 'S', -3900, 'vine'), on_wall('hall', 'S', -4600, 'vine'), on_wall('hall', 'S', -3200, 'vine'),
+    lamp_on('hall', 'W', -700, 430), lamp_on('hall', 'W', 700, 430), lamp_on('hall', 'E', -950, 430), lamp_on('hall', 'E', 950, 430),
+    on_wall('hall', 'E', -1150, 'vine'), on_wall('hall', 'E', 1150, 'vine'), on_wall('hall', 'W', -350, 'vine'), on_wall('hall', 'W', 350, 'vine'),
     pot(-4300, 1250), pot(-3500, 1250, 0x4000))
 for (mx, mz, myaw) in ((-5000, 600, 0x1000), (-5120, 790, 0x5000), (-2560, 620, 0x9000), (-2630, 800, 0xD000), (-4500, -240, 0x2000), (-3000, -250, 0x6000)):
     add('hall', dict(kind='prop', model='mushroom', pos=(mx, mz), y=0, yaw=myaw))
 chand('hall', -4400, 350); chand('hall', -3400, 350); chand('hall', -3900, -500)
-portrait('hall', 'S', -4400, 1); portrait('hall', 'S', -3400, 3); portrait('hall', 'E', -500, 2); portrait('hall', 'E', 500, 1)
+portrait('hall', 'W', -1150, 1); portrait('hall', 'W', 1150, 3); portrait('hall', 'E', -500, 2); portrait('hall', 'E', 500, 1)
 
 # -- other rooms
 chand('dining', 0, 0); portrait('dining', 'S', -500, 2); portrait('dining', 'S', 500, 3); portrait('dining', 'N', -600, 1)
@@ -353,12 +357,12 @@ desk_at('guard', 0)                                   # typewriter desk
 chand('lib', -7000, 1700); portrait('lib', 'N', -6600, 1, y=360); portrait('lib', 'S', -7300, 2, y=360)
 add('lib', lamp_on('lib', 'E', 1700, 420), on_wall('lib', 'N', -7600, 'vine'), pot(-6300, 2250))
 desk_at('lib', 2)                                     # reading table (boxes 0/1 are the bookshelves)
-chand('land', -3800, 2400); portrait('land', 'N', -4200, 1); portrait('land', 'N', -3400, 3)
-for (k, at) in ((2, -4950), (3, -3800), (1, -2850)):          # locked doors along the balcony (set dressing)
-    RM['land'].setdefault('decor', []).append(dict(tex='mans_door_k%d' % k, wall='N', at=at, w=300, h=340, y0=0))
-for bx in (-4425, -4175, -3925, -3675, -3425, -3175):          # balcony rail between the two stairwells
-    add('land', dict(kind='prop', model='balustrade', pos=(bx, 2888), y=0, yaw=0x8000))
-add('land', lamp_on('land', 'E', 2150, 430), on_wall('land', 'S', -3800, 'vine'), pot(-5100, 2800))
+for (k, at) in ((2, 1750), (3, 2130)):                       # locked doors on the west wall (set dressing); the south wall is never seen from the cameras
+    RM['land'].setdefault('decor', []).append(dict(tex='mans_door_k%d' % k, wall='W', at=at, w=300, h=340, y0=0))
+portrait('land', 'E', 2200, 1)
+for bx in (-5050, -4275, -4025, -3775, -3525, -2775, -2525):   # balcony rail along the open edge, gaps at the two stairwells
+    add('land', dict(kind='prop', model='balustrade', pos=(bx, 1425), y=0, yaw=0))
+add('land', lamp_on('land', 'E', 1500, 430), lamp_on('land', 'W', 1500, 430), pot(-5100, 2250))
 add('corr2', lamp_on('corr2', 'N', -800, 380), on_wall('corr2', 'S', 200, 'vine'))
 chand('gal', 2200, 2700); portrait('gal', 'N', 1800, 2); portrait('gal', 'N', 2700, 3); portrait('gal', 'S', 1900, 1); portrait('gal', 'S', 2600, 2)
 add('gal', lamp_on('gal', 'E', 2200, 400), on_wall('gal', 'N', 1400, 'vine'), pot(3000, 3250))
@@ -402,9 +406,9 @@ DOORS = [
     dict(id='lib_n',   room='lib',   wall='N', at=-7000,   to='corrw_w'),
     dict(id='hall_stair_w', room='hall', virtual=(-4650, -100), n=(0, 1),  to='land_stair_w', stair=1),
     dict(id='hall_stair_e', room='hall', virtual=(-3150, -100), n=(0, 1),  to='land_stair_e', stair=1),
-    dict(id='land_stair_w', room='land', virtual=(-4800, 2650), n=(0, -1), to='hall_stair_w', stair=2),
-    dict(id='land_stair_e', room='land', virtual=(-2800, 2650), n=(0, -1), to='hall_stair_e', stair=2),
-    dict(id='land_e',  room='land',  wall='E', at=2500,    to='corr2_w'),
+    dict(id='land_stair_w', room='land', virtual=(-4650, 1600), n=(0, 1), to='hall_stair_w', stair=2),
+    dict(id='land_stair_e', room='land', virtual=(-3150, 1600), n=(0, 1), to='hall_stair_e', stair=2),
+    dict(id='land_e',  room='land',  wall='E', at=1850,    to='corr2_w'),
     dict(id='corr2_w', room='corr2', wall='W', at=2700,    to='land_e'),
     dict(id='corr2_e', room='corr2', wall='E', at=2700,    to='gal_w', key=2),
     dict(id='gal_w',   room='gal',   wall='W', at=2700,    to='corr2_e'),
