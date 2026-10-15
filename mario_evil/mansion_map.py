@@ -135,9 +135,9 @@ land = room('land', 'Second Floor Balcony', -5200, 1810, -2400, 2710, 800, floor
             lights=[(-4300, 450, 2300, 0.50, 1200), (-3200, 450, 2300, 0.50, 1200), (-4650, 350, 2050, 0.30, 600), (-3150, 350, 2050, 0.30, 600)],
             objs=[dict(kind='zombie', pos=(-3300, 2450), yaw=0x8000), dict(kind='herb_g', pos=(-4300, 2350)),
                   dict(kind='ammo', pos=(-2900, 2350), amount=10)])
-land['cams'] = [      # outside the end walls (one-sided, so see-through), high up: Mario on the balcony and the hall below both in frame
-    dict(pos=(-1400, 900, 2600), look=(-2800, -100, 2100), zone=(-3800, 1810, -2400, 2710), fov=62, outside=True),
-    dict(pos=(-6000, 900, 2600), look=(-4600, -100, 2100), zone=(-5200, 1810, -3800, 2710), fov=62, outside=True),
+land['cams'] = [      # outside the end walls (one-sided, so see-through), close in and angled down. Each half is seen from the OPPOSITE end, so the camera faces the doors/wall Mario is near
+    dict(pos=(-2100, 650, 2400), look=(-4500, -250, 2260), zone=(-5200, 1810, -3800, 2710), fov=44, outside=True),   # west half: camera at the east end, facing the west wall doors
+    dict(pos=(-5500, 650, 2400), look=(-3100, -250, 2260), zone=(-3800, 1810, -2400, 2710), fov=44, outside=True),   # east half: camera at the west end, facing the east wall
 ]
 ROOMS.append(land)
 
