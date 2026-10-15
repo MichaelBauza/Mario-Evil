@@ -23,7 +23,7 @@ static const struct CineStep gCineSteps2[] = {
     { .op = CINE_TEXT, .actor = 0, .par = 0, .follow = 0, .frames = 0, .v = {0, 0, 0, 0, 0, 0, 0}, .speaker = NULL, .line0 = "Somewhere above you, a door creaks open.", .line1 = "", .sfx = 0 },
 };
 static const struct CineStep gCineSteps3[] = {
-    { .op = CINE_CAM, .actor = 0, .par = 0, .follow = 0, .frames = 0, .v = {3980, 200, -3920, 4110, 239, -3490, 50}, .speaker = NULL, .line0 = NULL, .line1 = NULL, .sfx = 0 },
+    { .op = CINE_CAM, .actor = 0, .par = 0, .follow = 0, .frames = 0, .v = {2610, 200, -4840, 4110, 2149, -3490, 50}, .speaker = NULL, .line0 = NULL, .line1 = NULL, .sfx = 0 },
     { .op = CINE_MOVE, .actor = 0, .par = 0, .follow = 0, .frames = 60, .v = {3400, 0, -1760, 0, 0, 0, 0}, .speaker = NULL, .line0 = NULL, .line1 = NULL, .sfx = 0 },
 };
 const struct CineScript gCines[] = {
