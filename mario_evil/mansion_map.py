@@ -355,10 +355,9 @@ desk_at('guard', 0)                                   # typewriter desk
 chand('lib', -7000, 1700); portrait('lib', 'N', -6600, 1, y=360); portrait('lib', 'S', -7300, 2, y=360)
 add('lib', lamp_on('lib', 'E', 1700, 420), on_wall('lib', 'N', -7600, 'vine'), pot(-6300, 2250))
 desk_at('lib', 2)                                     # reading table (boxes 0/1 are the bookshelves)
-for (at, k) in ((-4950, 2), (-4350, 3), (-3450, 3), (-2850, 1)):    # the SAME four locked doors the hall shows on its gallery (the hall's north wall = this south wall)
-    RM['land'].setdefault('decor', []).append(dict(tex='mans_door_k%d' % k, wall='S', at=at, w=300, h=340, y0=0))
-RM['land']['decor'].append(dict(tex='mans_door', wall='S', at=-3900, w=340, h=360, y0=0))          # the centre door, as the gallery's great door in the hall (it was missing here)
-RM['land']['decor'].append(dict(tex='mans_paint_peach', wall='S', at=-3900, w=230, h=230, y0=420))  # Peach above it, kept inside the wall height
+# (the four locked doors that were here are removed: none leads to a room)
+RM['land'].setdefault('decor', []).append(dict(tex='mans_door', wall='S', at=-3900, w=340, h=360, y0=0))          # the centre door, as the gallery's great door in the hall (it was missing here)
+RM['land'].setdefault('decor', []).append(dict(tex='mans_paint_peach', wall='S', at=-3900, w=230, h=230, y0=420))  # Peach above it, kept inside the wall height
 RM['hall']['decor'].append(dict(tex='mans_door', wall='E', at=-1170, w=300, h=340, y0=500))          # the east end of the gallery: the door the balcony's east door leads through
 portrait('land', 'E', 2080, 1)
 for bx in (-5050, -4275, -4025, -3775, -3525, -2775, -2525):   # balcony rail along the open edge, gaps at the two stairwells
