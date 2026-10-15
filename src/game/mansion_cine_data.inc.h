@@ -30,6 +30,6 @@ const struct CineScript gCines[] = {
     { .zx0 = 0, .zz0 = 0, .zx1 = 0, .zz1 = 0, .talkRadius = 260, .talkActor = 1, .once = 0, .nSteps = 5, .steps = gCineSteps0 },   /* toad_talk */
     { .zx0 = -4100, .zz0 = 1500, .zx1 = -3700, .zz1 = 1750, .talkRadius = 0, .talkActor = 255, .once = 1, .nSteps = 4, .steps = gCineSteps1 },   /* intro_hall */
     { .zx0 = -300, .zz0 = 560, .zx1 = 300, .zz1 = 720, .talkRadius = 0, .talkActor = 255, .once = 1, .nSteps = 8, .steps = gCineSteps2 },   /* dining_fire */
-    { .zx0 = 1440, .zz0 = -2320, .zx1 = 6450, .zz1 = -980, .talkRadius = 0, .talkActor = 255, .once = 1, .nSteps = 2, .steps = gCineSteps3 },   /* Courtyard_01 */
+    { .zx0 = 1440, .zz0 = -6020, .zx1 = 6450, .zz1 = -980, .talkRadius = 0, .talkActor = 255, .once = 1, .nSteps = 2, .steps = gCineSteps3 },   /* Courtyard_01 */
 };
 const s32 gMansionCineCount = 4;

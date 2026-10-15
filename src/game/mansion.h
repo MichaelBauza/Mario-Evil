@@ -18,7 +18,7 @@ enum MansionItem {
 enum MansionMenu { MENU_NONE, MENU_ITEMS, MENU_FILES, MENU_BOX, MENU_TITLE, MENU_MAP };
 
 struct MansionRoom { s16 x0, z0, x1, z1; u8 camFirst, camCount; const char *name; s16 mx0, mz0, mx1, mz1; };  // m* = map rectangle (tenths of 100 units)
-struct MansionCam  { s16 zx0, zz0, zx1, zz1; s16 px, py, pz; s16 fx, fy, fz; u8 fov; };
+struct MansionCam  { s16 zx0, zz0, zx1, zz1; s16 px, py, pz; s16 fx, fy, fz; u8 fov; u8 follow; };   // follow: px/py/pz = offset from Mario, who is always the focus
 struct MansionDoor { u8 room; s16 x, z; s8 nx, nz; u8 dest; u8 key; s16 sx, sz; u16 yaw; u8 lr, lg, lb; u8 emblem; u8 stair; };   // stair: 0 door, 1 stairs up, 2 stairs down (RE1-style walk + fade)
 
 // One entry per room-bound object (items, zombies, props, cinematic actors, the typewriter,

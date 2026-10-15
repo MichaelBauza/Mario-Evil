@@ -448,6 +448,11 @@ void mansion_camera(struct Camera *c) {
             gMansionFov = 50;
         } else {
             gMansionFov = cam->fov;
+            if (cam->follow) {
+                /* follow camera: Mario is the focus and the camera keeps a fixed offset from him, so he is always in view */
+                focus[0] = mx; focus[1] = gMarioState->pos[1] + 90.0f; focus[2] = mz;
+                pos[0] = focus[0] + cam->px; pos[1] = focus[1] + cam->py; pos[2] = focus[2] + cam->pz;
+            }
         }
         gMansion.camIdx = pick;
         vec3f_copy(c->pos, pos);

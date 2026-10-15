@@ -61,14 +61,14 @@ cn['cams'] = cams_along_x(cn, ya=0.9, inset=120, fov=60, front='S')
 ROOMS.append(cn)
 
 # ---- Save Room -------------------------------------------------------------
-save = room('save', 'Save Room', 3000, -3500, 4000, -2500, 700, floor='mans_floor',
-            boxes=[dict(x0=3550, z0=-2850, x1=3850, z1=-2650, y1=110, side='mans_wood', top='mans_wood'),
-                   dict(x0=3192, z0=-3383, x1=3308, z1=-3317, y1=60, hidden=True)],
-            lights=[(3500, 520, -3000, 0.85, 800)],
-            objs=[dict(kind='typewriter', pos=(3700, -2832), y=110, yaw=0x8000), dict(kind='box', pos=(3250, -3350), yaw=0),
-                  dict(kind='ribbon', pos=(3800, -3300)), dict(kind='key', pos=(3750, -3050), keyid=1),
-                  dict(kind='gun', pos=(3350, -3250)), dict(kind='ammo', pos=(3500, -3350), amount=15)])
-save['cams'] = [dict(pos=(3850, 600, -3350), look=(3550, 60, -3050), zone=(3000, -3500, 4000, -2500), fov=58)]
+save = room('save', 'Save Room', 3000, -7200, 4000, -6200, 700, floor='mans_floor',
+            boxes=[dict(x0=3550, z0=-6550, x1=3850, z1=-6350, y1=110, side='mans_wood', top='mans_wood'),
+                   dict(x0=3192, z0=-7083, x1=3308, z1=-7017, y1=60, hidden=True)],
+            lights=[(3500, 520, -6700, 0.85, 800)],
+            objs=[dict(kind='typewriter', pos=(3700, -6532), y=110, yaw=0x8000), dict(kind='box', pos=(3250, -7050), yaw=0),
+                  dict(kind='ribbon', pos=(3800, -7000)), dict(kind='key', pos=(3750, -6750), keyid=1),
+                  dict(kind='gun', pos=(3350, -6950)), dict(kind='ammo', pos=(3500, -7050), amount=15)])
+save['cams'] = [dict(pos=(3850, 600, -7050), look=(3550, 60, -6750), zone=(3000, -7200, 4000, -6200), fov=58)]
 ROOMS.append(save)
 
 # ---- West Corridor ---------------------------------------------------------
@@ -90,7 +90,7 @@ kitchen['cams'] = cams_along_x(kitchen, front='N')
 ROOMS.append(kitchen)
 
 # ---- Courtyard (open sky) ---------------------------------------------------
-court = room('court', 'Courtyard', 1500, -2300, 6500, -1000, 900, floor='mans_grass', wall='mans_stone', panel='mans_stone',
+court = room('court', 'Courtyard', 1500, -6000, 6500, -1000, 900, floor='mans_grass', wall='mans_stone', panel='mans_stone',
              wainscot=0, sky=True, ambient=0.50,
              boxes=[dict(x0=3800, z0=-1850, x1=4200, z1=-1450, y1=120, side='mans_marble', top='mans_marble'),
                    dict(x0=3880, z0=-1450, x1=4120, z1=-1370, y1=14, side='mans_wood', top='mans_door')],
@@ -99,8 +99,8 @@ court = room('court', 'Courtyard', 1500, -2300, 6500, -1000, 900, floor='mans_gr
                    dict(kind='zombie', pos=(5600, -1300), yaw=0x8000),
                    dict(kind='herb_g', pos=(2200, -2050)), dict(kind='ammo', pos=(2250, -1700), amount=10),
                    dict(kind='file', file=5, pos=(6100, -2000))])
-court['cams'] = cams_along_x(court, ya=0.8, inset=250, fov=55, front='N')
-_cc = court['cams']; _cc[0]['zone'], _cc[1]['zone'] = _cc[1]['zone'], _cc[0]['zone']   # swap which angle plays in which half
+# follow camera: fixed offset from Mario (1000 south, 750 up), always looking at him; the room is 5000 x 5000
+court['cams'] = [dict(pos=(0, 750, 1000), look=(0, 0, 0), zone=(1500, -6000, 6500, -1000), fov=55, outside=True, follow=True)]
 ROOMS.append(court)
 
 # ---- Guardhouse (second save point) -----------------------------------------
@@ -314,7 +314,7 @@ def desk_at(rid, box_index, yaw=0):
     b['hidden'] = True
     add(rid, dict(kind='prop', model='desk', pos=(cx, cz), y=0, yaw=yaw))
 
-add('save', lamp_on('save', 'E', -3000, 380), on_wall('save', 'N', 3700, 'vine'))
+add('save', lamp_on('save', 'E', -6700, 380), on_wall('save', 'N', 3700, 'vine'))
 desk_at('save', 0)                                    # typewriter desk
 add('corr_w', lamp_on('corr_w', 'N', -6500, 380), on_wall('corr_w', 'S', -7200, 'vine'))
 add('kitchen', lamp_on('kitchen', 'S', 2800, 380), on_wall('kitchen', 'N', 3200, 'vine'), pot(3300, 560))
@@ -387,7 +387,7 @@ DOORS = [
     dict(id='dining_n', room='dining', wall='N', at=0,     to='corrn_s'),
     dict(id='corrn_s', room='corr_n', wall='S', at=0,     to='dining_n'),
     dict(id='corrn_e', room='corr_n', wall='E', at=-3000, to='save_w'),
-    dict(id='save_w',  room='save',   wall='W', at=-3000, to='corrn_e'),
+    dict(id='save_w',  room='save',   wall='W', at=-6700, to='corrn_e'),
     dict(id='hall_w',  room='hall',   wall='W', at=620,   to='corrw_e', key=1),
     dict(id='corrw_e', room='corr_w', wall='E', at=0,     to='hall_w'),
     dict(id='dining_e', room='dining', wall='E', at=0,     to='kitchen_w'),
@@ -427,7 +427,7 @@ DOORS = [
 # real room rectangle.  Checked for overlaps by check_map.py.
 MAPRECTS = {
     'hall': (-21, 4, -1, 22), 'dining': (-1, 5, 19, 21), 'corr_n': (-1, 0, 21, 5), 'kitchen': (19, 5, 37, 21),
-    'court': (22, -8, 72, 5), 'save': (35.5, -18, 45.5, -8), 'guard': (72, -7, 83, 4),
+    'court': (22, -45, 72, 5), 'save': (35.5, -55, 45.5, -45), 'guard': (72, -7, 83, 4),
     'corr_w': (-38, 10.5, -21, 15.5), 'lib': (-47, 15.5, -29, 29.5),
     'land': (-21, 22, -1, 34), 'corr2': (-1, 25.5, 25, 30.5), 'gal': (25, 22, 45, 33), 'bed': (2, 30.5, 20, 42.5),
     'stair': (41, 5, 57, 10), 'cellar': (57, 5, 71, 15), 'lab': (54, 15, 74, 33),
