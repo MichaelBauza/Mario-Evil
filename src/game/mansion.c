@@ -452,6 +452,10 @@ void mansion_camera(struct Camera *c) {
                 /* follow camera: Mario is the focus and the camera keeps a fixed offset from him, so he is always in view */
                 focus[0] = mx; focus[1] = gMarioState->pos[1] + 90.0f; focus[2] = mz;
                 pos[0] = focus[0] + cam->px; pos[1] = focus[1] + cam->py; pos[2] = focus[2] + cam->pz;
+                if (cam->follow == 2) {
+                    /* mounted on a pivot line (px = world x): half-way pull towards Mario's x, still looking at him */
+                    pos[0] = cam->px + (mx - cam->px) * 0.5f;
+                }
             }
         }
         gMansion.camIdx = pick;

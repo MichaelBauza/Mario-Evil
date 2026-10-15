@@ -35,7 +35,7 @@ const struct MansionCam gMansionCams[MANSION_NUM_CAMS] = {
     { -6650, -250, -5800, 250, -7380, 630, 130, -6344, 90, 0, 60, 0 },
     { 1600, -800, 2500, 800, 3200, 602, -600, 2176, 90, 0, 52, 0 },
     { 2500, -800, 3400, 800, 1800, 602, 600, 2824, 90, 0, 52, 0 },
-    { 1500, -6000, 6500, -1000, 0, 750, 1000, 0, 0, 0, 55, 1 },
+    { 1500, -6000, 6500, -1000, 4000, 750, 1000, 0, 0, 0, 55, 2 },
     { 6900, -2100, 8000, -1000, 7850, 560, -1150, 7300, 60, -1700, 58, 0 },
     { -7900, 1000, -7000, 2400, -6300, 645, 1200, -7324, 90, 1700, 52, 0 },
     { -7000, 1000, -6100, 2400, -7700, 645, 2200, -6676, 90, 1700, 52, 0 },
@@ -69,10 +69,10 @@ const struct MansionDoor gMansionDoors[MANSION_NUM_DOORS] = {
     { 1, 1000, 0, -1, 0, 9, 0, 790, 0, 0xC000, 171, 145, 110, 0, 0 },  // dining_e
     { 5, 1600, 0, 1, 0, 8, 0, 1810, 0, 0x4000, 157, 135, 104, 0, 0 },  // kitchen_w
     { 5, 2500, -800, 0, 1, 11, 0, 2500, -590, 0x0000, 160, 138, 107, 0, 0 },  // kitchen_n
-    { 6, 2500, -1000, 0, -1, 10, 0, 2500, -1210, 0x8000, 114, 148, 124, 0, 0 },  // court_s
-    { 6, 3350, -6000, 0, 1, 13, 0, 3350, -5790, 0x0000, 128, 186, 143, 0, 0 },  // court_n
+    { 6, 1500, -3500, 1, 0, 10, 0, 1710, -3500, 0x4000, 139, 196, 154, 0, 0 },  // court_w
+    { 6, 4000, -6000, 0, 1, 13, 0, 4000, -5790, 0x0000, 146, 215, 163, 0, 0 },  // court_n
     { 3, 3350, -6200, 0, -1, 12, 0, 3350, -6410, 0x8000, 231, 196, 147, 0, 0 },  // save_s
-    { 6, 6500, -1650, -1, 0, 15, 3, 6290, -1650, 0xC000, 107, 140, 117, 3, 0 },  // court_e
+    { 6, 6500, -3500, -1, 0, 15, 3, 6290, -3500, 0xC000, 139, 196, 154, 3, 0 },  // court_e
     { 7, 6900, -1550, 1, 0, 14, 0, 7110, -1550, 0x4000, 224, 188, 140, 3, 0 },  // guard_w
     { 4, -7500, 0, 1, 0, 17, 0, -7290, 0, 0x4000, 183, 156, 118, 0, 0 },  // corrw_w
     { 8, -7000, 1000, 0, 1, 16, 0, -7000, 1210, 0x0000, 186, 159, 121, 0, 0 },  // lib_n
@@ -86,7 +86,7 @@ const struct MansionDoor gMansionDoors[MANSION_NUM_DOORS] = {
     { 11, 1200, 2700, 1, 0, 24, 0, 1410, 2700, 0x4000, 167, 145, 113, 2, 0 },  // gal_w
     { 10, -800, 2950, 0, -1, 27, 0, -800, 2740, 0x8000, 228, 189, 137, 0, 0 },  // corr2_s
     { 12, -800, 3600, 0, 1, 26, 0, -800, 3810, 0x0000, 166, 141, 107, 0, 0 },  // bed_n
-    { 6, 4000, -1440, 0, 1, 29, 0, 4000, -1230, 0x0000, 126, 174, 139, 0, 0 },  // court_hatch
+    { 6, 4000, -3290, 0, 1, 29, 0, 4000, -3080, 0x0000, 141, 189, 154, 0, 0 },  // court_hatch
     { 13, 4400, 350, 1, 0, 28, 0, 4610, 350, 0x4000, 198, 165, 121, 0, 0 },  // stair_w
     { 13, 6000, 350, -1, 0, 31, 0, 5790, 350, 0xC000, 176, 150, 113, 0, 0 },  // stair_e
     { 14, 6300, 350, 1, 0, 30, 0, 6510, 350, 0x4000, 188, 162, 125, 0, 0 },  // cellar_w
@@ -190,27 +190,29 @@ const struct MansionRoomObj gMansionRoomObjs[] = {
     { 5, 0xEC, bhvMansionProp, 2580, 0, -170, 0, 0x00000000 },
     { 5, 0xEC, bhvMansionProp, 2420, 0, 170, 32768, 0x00000000 },
     { 5, 0xEC, bhvMansionProp, 2580, 0, 170, 32768, 0x00000000 },
-    { 6, MODEL_GOOMBA, bhvMansionZombie, 3000, 0, -1400, 49152, 0x0300000F },
-    { 6, MODEL_GOOMBA, bhvMansionZombie, 4800, 0, -1900, 16384, 0x03000010 },
-    { 6, MODEL_GOOMBA, bhvMansionZombie, 5600, 0, -1300, 32768, 0x03000011 },
-    { 6, MODEL_LEVEL_GEOMETRY_03, bhvMansionPickup, 2200, 10, -2050, 0, 0x01010012 },
-    { 6, MODEL_LEVEL_GEOMETRY_0E, bhvMansionPickup, 2250, 10, -1700, 0, 0x0A0A0013 },
-    { 6, MODEL_LEVEL_GEOMETRY_08, bhvMansionFile, 6100, 10, -2000, 0, 0x05000000 },
-    { 6, MODEL_LEVEL_GEOMETRY_12, bhvMansionProp, 4000, 0, -1650, 0, 0x00000000 },
-    { 6, MODEL_LEVEL_GEOMETRY_14, bhvMansionProp, 3000, 420, -5996, 0, 0x00000000 },
-    { 6, MODEL_LEVEL_GEOMETRY_14, bhvMansionProp, 5300, 420, -5996, 0, 0x00000000 },
-    { 6, MODEL_LEVEL_GEOMETRY_14, bhvMansionProp, 4600, 420, -1004, 32768, 0x00000000 },
+    { 6, MODEL_GOOMBA, bhvMansionZombie, 3000, 0, -2000, 49152, 0x0300000F },
+    { 6, MODEL_GOOMBA, bhvMansionZombie, 5200, 0, -4800, 16384, 0x03000010 },
+    { 6, MODEL_GOOMBA, bhvMansionZombie, 5800, 0, -2000, 32768, 0x03000011 },
+    { 6, MODEL_LEVEL_GEOMETRY_03, bhvMansionPickup, 2200, 10, -2300, 0, 0x01010012 },
+    { 6, MODEL_LEVEL_GEOMETRY_0E, bhvMansionPickup, 2300, 10, -4800, 0, 0x0A0A0013 },
+    { 6, MODEL_LEVEL_GEOMETRY_08, bhvMansionFile, 6100, 10, -1400, 0, 0x05000000 },
+    { 6, MODEL_LEVEL_GEOMETRY_12, bhvMansionProp, 4000, 0, -3500, 0, 0x00000000 },
+    { 6, MODEL_LEVEL_GEOMETRY_14, bhvMansionProp, 3300, 420, -5996, 0, 0x00000000 },
+    { 6, MODEL_LEVEL_GEOMETRY_14, bhvMansionProp, 4700, 420, -5996, 0, 0x00000000 },
+    { 6, MODEL_LEVEL_GEOMETRY_14, bhvMansionProp, 1504, 420, -2500, 16384, 0x00000000 },
+    { 6, MODEL_LEVEL_GEOMETRY_14, bhvMansionProp, 1504, 420, -4500, 16384, 0x00000000 },
+    { 6, MODEL_LEVEL_GEOMETRY_14, bhvMansionProp, 6496, 420, -2500, 49152, 0x00000000 },
+    { 6, MODEL_LEVEL_GEOMETRY_14, bhvMansionProp, 6496, 420, -4500, 49152, 0x00000000 },
     { 6, 0xE9, bhvMansionProp, 2750, 0, -5976, 0, 0x00000000 },
-    { 6, 0xE9, bhvMansionProp, 3950, 0, -5976, 0, 0x00000000 },
     { 6, 0xE9, bhvMansionProp, 5400, 0, -5976, 0, 0x00000000 },
-    { 6, 0xE9, bhvMansionProp, 3000, 0, -1024, 32768, 0x00000000 },
-    { 6, 0xE9, bhvMansionProp, 5900, 0, -1024, 32768, 0x00000000 },
-    { 6, 0xE9, bhvMansionProp, 6476, 0, -2100, 49152, 0x00000000 },
-    { 6, MODEL_LEVEL_GEOMETRY_15, bhvMansionProp, 2600, 0, -1380, 8192, 0x00000000 },
-    { 6, MODEL_LEVEL_GEOMETRY_15, bhvMansionProp, 3400, 0, -2080, 36864, 0x00000000 },
-    { 6, MODEL_LEVEL_GEOMETRY_15, bhvMansionProp, 5200, 0, -1260, 20480, 0x00000000 },
-    { 6, MODEL_LEVEL_GEOMETRY_15, bhvMansionProp, 4650, 0, -2200, 49152, 0x00000000 },
-    { 6, MODEL_LEVEL_GEOMETRY_15, bhvMansionProp, 6200, 0, -1330, 12288, 0x00000000 },
+    { 6, 0xE9, bhvMansionProp, 1524, 0, -5200, 16384, 0x00000000 },
+    { 6, 0xE9, bhvMansionProp, 6476, 0, -5300, 49152, 0x00000000 },
+    { 6, 0xE9, bhvMansionProp, 6476, 0, -1700, 49152, 0x00000000 },
+    { 6, MODEL_LEVEL_GEOMETRY_15, bhvMansionProp, 2600, 0, -2000, 8192, 0x00000000 },
+    { 6, MODEL_LEVEL_GEOMETRY_15, bhvMansionProp, 3500, 0, -4700, 36864, 0x00000000 },
+    { 6, MODEL_LEVEL_GEOMETRY_15, bhvMansionProp, 5300, 0, -2100, 20480, 0x00000000 },
+    { 6, MODEL_LEVEL_GEOMETRY_15, bhvMansionProp, 4650, 0, -4900, 49152, 0x00000000 },
+    { 6, MODEL_LEVEL_GEOMETRY_15, bhvMansionProp, 6200, 0, -5300, 12288, 0x00000000 },
     { 7, MODEL_LEVEL_GEOMETRY_0A, bhvMansionTypewriter, 7700, 110, -1950, 0, 0x00000000 },
     { 7, MODEL_LEVEL_GEOMETRY_09, bhvMansionItemBox, 7100, 10, -1250, 16384, 0x00000000 },
     { 7, MODEL_LEVEL_GEOMETRY_07, bhvMansionPickup, 7800, 10, -1250, 0, 0x04010014 },
@@ -298,4 +300,4 @@ const struct MansionRoomObj gMansionRoomObjs[] = {
     { 17, MODEL_LEVEL_GEOMETRY_14, bhvMansionProp, 4400, 400, 4396, 32768, 0x00000000 },
     { 17, 0xE9, bhvMansionProp, 4976, 0, 3600, 49152, 0x00000000 },
 };
-const u16 gMansionRoomObjCount = 196;
+const u16 gMansionRoomObjCount = 198;

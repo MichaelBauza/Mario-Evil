@@ -92,15 +92,16 @@ ROOMS.append(kitchen)
 # ---- Courtyard (open sky) ---------------------------------------------------
 court = room('court', 'Courtyard', 1500, -6000, 6500, -1000, 900, floor='mans_grass', wall='mans_stone', panel='mans_stone',
              wainscot=0, sky=True, ambient=0.50,
-             boxes=[dict(x0=3800, z0=-1850, x1=4200, z1=-1450, y1=120, side='mans_marble', top='mans_marble'),
-                   dict(x0=3880, z0=-1450, x1=4120, z1=-1370, y1=14, side='mans_wood', top='mans_door')],
-             lights=[(2500, 400, -1650, 0.25, 900), (5500, 400, -1650, 0.25, 900)],
-             objs=[dict(kind='zombie', pos=(3000, -1400), yaw=0xC000), dict(kind='zombie', pos=(4800, -1900), yaw=0x4000),
-                   dict(kind='zombie', pos=(5600, -1300), yaw=0x8000),
-                   dict(kind='herb_g', pos=(2200, -2050)), dict(kind='ammo', pos=(2250, -1700), amount=10),
-                   dict(kind='file', file=5, pos=(6100, -2000))])
-# follow camera: fixed offset from Mario (1000 south, 750 up), always looking at him; the room is 5000 x 5000
-court['cams'] = [dict(pos=(0, 750, 1000), look=(0, 0, 0), zone=(1500, -6000, 6500, -1000), fov=55, outside=True, follow=True)]
+             boxes=[dict(x0=3800, z0=-3700, x1=4200, z1=-3300, y1=120, side='mans_marble', top='mans_marble'),
+                   dict(x0=3880, z0=-3300, x1=4120, z1=-3220, y1=14, side='mans_wood', top='mans_door')],
+             lights=[(2500, 400, -3500, 0.25, 900), (5500, 400, -3500, 0.25, 900), (4000, 400, -3500, 0.20, 900)],
+             objs=[dict(kind='zombie', pos=(3000, -2000), yaw=0xC000), dict(kind='zombie', pos=(5200, -4800), yaw=0x4000),
+                   dict(kind='zombie', pos=(5800, -2000), yaw=0x8000),
+                   dict(kind='herb_g', pos=(2200, -2300)), dict(kind='ammo', pos=(2300, -4800), amount=10),
+                   dict(kind='file', file=5, pos=(6100, -1400))])
+# camera on the south wall centre (x=4000), looking north at Mario: it keeps x=4000 as its pivot (half-way pull towards Mario's x),
+# stays 1000 south of him and 750 up, so he is always in view.  follow=2 -> pos.x = pivot (px) + 0.5*(Mario x - px)
+court['cams'] = [dict(pos=(4000, 750, 1000), look=(0, 0, 0), zone=(1500, -6000, 6500, -1000), fov=55, outside=True, follow=2)]
 ROOMS.append(court)
 
 # ---- Guardhouse (second save point) -----------------------------------------
@@ -260,17 +261,21 @@ def pot(x, z, yaw=0): return dict(kind='prop', model='pot', pos=(x, z), y=0, yaw
 # -- Courtyard: cracked cement walls, arched gates, balcony rail, overgrown grass, the ghost fountain
 c = RM['court']
 c.update(floor='mans_grass', wall='mans_brick', panel='mans_brick', rail=(780, 900), ambient=0.46)
-# cement pad across the middle of the yard (around the fountain); grass stays at both ends.
-# x-range from the layout sketch: grass is the outer ~29% at each end of the 5000-unit court.
-c.setdefault('pads', []).append((2930, -2300, 5045, -1000, 'mans_cement'))
+# cement (sketch): square plaza around the fountain, an east-west path wall to wall, a path north to the Save Room gate;
+# everything else is grass.  The pads must not overlap (coplanar quads would z-fight).
+c.setdefault('pads', []).extend([
+    (3200, -4300, 4800, -2700, 'mans_cement'),      # plaza
+    (1500, -3800, 3200, -3200, 'mans_cement'),      # west path (to the kitchen gate)
+    (4800, -3800, 6500, -3200, 'mans_cement'),      # east path (to the guardhouse gate)
+    (3700, -6000, 4300, -4300, 'mans_cement'),      # north path (to the Save Room gate)
+])
 c['boxes'][0]['hidden'] = True                       # collision only; the fountain model is drawn instead
-for (wall, at) in (('N', 2300), ('N', 4650), ('N', 5900), ('S', 3900), ('S', 5300), ('W', -1650)):
-    c.setdefault('decor', []).append(dict(tex='mans_gate', wall=wall, at=at, w=320, h=400, y0=0))
-add('court', dict(kind='prop', model='fountain', pos=(4000, -1650), y=0, yaw=0),
-    lamp_on('court', 'N', 3000, 420), lamp_on('court', 'N', 5300, 420), lamp_on('court', 'S', 4600, 420),
-    on_wall('court', 'N', 2750, 'vine'), on_wall('court', 'N', 3950, 'vine'), on_wall('court', 'N', 5400, 'vine'),
-    on_wall('court', 'S', 3000, 'vine'), on_wall('court', 'S', 5900, 'vine'), on_wall('court', 'E', -2100, 'vine'),
-    pot(2600, -1380, 0x2000), pot(3400, -2080, 0x9000), pot(5200, -1260, 0x5000), pot(4650, -2200, 0xC000), pot(6200, -1330, 0x3000))
+add('court', dict(kind='prop', model='fountain', pos=(4000, -3500), y=0, yaw=0),
+    lamp_on('court', 'N', 3300, 420), lamp_on('court', 'N', 4700, 420),
+    lamp_on('court', 'W', -2500, 420), lamp_on('court', 'W', -4500, 420), lamp_on('court', 'E', -2500, 420), lamp_on('court', 'E', -4500, 420),
+    on_wall('court', 'N', 2750, 'vine'), on_wall('court', 'N', 5400, 'vine'),
+    on_wall('court', 'W', -5200, 'vine'), on_wall('court', 'E', -5300, 'vine'), on_wall('court', 'E', -1700, 'vine'),
+    pot(2600, -2000, 0x2000), pot(3500, -4700, 0x9000), pot(5300, -2100, 0x5000), pot(4650, -4900, 0xC000), pot(6200, -5300, 0x3000))
 
 # -- Main hall (v0.2.6): two-storey atrium -- brick walls, gallery with locked doors, two staircases, blood fountain
 add('hall', dict(kind='actor', actor=1, model='toad_rom', pos=(-3000, 330), y=0, yaw=0x8000))   # Toad: talk with B (see cinematics.py)
@@ -392,11 +397,11 @@ DOORS = [
     dict(id='corrw_e', room='corr_w', wall='E', at=0,     to='hall_w'),
     dict(id='dining_e', room='dining', wall='E', at=0,     to='kitchen_w'),
     dict(id='kitchen_w', room='kitchen', wall='W', at=0,   to='dining_e'),
-    dict(id='kitchen_n', room='kitchen', wall='N', at=2500, to='court_s'),
-    dict(id='court_s', room='court', wall='S', at=2500,    to='kitchen_n'),
-    dict(id='court_n', room='court', wall='N', at=3350,    to='save_s'),
+    dict(id='kitchen_n', room='kitchen', wall='N', at=2500, to='court_w'),
+    dict(id='court_w', room='court', wall='W', at=-3500,   to='kitchen_n'),
+    dict(id='court_n', room='court', wall='N', at=4000,    to='save_s'),
     dict(id='save_s',  room='save',  wall='S', at=3350,    to='court_n'),
-    dict(id='court_e', room='court', wall='E', at=-1650,   to='guard_w', key=3),
+    dict(id='court_e', room='court', wall='E', at=-3500,   to='guard_w', key=3),
     dict(id='guard_w', room='guard', wall='W', at=-1550,   to='court_e'),
     dict(id='corrw_w', room='corr_w', wall='W', at=0,      to='lib_n'),
     dict(id='lib_n',   room='lib',   wall='N', at=-7000,   to='corrw_w'),
@@ -410,7 +415,7 @@ DOORS = [
     dict(id='gal_w',   room='gal',   wall='W', at=2700,    to='corr2_e'),
     dict(id='corr2_s', room='corr2', wall='S', at=-800,    to='bed_n'),
     dict(id='bed_n',   room='bed',   wall='N', at=-800,    to='corr2_s'),
-    dict(id='court_hatch', room='court', virtual=(4000, -1440), n=(0, 1), to='stair_w'),
+    dict(id='court_hatch', room='court', virtual=(4000, -3290), n=(0, 1), to='stair_w'),
     dict(id='stair_w', room='stair', wall='W', at=350,     to='court_hatch'),
     dict(id='stair_e', room='stair', wall='E', at=350,     to='cellar_w'),
     dict(id='cellar_w', room='cellar', wall='W', at=350,   to='stair_e'),

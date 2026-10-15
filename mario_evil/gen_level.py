@@ -374,7 +374,7 @@ def emit_all():
     dt.append('};\n\nconst struct MansionCam gMansionCams[MANSION_NUM_CAMS] = {\n')
     for c in cams:
         z = c['zone']; p = c['pos']; f = c['look']
-        dt.append('    { %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d },\n' % (z[0], z[1], z[2], z[3], p[0], p[1], p[2], f[0], f[1], f[2], c.get('fov', 50), 1 if c.get('follow') else 0))
+        dt.append('    { %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d },\n' % (z[0], z[1], z[2], z[3], p[0], p[1], p[2], f[0], f[1], f[2], c.get('fov', 50), int(c.get('follow') or 0)))
     dt.append('};\n\nconst struct MansionDoor gMansionDoors[MANSION_NUM_DOORS] = {\n')
     for d in DOORS:
         r = ROOMS[roomidx[d['room']]]
