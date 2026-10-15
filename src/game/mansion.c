@@ -1011,7 +1011,7 @@ void mansion_post_update(void) {
         m->action = ACT_UNINITIALIZED;
         set_mario_anim_with_accel(m, MARIO_ANIM_WALKING, 0x28000);
         if (gMansion.doorTimer >= 4 && gMansion.doorTimer < 64 && (gMansion.doorTimer % 9) == 0) {
-            play_sound(((gMansion.doorTimer / 9) & 1) ? SOUND_MEVIL_STEP2 : SOUND_MEVIL_STEP1, gGlobalSoundSource);
+            play_sound(SOUND_MEVIL_STEP1, gGlobalSoundSource);
         }
     } else if (gMansion.doorState == 1) m->marioObj->header.gfx.node.flags |= GRAPH_RENDER_INVISIBLE;
     else m->marioObj->header.gfx.node.flags &= ~GRAPH_RENDER_INVISIBLE;
@@ -1766,7 +1766,6 @@ static void zombie_moan(struct Object *z) {
 // Mario footsteps: distance based (independent of the walk animation), alternating two RE1 steps.
 static void mansion_footsteps(struct MarioState *m) {
     static f32 sStride = 0.0f;
-    static u8 sFoot = 0;
     f32 speed = (m->forwardVel < 0.0f) ? -m->forwardVel : m->forwardVel;
     f32 need = (speed > 22.0f) ? 190.0f : 135.0f;
 
@@ -1775,8 +1774,7 @@ static void mansion_footsteps(struct MarioState *m) {
         sStride += speed;
         if (sStride >= need) {
             sStride -= need;
-            play_sound(sFoot ? SOUND_MEVIL_STEP2 : SOUND_MEVIL_STEP1, gGlobalSoundSource);   // two normal steps, alternating
-            sFoot ^= 1;
+            play_sound(SOUND_MEVIL_STEP1, gGlobalSoundSource);   // the one normal step sound for every stride
         }
     } else {
         sStride = 0.0f;
