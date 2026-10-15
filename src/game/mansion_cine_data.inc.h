@@ -6,7 +6,7 @@ static const struct CineStep gCineSteps0[] = {
     { .op = CINE_TEXT, .actor = 0, .par = 0, .frames = 0, .v = {0, 0, 0, 0, 0, 0, 0}, .speaker = "TOAD", .line0 = "Now we have all split up! Help me rescue my", .line1 = "friends Mario Whaaaa!!!", .sfx = 0 },
 };
 static const struct CineStep gCineSteps1[] = {
-    { .op = CINE_WALK, .actor = 0, .par = 0, .frames = 70, .v = {-3900, 0, 1000, 0, 0, 0, 0}, .speaker = NULL, .line0 = NULL, .line1 = NULL, .sfx = 0 },
+    { .op = CINE_WALK, .actor = 0, .par = 0, .frames = 130, .v = {-3900, 0, 1000, 0, 0, 0, 0}, .speaker = NULL, .line0 = NULL, .line1 = NULL, .sfx = 0 },
     { .op = CINE_TEXT, .actor = 0, .par = 0, .frames = 0, .v = {0, 0, 0, 0, 0, 0, 0}, .speaker = "MARIO", .line0 = "Let's-a go!", .line1 = "", .sfx = 0 },
     { .op = CINE_WAIT, .actor = 0, .par = 0, .frames = 20, .v = {0, 0, 0, 0, 0, 0, 0}, .speaker = NULL, .line0 = NULL, .line1 = NULL, .sfx = 0 },
 };
@@ -22,7 +22,7 @@ static const struct CineStep gCineSteps2[] = {
 };
 const struct CineScript gCines[] = {
     { .zx0 = 0, .zz0 = 0, .zx1 = 0, .zz1 = 0, .talkRadius = 260, .talkActor = 1, .once = 0, .nSteps = 4, .steps = gCineSteps0 },   /* toad_talk */
-    { .zx0 = -4100, .zz0 = 1100, .zx1 = -3700, .zz1 = 1400, .talkRadius = 0, .talkActor = 255, .once = 1, .nSteps = 3, .steps = gCineSteps1 },   /* intro_hall */
+    { .zx0 = -4100, .zz0 = 1500, .zx1 = -3700, .zz1 = 1750, .talkRadius = 0, .talkActor = 255, .once = 1, .nSteps = 3, .steps = gCineSteps1 },   /* intro_hall */
     { .zx0 = -300, .zz0 = 560, .zx1 = 300, .zz1 = 720, .talkRadius = 0, .talkActor = 255, .once = 1, .nSteps = 8, .steps = gCineSteps2 },   /* dining_fire */
 };
 const s32 gMansionCineCount = 3;

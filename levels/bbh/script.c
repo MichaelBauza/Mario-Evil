@@ -76,7 +76,7 @@ const LevelScript level_bbh_entry[] = {
     LOAD_MODEL_FROM_GEO(MODEL_TOAD, mvtoad_geo),
     LOAD_MODEL_FROM_GEO(MODEL_BOWSER, bowser_geo),
     AREA(/*index*/ 1, mansion_geo_area),
-        OBJECT(/*model*/ MODEL_NONE, /*pos*/ -3900, 20, 1330, /*angle*/ 0, 180, 0, /*behParam*/ 0x000A0000, /*beh*/ bhvInstantActiveWarp),
+        OBJECT(/*model*/ MODEL_NONE, /*pos*/ -3900, 20, 1650, /*angle*/ 0, 180, 0, /*behParam*/ 0x000A0000, /*beh*/ bhvInstantActiveWarp),
         WARP_NODE(/*id*/ 0x0A, /*destLevel*/ LEVEL_BBH, /*destArea*/ 0x01, /*destNode*/ 0x0A, /*flags*/ WARP_NO_CHECKPOINT),
         WARP_NODE(/*id*/ 0xF0, /*destLevel*/ LEVEL_BBH, /*destArea*/ 0x01, /*destNode*/ 0x0A, /*flags*/ WARP_NO_CHECKPOINT),
         WARP_NODE(/*id*/ 0xF1, /*destLevel*/ LEVEL_BBH, /*destArea*/ 0x01, /*destNode*/ 0x0A, /*flags*/ WARP_NO_CHECKPOINT),
@@ -87,7 +87,7 @@ const LevelScript level_bbh_entry[] = {
     END_AREA(),
 
     FREE_LEVEL_POOL(),
-    MARIO_POS(/*area*/ 1, /*yaw*/ 180, /*pos*/ -3900, 0, 1330),
+    MARIO_POS(/*area*/ 1, /*yaw*/ 180, /*pos*/ -3900, 0, 1650),
     CALL(/*arg*/ 0, /*func*/ lvl_init_or_update),
     CALL(/*arg*/ 0, /*func*/ lvl_mansion_init),
     CALL_LOOP(/*arg*/ 1, /*func*/ lvl_init_or_update),

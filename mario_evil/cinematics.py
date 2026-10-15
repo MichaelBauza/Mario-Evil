@@ -46,8 +46,8 @@ CINES = [
         text('TOAD', "Now we have all split up! Help me rescue my friends Mario Whaaaa!!!"),
     ]),
     # Intro: plays once, as soon as the title screen is dismissed and Mario is in the hall.
-    dict(name='intro_hall', zone=(-4100, 1100, -3700, 1400), steps=[
-        walk((-3900, 0, 1000), frames=70),                         # Mario walks in from the south wall up the carpet (hall camera stays as is)
+    dict(name='intro_hall', zone=(-4100, 1500, -3700, 1750), steps=[
+        walk((-3900, 0, 1000), frames=130),                         # Mario walks in from the south wall up the carpet (hall camera stays as is)
         text('MARIO', "Let's-a go!"),
         wait(20),
     ]),
