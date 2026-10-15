@@ -236,6 +236,7 @@ def validate():
         for i, c in enumerate(r['cams']):
             x, y, z = c['pos']
             if c.get('outside'): continue          # deliberate cameras beyond a wall (walls are one-sided, so they see through it)
+            if c.get('follow'): continue           # follow cameras: pos is an offset from Mario, not a room position
             if not (r['x0'] < x < r['x1'] and r['z0'] < z < r['z1'] and 0 < y < r['h']):
                 print('ERROR: camera %s/%d is outside the room' % (r['id'], i)); bad += 1
             for b in r.get('boxes', []):

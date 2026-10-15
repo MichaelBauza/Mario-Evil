@@ -191,7 +191,7 @@ cellar['cams'] = [dict(pos=(7650, 600, 950), look=(6900, 60, 350), zone=(6300, 0
 ROOMS.append(cellar)
 
 # ---- Kamek's Laboratory (boss) ----------------------------------------------------
-lab = room('lab', "Kamek's Laboratory", 5800, 1100, 8000, 3500, 1500, floor='mans_tile', wall='mans_metal_plate', panel='mans_metal_plate',
+lab = room('lab', "Kamek's Laboratory", 5000, 1100, 8000, 3500, 1500, floor='mans_tile', wall='mans_metal_plate', panel='mans_metal_plate',
            wainscot=350, ambient=0.30,
            boxes=[dict(x0=7280, z0=1330, x1=7620, z1=1670, y1=480, hidden=True),          # specimen tank (north-east)
                   dict(x0=6430, z0=1330, x1=6770, z1=1670, y1=480, hidden=True),          # specimen tank (north-west)
@@ -199,7 +199,7 @@ lab = room('lab', "Kamek's Laboratory", 5800, 1100, 8000, 3500, 1500, floor='man
                   dict(x0=6280, z0=2280, x1=6520, z1=2520, y1=170, hidden=True),          # cauldron (by the console)
                   dict(x0=6880, z0=3180, x1=7120, z1=3420, y1=170, hidden=True),          # cauldron (south)
                   dict(x0=7480, z0=3396, x1=7920, z1=3500, y1=280, hidden=True),          # control bank (south wall)
-                  dict(x0=5800, z0=1730, x1=5900, z1=2170, y1=260, hidden=True),          # control bank (west wall)
+                  dict(x0=5000, z0=1730, x1=5100, z1=2170, y1=260, hidden=True),          # control bank (west wall)
                   dict(x0=7910, z0=1810, x1=8000, z1=2190, y1=300, hidden=True),          # vial rack (east wall)
                   dict(x0=6110, z0=1100, x1=6490, z1=1190, y1=300, hidden=True),          # vial rack (north wall)
                   dict(x0=5950, z0=1100, x1=6900, z1=1340, y0=900, y1=940, side='mans_metal_plate', top='mans_metal_plate'),   # north catwalk (above the floor)
@@ -212,7 +212,8 @@ lab = room('lab', "Kamek's Laboratory", 5800, 1100, 8000, 3500, 1500, floor='man
                   dict(x0=5880, z0=2300, x1=6080, z1=2600, y1=100, side='mans_marble', top='mans_marble'),
                   dict(x0=5850, z0=1450, x1=5970, z1=1570, y1=880, side='mans_marble', top='mans_marble')],
            lights=[(6800, 700, 2300, 0.55, 1500), (6000, 500, 2900, 0.30, 700), (7500, 500, 1700, 0.30, 700),
-                   (7000, 1300, 2300, 0.45, 1400), (7600, 1200, 3100, 0.40, 1200), (6200, 1200, 1700, 0.40, 1200)],
+                   (7000, 1300, 2300, 0.45, 1400), (7600, 1200, 3100, 0.40, 1200), (6200, 1200, 1700, 0.40, 1200),
+                   (5400, 1300, 1300, 0.40, 1200), (5400, 1300, 3200, 0.40, 1200)],
            objs=[dict(kind='file', file=8, pos=(6200, 1900), y=110),
                  dict(kind='console', pos=(5980, 2450), y=100, yaw=0x4000),
                  dict(kind='zombie', pos=(7000, 2950), yaw=0x8000, hp=30, boss=1),
@@ -223,12 +224,19 @@ lab = room('lab', "Kamek's Laboratory", 5800, 1100, 8000, 3500, 1500, floor='man
                  dict(kind='prop', model='cauldron', pos=(6400, 2400), y=0, yaw=0x2000),
                  dict(kind='prop', model='cauldron', pos=(7000, 3300), y=0, yaw=0x6000),
                  dict(kind='prop', model='panel_bank', pos=(5950, 3500), y=0, yaw=0x8000),
-                 dict(kind='prop', model='panel_bank', pos=(5800, 1950), y=0, yaw=0x4000),
+                 dict(kind='prop', model='panel_bank', pos=(5000, 1950), y=0, yaw=0x4000),
                  dict(kind='prop', model='vial_rack', pos=(8000, 2050), y=0, yaw=0xC000),
                  dict(kind='prop', model='vial_rack', pos=(6300, 1100), y=0, yaw=0),
                  dict(kind='ammo', pos=(6000, 2900), amount=15), dict(kind='ammo', pos=(7600, 2000), amount=15),
                  dict(kind='herb_r', pos=(6500, 2700)), dict(kind='herb_g', pos=(7300, 2700))])
-lab['cams'] = cams_along_x(lab, ya=0.8, inset=150, fov=55, front='N')
+# four high follow cameras, one per quadrant: each sits 700 out from Mario, diagonally inside the room, 1100 up, so the
+# tanks, cauldrons and racks (all under 500 tall) never stand between the lens and Mario
+lab['cams'] = [
+    dict(pos=(700, 1100, 700), look=(0, 0, 0), zone=(5000, 1100, 6500, 2300), fov=55, follow=True),     # NW quadrant: camera looks south-east
+    dict(pos=(-700, 1100, 700), look=(0, 0, 0), zone=(6500, 1100, 8000, 2300), fov=55, follow=True),    # NE quadrant: looks south-west
+    dict(pos=(700, 1100, -700), look=(0, 0, 0), zone=(5000, 2300, 6500, 3500), fov=55, follow=True),    # SW quadrant: looks north-east
+    dict(pos=(-700, 1100, -700), look=(0, 0, 0), zone=(6500, 2300, 8000, 3500), fov=55, follow=True),   # SE quadrant: looks north-west
+]
 ROOMS.append(lab)
 
 # ---- Luigi's cell (behind the iron bars; the gate is opened with the Cage Key, dropped by Tyrant Bowser) ----
@@ -471,7 +479,7 @@ MAPRECTS = {
     'court': (22, -45, 72, 5), 'save': (35.5, -55, 45.5, -45), 'guard': (72, -7, 83, 4),
     'corr_w': (-38, 10.5, -21, 15.5), 'lib': (-47, 15.5, -29, 29.5),
     'land': (-21, 22, -1, 34), 'corr2': (-1, 25.5, 25, 30.5), 'gal': (25, 22, 45, 33), 'bed': (2, 30.5, 20, 42.5),
-    'stair': (41, 5, 57, 10), 'cellar': (57, 5, 71, 15), 'lab': (54, 16, 80, 32), 'cell': (73, 36, 80, 43),
+    'stair': (41, 5, 57, 10), 'cellar': (57, 5, 71, 15), 'lab': (50, 16, 80, 32), 'cell': (73, 36, 80, 43),
     'tunnel': (50, 33, 66, 38), 'dock': (38, 34, 50, 45),
 }
 
